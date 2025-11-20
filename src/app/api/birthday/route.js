@@ -6,6 +6,23 @@ export async function POST(request) {
         const body = await request.json();
         const { recipientName, birthdayDate, message, theme, photos } = body;
 
+        // Rate Limiting
+        const ip = request.headers.get('x-forwarded-for') || 'unknown';
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+        const recentPages = await prisma.birthdayPage.count({
+            where: {
+                ipAddress: ip,
+                createdAt: {
+                    gte: oneHourAgo,
+                },
+            },
+        });
+
+        if (recentPages >= 5) {
+            return NextResponse.json({ success: false, error: 'Rate limit exceeded. You can only create 5 pages per hour.' }, { status: 429 });
+        }
+
         if (!recipientName) {
             return NextResponse.json({ success: false, error: 'Recipient name is required' }, { status: 400 });
         }
@@ -17,6 +34,7 @@ export async function POST(request) {
                 birthdayDate: birthdayDate ? new Date(birthdayDate) : null,
                 message,
                 theme: theme || 'elegant',
+                ipAddress: ip,
                 photos: {
                     create: photos?.map((url, index) => ({
                         url,
