@@ -1,0 +1,48 @@
+/* Theme Definitions */
+
+/* Elegant Theme */
+[data-theme='elegant'] {
+    --bg-primary: #fdfbf7;
+    --bg-secondary: #f3efe6;
+    --text-primary: #2c2c2c;
+    --text-secondary: #595959;
+    --accent-color: #d4af37;
+    /* Gold */
+    --font-heading: var(--font-playfair), serif;
+    --font-body: var(--font-lato), sans-serif;
+}
+
+/* Fun Theme */
+[data-theme='fun'] {
+    --bg-primary: #fff0f5;
+    --bg-secondary: #ffe4e1;
+    --text-primary: #333;
+    --text-secondary: #666;
+    --accent-color: #ff69b4;
+    /* HotPink */
+    --font-heading: var(--font-fredoka), cursive;
+    --font-body: var(--font-quicksand), sans-serif;
+}
+
+/* Retro Theme */
+[data-theme='retro'] {
+    --bg-primary: #2b2b2b;
+    --bg-secondary: #1a1a1a;
+    --text-primary: #f0f0f0;
+    --text-secondary: #ccc;
+    --accent-color: #00ff00;
+    /* Neon Green */
+    --font-heading: var(--font-press-start), cursive;
+    --font-body: var(--font-vt323), monospace;
+}
+
+/* Minimal Theme */
+[data-theme='minimal'] {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9f9f9;
+    --text-primary: #000000;
+    --text-secondary: #444444;
+    --accent-color: #000000;
+    --font-heading: var(--font-inter), sans-serif;
+    --font-body: var(--font-inter), sans-serif;
+}
