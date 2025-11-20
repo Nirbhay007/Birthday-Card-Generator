@@ -7,7 +7,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("PRISMA_DATABASE_URL") // uses connection pooling
+  url      = env("PRISMA_DATABASE_URL") //  Accelerate for the app (pooling & caching)
+  directUrl = env("POSTGRES_URL")       //  Direct connection for migrations
 }
 
 model BirthdayPage {
