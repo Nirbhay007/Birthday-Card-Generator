@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Wind } from 'lucide-react';
+import { Mic, Wind } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { cn } from '@/lib/utils';
 
-export default function CandleBlower({ onBlow, audioEnabled }) {
+export default function CandleBlower({ onBlow }) {
     const [listening, setListening] = useState(false);
     const [permissionDenied, setPermissionDenied] = useState(false);
     const [volume, setVolume] = useState(0);
@@ -24,7 +24,7 @@ export default function CandleBlower({ onBlow, audioEnabled }) {
 
     const startListening = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            const stream = await navigator?.mediaDevices?.getUserMedia({ audio: true, video: false });
 
             audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
             analyserRef.current = audioContextRef.current.createAnalyser();
@@ -69,7 +69,6 @@ export default function CandleBlower({ onBlow, audioEnabled }) {
         const average = sum / bufferLength;
         setVolume(average);
 
-        // Threshold for "blowing" - this might need tuning
         if (average > 40 && !candlesBlown) {
             handleBlowOut();
         } else {
@@ -89,9 +88,9 @@ export default function CandleBlower({ onBlow, audioEnabled }) {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center space-y-8 py-8">
+        <section className="flex flex-col items-center justify-center space-y-8 py-8" aria-label="Interactive virtual candle blowing section">
             {/* Candles */}
-            <div className="relative flex items-end justify-center space-x-8 h-40">
+            <div className="relative flex items-end justify-center space-x-8 h-40" role="img" aria-label={candlesBlown ? "Birthday candles blown out" : "Lit birthday candles"}>
                 {[1, 2, 3].map((i) => (
                     <div key={i} className="relative flex flex-col items-center">
                         <div className={cn(
@@ -113,13 +112,13 @@ export default function CandleBlower({ onBlow, audioEnabled }) {
                     <>
                         {listening ? (
                             <div className="space-y-2">
-                                <div className="flex items-center justify-center space-x-2 text-purple-600 animate-pulse">
-                                    <Wind className="w-6 h-6" />
-                                    <span className="font-bold">Blow into your mic!</span>
+                                <div className="flex items-center justify-center space-x-2 text-purple-700 animate-pulse">
+                                    <Wind className="w-6 h-6" aria-hidden="true" />
+                                    <span className="font-bold text-lg">Blow into your microphone!</span>
                                 </div>
-                                <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden mx-auto">
+                                <div className="w-48 h-3 bg-gray-200 rounded-full overflow-hidden mx-auto border border-gray-300" aria-label="Microphone volume indicator">
                                     <div
-                                        className="h-full bg-purple-500 transition-all duration-75"
+                                        className="h-full bg-purple-600 transition-all duration-75"
                                         style={{ width: `${Math.min(volume * 2, 100)}%` }}
                                     />
                                 </div>
@@ -127,28 +126,27 @@ export default function CandleBlower({ onBlow, audioEnabled }) {
                         ) : (
                             <button
                                 onClick={startListening}
-                                className="px-6 py-3 bg-purple-600 text-white rounded-full font-bold shadow-lg hover:bg-purple-700 transition-all flex items-center space-x-2 mx-auto"
+                                className="px-6 py-3.5 bg-purple-600 text-white rounded-full font-bold shadow-lg hover:bg-purple-700 transition-all flex items-center space-x-2 mx-auto focus:outline-none focus:ring-4 focus:ring-purple-300"
+                                aria-label="Enable microphone to blow out virtual birthday candles"
                             >
-                                <Mic className="w-5 h-5" />
-                                <span>Enable Mic to Blow</span>
+                                <Mic className="w-5 h-5" aria-hidden="true" />
+                                <span>Enable Mic to Blow Candles</span>
                             </button>
                         )}
 
-                        {(permissionDenied || !listening) && (
-                            <button
-                                onClick={handleBlowOut}
-                                className="text-sm text-gray-500 underline hover:text-gray-700 mt-2 block mx-auto"
-                            >
-                                Or click here to blow manually
-                            </button>
-                        )}
+                        <button
+                            onClick={handleBlowOut}
+                            className="text-sm font-medium text-gray-700 underline hover:text-purple-700 mt-2 block mx-auto focus:outline-none focus:ring-2 focus:ring-purple-500 rounded-md px-2 py-1"
+                        >
+                            Or click here to blow out candles manually
+                        </button>
                     </>
                 ) : (
-                    <div className="text-2xl font-bold text-purple-600 animate-bounce">
+                    <div className="text-2xl sm:text-3xl font-extrabold text-purple-600 animate-bounce" role="status" aria-live="assertive">
                         Yay! Happy Birthday! 🎉
                     </div>
                 )}
             </div>
-        </div>
+        </section>
     );
 }

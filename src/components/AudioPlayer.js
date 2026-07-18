@@ -9,11 +9,10 @@ export default function AudioPlayer({ src = "/happy-birthday.mp3", autoPlay = tr
 
     useEffect(() => {
         if (autoPlay && audioRef.current) {
-            // Browsers block autoplay until interaction. We try, but if it fails, we wait for interaction.
             audioRef.current.play().then(() => {
                 setPlaying(true);
             }).catch(() => {
-                // Autoplay blocked
+                // Autoplay blocked by browser policy
                 setPlaying(false);
             });
         }
@@ -35,11 +34,15 @@ export default function AudioPlayer({ src = "/happy-birthday.mp3", autoPlay = tr
             <audio ref={audioRef} src={src} loop />
             <button
                 onClick={togglePlay}
-                className="bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg hover:shadow-xl transition-all text-gray-800"
-                aria-label={playing ? "Mute music" : "Play music"}
+                className="bg-gray-900/90 text-white backdrop-blur-md p-3.5 rounded-full shadow-2xl hover:bg-gray-800 transition-all focus:outline-none focus:ring-4 focus:ring-purple-500 flex items-center justify-center"
+                aria-label={playing ? "Mute background birthday music" : "Play background birthday music"}
+                title={playing ? "Mute music" : "Play music"}
             >
-                {playing ? <Volume2 className="w-6 h-6" /> : <VolumeX className="w-6 h-6" />}
+                {playing ? <Volume2 className="w-6 h-6 text-purple-400" /> : <VolumeX className="w-6 h-6 text-gray-400" />}
             </button>
+            <span className="sr-only" aria-live="polite">
+                {playing ? "Background birthday music is currently playing" : "Background birthday music is muted"}
+            </span>
         </div>
     );
 }
