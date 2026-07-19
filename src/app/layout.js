@@ -3,6 +3,8 @@ import "./globals.css";
 import "./themes.css";
 import { getWebSiteSchema, getOrganizationSchema } from "@/lib/seo";
 
+import { Analytics } from "@vercel/analytics/react";
+
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
@@ -105,6 +107,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${inter.variable} ${playfair.variable} ${lato.variable} ${fredoka.variable} ${quicksand.variable} ${pressStart.variable} ${vt323.variable}`}>
         {children}
+        <Analytics />
       </body>
     </html>
   );
