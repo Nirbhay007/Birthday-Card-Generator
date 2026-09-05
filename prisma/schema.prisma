@@ -20,6 +20,7 @@ model BirthdayPage {
   audioEnabled Boolean  @default(true)
   createdAt    DateTime @default(now())
   ipAddress    String?
+  reminderEmail String?
   photos       Photo[]
 }
 

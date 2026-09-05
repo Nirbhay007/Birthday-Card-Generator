@@ -150,3 +150,33 @@ export function getGreetingCardSchema(siteUrl, pageData) {
     },
   };
 }
+
+export function getItemListSchema(siteUrl, name, items) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name,
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.text ? item.text.slice(0, 80) : item.name,
+      description: item.text || item.description,
+    })),
+  };
+}
+
+export function getCollectionSchema(siteUrl, category) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: category.metaTitle || category.title,
+    description: category.metaDescription || category.shortDescription,
+    url: `${siteUrl}/wishes/${category.slug}`,
+    publisher: {
+      '@type': 'Organization',
+      name: 'BirthdayGen',
+      url: siteUrl,
+    },
+  };
+}
+

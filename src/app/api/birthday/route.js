@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 export async function POST(request) {
     try {
         const body = await request.json();
-        const { recipientName, birthdayDate, message, theme, photos } = body;
+        const { recipientName, birthdayDate, message, theme, photos, reminderEmail, remindNextYear } = body;
 
         // Rate Limiting
         const ip = request.headers.get('x-forwarded-for') || 'unknown';
@@ -27,6 +27,10 @@ export async function POST(request) {
             return NextResponse.json({ success: false, error: 'Recipient name is required' }, { status: 400 });
         }
 
+        const validReminderEmail = (remindNextYear && typeof reminderEmail === 'string' && reminderEmail.includes('@'))
+            ? reminderEmail.trim().slice(0, 255)
+            : null;
+
         // Create the page and photos in a transaction
         const page = await prisma.birthdayPage.create({
             data: {
@@ -35,6 +39,7 @@ export async function POST(request) {
                 message,
                 theme: theme || 'elegant',
                 ipAddress: ip,
+                reminderEmail: validReminderEmail,
                 photos: {
                     create: photos?.map((url, index) => ({
                         url,

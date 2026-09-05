@@ -4,6 +4,7 @@ import CandleBlower from '@/components/CandleBlower';
 import PhotoGallery from '@/components/PhotoGallery';
 import AudioPlayer from '@/components/AudioPlayer';
 import ShareButtons from '@/components/ShareButtons';
+import MonetizationSlot from '@/components/MonetizationSlot';
 import { getBreadcrumbSchema, getGreetingCardSchema } from '@/lib/seo';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
@@ -137,12 +138,23 @@ export default async function BirthdayPage({ params }) {
                         <p className="text-sm opacity-70 mb-4 font-medium">Made with ❤️ using BirthdayGen</p>
                         <ShareButtons title={`Happy Birthday ${page.recipientName}!`} />
 
-                        <div className="mt-12">
+                        {/* CLS-safe non-intrusive monetization placeholder */}
+                        <div className="max-w-xl mx-auto my-6">
+                            <MonetizationSlot slotId={`card-footer-${page.id}`} />
+                        </div>
+
+                        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
                             <a
                                 href="/"
                                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-purple-600 text-white hover:bg-purple-700 transition-all text-sm font-semibold shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-purple-300"
                             >
-                                <span>🎉 Create your own free interactive birthday card with BirthdayGen</span>
+                                <span>🎉 Create your own free interactive card</span>
+                            </a>
+                            <a
+                                href="/wishes"
+                                className="inline-flex items-center gap-1.5 px-5 py-3 rounded-full bg-white/70 hover:bg-white text-purple-700 transition-all text-sm font-semibold border border-purple-200 shadow-xs"
+                            >
+                                <span>Browse Birthday Wishes</span>
                             </a>
                         </div>
                     </footer>

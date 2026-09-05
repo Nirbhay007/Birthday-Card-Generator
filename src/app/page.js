@@ -1,7 +1,10 @@
 import React from 'react';
+import Link from 'next/link';
 import BirthdayGeneratorContainer from '@/components/BirthdayGeneratorContainer';
-import { Sparkles, Heart, Music, Image as ImageIcon, Wind, ShieldCheck, Zap, HelpCircle } from 'lucide-react';
+import MonetizationSlot from '@/components/MonetizationSlot';
+import { Sparkles, Heart, Music, Image as ImageIcon, Wind, ShieldCheck, Zap, HelpCircle, ArrowRight, BookOpen } from 'lucide-react';
 import { getSoftwareApplicationSchema, getFAQSchema, getHowToSchema } from '@/lib/seo';
+import { WISH_CATEGORIES } from '@/lib/wishesData';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
@@ -55,12 +58,15 @@ export default function Home() {
       <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900">
         {/* Navigation Header */}
         <nav className="container mx-auto px-4 py-4 flex justify-between items-center border-b border-purple-100/50">
-          <a href="/" className="inline-flex items-center gap-2 text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <Link href="/" className="inline-flex items-center gap-2 text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             <span className="text-2xl">🎉</span> BirthdayGen
-          </a>
-          <div className="flex gap-6 text-sm font-medium text-gray-600">
-            <a href="#how-it-works" className="hover:text-purple-600 transition-colors">How It Works</a>
-            <a href="#features" className="hover:text-purple-600 transition-colors">Features</a>
+          </Link>
+          <div className="flex gap-4 sm:gap-6 text-sm font-medium text-gray-600 items-center">
+            <a href="#how-it-works" className="hover:text-purple-600 transition-colors hidden sm:inline">How It Works</a>
+            <a href="#features" className="hover:text-purple-600 transition-colors hidden sm:inline">Features</a>
+            <Link href="/wishes" className="text-purple-600 font-semibold hover:text-purple-700 transition-colors flex items-center gap-1">
+              <BookOpen className="w-3.5 h-3.5" /> Wishes Hub
+            </Link>
             <a href="#faqs" className="hover:text-purple-600 transition-colors">FAQs</a>
           </div>
         </nav>
@@ -198,6 +204,53 @@ export default function Home() {
             </div>
           </section>
 
+          {/* SEO Internal Linking: Curated Birthday Wishes Library Showcase */}
+          <section className="max-w-6xl mx-auto my-20 bg-white p-8 sm:p-12 rounded-3xl border border-purple-100 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
+                  Topical Resource Hub
+                </span>
+                <h2 className="text-3xl font-bold text-gray-900 mt-2">
+                  Browse Birthday Wishes & Message Inspiration
+                </h2>
+                <p className="text-gray-600 mt-1 max-w-xl">
+                  Looking for the right words? Explore our handpicked messages and instantly use them in your custom interactive card.
+                </p>
+              </div>
+              <Link
+                href="/wishes"
+                className="inline-flex items-center gap-1 text-sm font-bold text-purple-600 hover:text-purple-800 transition-colors shrink-0"
+              >
+                <span>View Full Library</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {WISH_CATEGORIES.map((cat) => (
+                <Link
+                  key={cat.slug}
+                  href={`/wishes/${cat.slug}`}
+                  className="p-5 rounded-2xl border border-gray-100 hover:border-purple-300 hover:bg-purple-50/40 transition-all group flex flex-col justify-between"
+                >
+                  <div>
+                    <h3 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors mb-1 text-base">
+                      {cat.navTitle} Wishes
+                    </h3>
+                    <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                      {cat.shortDescription}
+                    </p>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between text-xs font-semibold text-purple-600">
+                    <span>{cat.wishes.length}+ Quotes</span>
+                    <span className="group-hover:translate-x-1 transition-transform">Read wishes →</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+
           {/* FAQs Section */}
           <section id="faqs" className="max-w-4xl mx-auto my-20">
             <div className="text-center mb-10">
@@ -217,6 +270,11 @@ export default function Home() {
             </div>
           </section>
 
+          {/* CLS-safe non-intrusive monetization slot (inactive by default) */}
+          <div className="max-w-4xl mx-auto">
+            <MonetizationSlot slotId="home-footer" />
+          </div>
+
           {/* E-E-A-T Trust & Editorial Note */}
           <section className="max-w-4xl mx-auto my-20 bg-white/60 backdrop-blur-sm p-8 rounded-3xl border border-purple-100 text-center">
             <ShieldCheck className="w-12 h-12 text-purple-600 mx-auto mb-4" />
@@ -230,9 +288,9 @@ export default function Home() {
         {/* Semantic Footer */}
         <footer className="bg-gray-900 text-gray-400 py-12 border-t border-gray-800">
           <div className="container mx-auto px-4 max-w-6xl">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-              <div>
-                <a href="/" className="text-xl font-bold text-white mb-3 inline-block">🎉 BirthdayGen</a>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+              <div className="md:col-span-1">
+                <Link href="/" className="text-xl font-bold text-white mb-3 inline-block">🎉 BirthdayGen</Link>
                 <p className="text-sm text-gray-400">
                   The ultimate free interactive birthday card microsite generator with photo galleries, music, and mic candle blowing.
                 </p>
@@ -241,9 +299,22 @@ export default function Home() {
                 <h3 className="text-white font-bold text-sm mb-3">Quick Navigation</h3>
                 <ul className="space-y-2 text-sm">
                   <li><a href="#create" className="hover:text-white transition-colors">Create Birthday Card</a></li>
+                  <li><Link href="/wishes" className="hover:text-white transition-colors">Birthday Wishes Hub</Link></li>
                   <li><a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
                   <li><a href="#features" className="hover:text-white transition-colors">Key Features</a></li>
                   <li><a href="#faqs" className="hover:text-white transition-colors">FAQs</a></li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-white font-bold text-sm mb-3">Popular Wishes</h3>
+                <ul className="space-y-2 text-sm">
+                  {WISH_CATEGORIES.slice(0, 4).map((c) => (
+                    <li key={c.slug}>
+                      <Link href={`/wishes/${c.slug}`} className="hover:text-white transition-colors">
+                        {c.navTitle} Wishes
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </div>
               <div>
