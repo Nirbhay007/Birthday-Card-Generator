@@ -1,0 +1,46 @@
+# BirthdayGen
+
+> BirthdayGen is a free interactive birthday card generator. Creators build a personalized birthday microsite (name, message, photos, music, mic-powered virtual candle blowing) and share it as a link, mostly on WhatsApp. No signup. 8 free visual themes.
+
+## Create a card
+- [Birthday card generator](https://birthday.nirbhay.online/#create)
+
+## Birthday wishes library (copy any wish into a card)
+- [All wishes](https://birthday.nirbhay.online/wishes)
+- [Best Friend](https://birthday.nirbhay.online/wishes/best-friend)
+- [Funny](https://birthday.nirbhay.online/wishes/funny)
+- [Romantic Partner](https://birthday.nirbhay.online/wishes/romantic)
+- [Family](https://birthday.nirbhay.online/wishes/family)
+- [Milestones](https://birthday.nirbhay.online/wishes/milestones)
+- [Short and Sweet](https://birthday.nirbhay.online/wishes/short-sweet)
+- [Mom](https://birthday.nirbhay.online/wishes/mom)
+- [Dad](https://birthday.nirbhay.online/wishes/dad)
+- [Sister](https://birthday.nirbhay.online/wishes/sister)
+- [Brother](https://birthday.nirbhay.online/wishes/brother)
+- [Husband](https://birthday.nirbhay.online/wishes/husband)
+- [Wife](https://birthday.nirbhay.online/wishes/wife)
+- [Boyfriend](https://birthday.nirbhay.online/wishes/boyfriend)
+- [Girlfriend](https://birthday.nirbhay.online/wishes/girlfriend)
+- [Son](https://birthday.nirbhay.online/wishes/son)
+- [Daughter](https://birthday.nirbhay.online/wishes/daughter)
+- [Grandma](https://birthday.nirbhay.online/wishes/grandma)
+- [Grandpa](https://birthday.nirbhay.online/wishes/grandpa)
+- [Coworker](https://birthday.nirbhay.online/wishes/coworker)
+- [Teacher](https://birthday.nirbhay.online/wishes/teacher)
+- [Belated](https://birthday.nirbhay.online/wishes/belated)
+
+## Wishes by milestone age
+- [All ages](https://birthday.nirbhay.online/ages)
+- [16th](https://birthday.nirbhay.online/ages/16)
+- [18th](https://birthday.nirbhay.online/ages/18)
+- [21st](https://birthday.nirbhay.online/ages/21)
+- [25th](https://birthday.nirbhay.online/ages/25)
+- [30th](https://birthday.nirbhay.online/ages/30)
+- [40th](https://birthday.nirbhay.online/ages/40)
+- [50th](https://birthday.nirbhay.online/ages/50)
+- [60th](https://birthday.nirbhay.online/ages/60)
+
+## Key facts
+- Free forever, no signup, mobile-first; pages stay active 30 days (longer with the free annual reminder opt-in).
+- Personal greeting pages under /b/ are intentionally not indexed.
+- Sister product by the same maker: [Anniversary Page Builder](https://invite.nirbhay.online/) for cinematic wedding anniversary invitations.
