@@ -51,19 +51,15 @@ export function getSoftwareApplicationSchema(siteUrl) {
       price: '0.00',
       priceCurrency: 'USD',
     },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.9',
-      ratingCount: '1250',
-      bestRating: '5',
-      worstRating: '1',
-    },
     featureList: [
       'Interactive Virtual Candle Blowing',
+      'Gift-box surprise reveal experience',
       'Personalized Photo Gallery',
-      'Custom Birthday Music Playback',
-      'Multiple Visual Themes (Elegant, Fun, Retro Neon, Minimal)',
+      'Music choice: classic song, music box, party pop',
+      'Relationship personalization (Mom, Best Friend, Partner...)',
+      'Multiple Visual Themes (Elegant, Fun, Royal Gold, Midnight Stars, Princess, Unicorn, Retro Neon, Minimal)',
       'Instant Shareable Link Generation',
+      'WhatsApp-ready sharing with personalized preview',
     ],
     description: 'An interactive web tool to design and send personalized digital birthday greeting microsites in seconds.',
   };
@@ -102,7 +98,7 @@ export function getHowToSchema(siteUrl) {
         '@type': 'HowToStep',
         position: 2,
         name: 'Customize Theme & Media',
-        text: 'Select from Elegant, Fun, Retro Neon, or Minimal themes, and upload special photos.',
+        text: 'Select from Elegant, Fun, Royal Gold, Midnight Stars, Princess, Unicorn, Retro Neon, or Minimal themes, and upload special photos.',
         url: `${siteUrl}/#create`,
       },
       {
@@ -146,7 +142,7 @@ export function getGreetingCardSchema(siteUrl, pageData) {
     interactionStatistic: {
       '@type': 'InteractionCounter',
       interactionType: 'https://schema.org/ViewAction',
-      userInteractionCount: 1,
+      userInteractionCount: pageData.viewCount > 0 ? pageData.viewCount : 1,
     },
   };
 }
@@ -171,7 +167,7 @@ export function getCollectionSchema(siteUrl, category) {
     '@type': 'CollectionPage',
     name: category.metaTitle || category.title,
     description: category.metaDescription || category.shortDescription,
-    url: `${siteUrl}/wishes/${category.slug}`,
+    url: category.canonicalUrl || `${siteUrl}/wishes/${category.slug}`,
     publisher: {
       '@type': 'Organization',
       name: 'BirthdayGen',

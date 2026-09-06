@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Copy, Check, Sparkles } from 'lucide-react';
 
-export default function WishCard({ wish }) {
+export default function WishCard({ wish, source }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -17,7 +17,7 @@ export default function WishCard({ wish }) {
     }
   };
 
-  const createCardUrl = `/?wish=${encodeURIComponent(wish.text)}#create`;
+  const createCardUrl = `/?wish=${encodeURIComponent(wish.text)}${source ? `&from=${encodeURIComponent(source)}` : ''}#create`;
 
   return (
     <div className="bg-white rounded-2xl p-6 border border-purple-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">

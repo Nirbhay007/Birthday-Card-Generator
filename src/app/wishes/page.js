@@ -1,6 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
-import { Sparkles, Heart, Laugh, Users, Award, MessageCircle, ArrowRight, CheckCircle, Gift } from 'lucide-react';
+import { Sparkles, Heart, Laugh, Users, Award, MessageCircle, ArrowRight, CheckCircle, Gift, HeartHandshake, Star, Flower2, Gamepad2, Crown, Gem, Flame, Smile, Rocket, Rainbow, Cake, Coffee, Briefcase, GraduationCap, Clock } from 'lucide-react';
+import SupportButton from '@/components/SupportButton';
+import WhatsNew from '@/components/WhatsNew';
 import { getAllCategories } from '@/lib/wishesData';
 import { getBreadcrumbSchema } from '@/lib/seo';
 
@@ -33,6 +35,21 @@ const CATEGORY_ICONS = {
   'family': Heart,
   'milestones': Award,
   'short-sweet': MessageCircle,
+  'mom': HeartHandshake,
+  'dad': Star,
+  'sister': Flower2,
+  'brother': Gamepad2,
+  'husband': Crown,
+  'wife': Gem,
+  'boyfriend': Flame,
+  'girlfriend': Smile,
+  'son': Rocket,
+  'daughter': Rainbow,
+  'grandma': Cake,
+  'grandpa': Coffee,
+  'coworker': Briefcase,
+  'teacher': GraduationCap,
+  'belated': Clock,
 };
 
 export default function WishesIndexPage() {
@@ -59,6 +76,7 @@ export default function WishesIndexPage() {
           <div className="flex gap-4 sm:gap-6 text-sm font-medium text-gray-600 items-center">
             <Link href="/" className="hover:text-purple-600 transition-colors">Card Generator</Link>
             <Link href="/wishes" className="text-purple-600 font-semibold">Wishes Hub</Link>
+            <WhatsNew />
           </div>
         </nav>
 
@@ -71,7 +89,7 @@ export default function WishesIndexPage() {
             Find the <span className="text-purple-600">Perfect Words</span> for Every Birthday
           </h1>
           <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Never struggle with writer's block again. Browse hundreds of curated birthday wishes, copy your favorites, or turn any message into an interactive digital card with virtual candles in one click.
+            Never struggle with writer's block again. Browse 170+ curated birthday wishes, copy your favorites, or turn any message into an interactive digital card with virtual candles in one click.
           </p>
         </header>
 
@@ -121,7 +139,7 @@ export default function WishesIndexPage() {
           </div>
 
           {/* Featured Highlight: Transform any wish into a card */}
-          <section className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-3xl p-8 sm:p-12 shadow-xl mb-16 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-8">
+          <section className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-3xl p-8 sm:p-12 shadow-xl mb-8 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-8">
             <div className="max-w-xl">
               <h2 className="text-3xl font-extrabold mb-3">Turn Any Wish Into An Interactive Surprise</h2>
               <p className="text-purple-100 leading-relaxed text-sm sm:text-base">
@@ -133,6 +151,20 @@ export default function WishesIndexPage() {
               className="px-8 py-4 bg-white text-purple-700 font-bold rounded-2xl hover:bg-purple-50 transition-all shadow-lg hover:scale-105 whitespace-nowrap text-base"
             >
               Start Creating Now 🎉
+            </Link>
+          </section>
+
+          {/* Cross-link: milestone ages hub */}
+          <section className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 sm:p-10 border border-amber-200 shadow-sm mb-16 text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">🎂 Celebrating a Milestone Age?</h2>
+            <p className="text-gray-600 text-sm sm:text-base mb-6 max-w-xl mx-auto">
+              Sweet 16, 18th, 21st, 30th, 40th, 50th, 60th — wishes written for the exact age, ready to turn into a candle-blowing surprise.
+            </p>
+            <Link
+              href="/ages"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-amber-500 to-pink-600 text-white font-bold text-sm shadow-md hover:shadow-lg transition-all hover:scale-105"
+            >
+              Browse Wishes by Age <ArrowRight className="w-4 h-4" />
             </Link>
           </section>
 
@@ -192,6 +224,7 @@ export default function WishesIndexPage() {
               <div>
                 <h4 className="text-white font-bold text-sm mb-3">About BirthdayGen</h4>
                 <p className="text-sm text-gray-400 mb-2">Free online greeting card & microsite generator.</p>
+                <p className="text-sm text-gray-400 mb-2"><SupportButton variant="link" /></p>
                 <p className="text-xs text-gray-500">© {new Date().getFullYear()} BirthdayGen. All rights reserved.</p>
               </div>
             </div>

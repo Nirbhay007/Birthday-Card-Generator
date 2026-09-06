@@ -1,5 +1,5 @@
-import prisma from '@/lib/prisma';
 import { WISH_CATEGORIES } from '@/lib/wishesData';
+import { AGE_PAGES } from '@/lib/ageWishesData';
 
 export default async function sitemap() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
@@ -18,6 +18,12 @@ export default async function sitemap() {
       changeFrequency: 'daily',
       priority: 0.9,
     },
+    {
+      url: `${baseUrl}/ages`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
   ];
 
   // Programmatic SEO category routes
@@ -28,25 +34,17 @@ export default async function sitemap() {
     priority: 0.85,
   }));
 
+  // Milestone-age programmatic routes
+  const ageRoutes = AGE_PAGES.map((a) => ({
+    url: `${baseUrl}/ages/${a.age}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.85,
+  }));
 
-  // Fetch recent public birthday pages for sitemap indexability
-  try {
-    const recentPages = await prisma.birthdayPage.findMany({
-      take: 100,
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, createdAt: true },
-    });
 
-    const dynamicRoutes = recentPages.map((page) => ({
-      url: `${baseUrl}/b/${page.id}`,
-      lastModified: page.createdAt ? new Date(page.createdAt) : new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    }));
-
-    return [...routes, ...wishesCategoryRoutes, ...dynamicRoutes];
-  } catch (error) {
-    console.error('Error generating sitemap:', error);
-    return [...routes, ...wishesCategoryRoutes];
-  }
+  // NOTE: personal /b/[id] greeting pages are intentionally excluded —
+  // they are noindex UGC. Indexing hundreds of thin name-pages would
+  // dilute crawl budget and site quality. Only ranking hubs are listed.
+  return [...routes, ...wishesCategoryRoutes, ...ageRoutes];
 }

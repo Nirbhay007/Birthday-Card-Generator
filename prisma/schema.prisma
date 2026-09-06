@@ -21,6 +21,14 @@ model BirthdayPage {
   createdAt    DateTime @default(now())
   ipAddress    String?
   reminderEmail String?
+  age          Int?
+  senderName   String?
+  relationship String?
+  music        String?  @default("classic")
+  viewCount    Int      @default(0)
+  loves        Int      @default(0)
+  shares       Int      @default(0)
+  source       String?
   photos       Photo[]
 }
 

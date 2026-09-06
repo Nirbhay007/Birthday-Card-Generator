@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Sparkles, Check, Heart, Laugh, Users, Award, MessageCircle } from 'lucide-react';
 import { WISH_CATEGORIES } from '@/lib/wishesData';
 
@@ -17,7 +18,7 @@ export default function WishInspirationModal({ isOpen, onClose, onSelectWish }) 
   const [activeCategory, setActiveCategory] = useState(WISH_CATEGORIES[0].slug);
   const [selectedWishId, setSelectedWishId] = useState(null);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const currentCategory = WISH_CATEGORIES.find((c) => c.slug === activeCategory) || WISH_CATEGORIES[0];
 
@@ -30,7 +31,9 @@ export default function WishInspirationModal({ isOpen, onClose, onSelectWish }) 
     }, 300);
   };
 
-  return (
+  // Portalled to body: the creator form uses backdrop-blur, which would
+  // otherwise trap this fixed overlay inside the form box.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -137,6 +140,7 @@ export default function WishInspirationModal({ isOpen, onClose, onSelectWish }) 
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

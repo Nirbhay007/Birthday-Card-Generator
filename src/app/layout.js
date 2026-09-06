@@ -56,7 +56,7 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: "/icon.svg",
+        url: "/api/og?name=Friend&theme=fun",
         width: 1200,
         height: 630,
         alt: "BirthdayGen - Create Interactive Birthday Cards",
@@ -68,7 +68,7 @@ export const metadata = {
     title: "BirthdayGen | Interactive Birthday Card Generator",
     description: "Make someone's birthday unforgettable with a personalized digital greeting card microsite.",
     creator: "@birthdaygen",
-    images: ["/icon.svg"],
+    images: ["/api/og?name=Friend&theme=fun"],
   },
   robots: {
     index: true,

@@ -1,10 +1,14 @@
 import React from 'react';
 import Link from 'next/link';
 import BirthdayGeneratorContainer from '@/components/BirthdayGeneratorContainer';
+import CelebrationBackground from '@/components/CelebrationBackground';
 import MonetizationSlot from '@/components/MonetizationSlot';
-import { Sparkles, Heart, Music, Image as ImageIcon, Wind, ShieldCheck, Zap, HelpCircle, ArrowRight, BookOpen } from 'lucide-react';
+import SupportButton from '@/components/SupportButton';
+import WhatsNew from '@/components/WhatsNew';
+import { Sparkles, Heart, Music, Image as ImageIcon, Wind, ShieldCheck, Zap, HelpCircle, ArrowRight, BookOpen, Gift, PartyPopper, Timer } from 'lucide-react';
 import { getSoftwareApplicationSchema, getFAQSchema, getHowToSchema } from '@/lib/seo';
 import { WISH_CATEGORIES } from '@/lib/wishesData';
+import { getAllAgePages } from '@/lib/ageWishesData';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
@@ -23,11 +27,11 @@ const FAQS = [
   },
   {
     question: "How long does a created birthday page stay active?",
-    answer: "Every generated birthday page receives a unique permanent link that can be shared anytime via WhatsApp, SMS, email, or social media."
+    answer: "Every generated birthday page stays active for 30 days — plenty of time to celebrate and share it anywhere. Want it kept longer? Tick the free annual reminder while creating, and we'll keep your page alive for next year's birthday too."
   },
   {
     question: "Can I customize the design themes and add photos?",
-    answer: "Yes! You can select from 4 beautiful themes (Elegant, Fun & Colorful, Retro Neon, Minimal) and upload personal photo memories to create a custom photo gallery."
+    answer: "Yes! You can select from 8 beautiful free themes (Elegant, Fun & Colorful, Royal Gold, Midnight Stars, Princess, Unicorn Kids, Retro Neon, Minimal) and upload personal photo memories to create a custom photo gallery."
   },
   {
     question: "Are user photos and data private?",
@@ -39,6 +43,7 @@ export default function Home() {
   const softwareSchema = getSoftwareApplicationSchema(baseUrl);
   const faqSchema = getFAQSchema(FAQS);
   const howToSchema = getHowToSchema(baseUrl);
+  const agePages = getAllAgePages();
 
   return (
     <>
@@ -55,9 +60,12 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
       />
 
-      <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900">
+      <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900 relative overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-[560px] pointer-events-none" aria-hidden="true">
+          <CelebrationBackground theme="fun" density="light" />
+        </div>
         {/* Navigation Header */}
-        <nav className="container mx-auto px-4 py-4 flex justify-between items-center border-b border-purple-100/50">
+        <nav className="container mx-auto px-4 py-4 flex justify-between items-center border-b border-purple-100/50 relative z-10">
           <Link href="/" className="inline-flex items-center gap-2 text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             <span className="text-2xl">🎉</span> BirthdayGen
           </Link>
@@ -68,31 +76,116 @@ export default function Home() {
               <BookOpen className="w-3.5 h-3.5" /> Wishes Hub
             </Link>
             <a href="#faqs" className="hover:text-purple-600 transition-colors">FAQs</a>
+            <WhatsNew />
           </div>
         </nav>
 
         {/* Hero Section */}
-        <div className="container mx-auto px-4 py-12">
-          <header className="text-center mb-12">
+        <div className="container mx-auto px-4 py-12 relative z-10">
+          <header className="text-center mb-10">
             <div className="inline-flex items-center justify-center px-4 py-2 bg-white rounded-full shadow-sm border border-purple-100 mb-6">
               <Sparkles className="w-4 h-4 text-purple-600 mr-2" />
               <span className="text-xs font-semibold uppercase tracking-wider text-purple-700">
-                #1 Free Interactive Birthday Microsite Maker
+                Free • No signup • Ready in 30 seconds
               </span>
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mb-6 tracking-tight leading-tight">
-              Create the <span className="text-purple-600">Perfect</span><br />
-              Personalized Birthday Surprise
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mb-4 tracking-tight leading-tight">
+              Send a <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-amber-500">Personalized Birthday Card</span><br />
+              They&apos;ll Never Forget
             </h1>
-            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Design a beautiful, interactive digital birthday card in seconds.
-              Add custom photos, personal messages, background music, and let them blow out real virtual candles!
+            <p className="text-base sm:text-lg font-bold text-gray-700 mb-4">
+              They tap a gift 🎁 → candles flicker → they blow → happy tears 🥹
             </p>
+            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              Design a free interactive birthday card in seconds — their name, your message,
+              favorite photos, music and real mic-powered candle blowing, shareable on WhatsApp in one tap.
+            </p>
+            <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <a href="#create" className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
+                <Gift className="w-5 h-5" /> Create a surprise — it&apos;s free
+              </a>
+              <Link href="/wishes" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-white border border-purple-200 text-purple-700 font-bold shadow-sm hover:bg-purple-50 transition-all">
+                <BookOpen className="w-4 h-4" /> Steal a perfect message
+              </Link>
+            </div>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-gray-600">
+              <span className="inline-flex items-center gap-1 bg-white/80 border border-purple-100 rounded-full px-3 py-1.5"><Timer className="w-3.5 h-3.5 text-purple-600" /> 30-sec setup</span>
+              <span className="inline-flex items-center gap-1 bg-white/80 border border-purple-100 rounded-full px-3 py-1.5"><PartyPopper className="w-3.5 h-3.5 text-pink-600" /> 8 free themes</span>
+              <span className="inline-flex items-center gap-1 bg-white/80 border border-purple-100 rounded-full px-3 py-1.5"><Wind className="w-3.5 h-3.5 text-indigo-600" /> Mic candle blow</span>
+              <span className="inline-flex items-center gap-1 bg-white/80 border border-purple-100 rounded-full px-3 py-1.5"><Heart className="w-3.5 h-3.5 text-rose-600" /> WhatsApp-ready</span>
+            </div>
           </header>
 
+          {/* Recipient journey strip */}
+          <div className="max-w-4xl mx-auto mb-10 grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+            {[
+              { emoji: '🎁', title: 'They tap the gift', desc: 'Gift-box reveal + confetti explosion' },
+              { emoji: '🎂', title: 'They blow candles', desc: 'Mic magic + fireworks + wish made' },
+              { emoji: '📸', title: 'They feel the love', desc: 'Photos, words from you, Send-love hearts' },
+            ].map((s) => (
+              <div key={s.title} className="bg-white/80 backdrop-blur-sm border border-purple-100 rounded-2xl px-4 py-4 shadow-sm">
+                <div className="text-3xl mb-1">{s.emoji}</div>
+                <p className="font-bold text-gray-900 text-sm">{s.title}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+
           {/* Interactive Generator Container */}
-          <section id="create" className="mb-20">
+          <section id="create" className="mb-14 scroll-mt-20">
             <BirthdayGeneratorContainer />
+          </section>
+
+          {/* Theme showcase */}
+          <section className="max-w-6xl mx-auto mb-16">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Pick a vibe — all 8 themes free</h2>
+              <p className="text-gray-600 mt-2 text-sm sm:text-base">Every theme has its own colors, fonts and party background. Midnight sparkles, Royal shines, Unicorn plays.</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { name: 'Royal Gold 👑', bg: '#1a0f2e', accent: '#f5c518', desc: 'Luxury & drama' },
+                { name: 'Midnight Stars', bg: '#0b1026', accent: '#818cf8', desc: 'Dreamy night' },
+                { name: 'Princess 💖', bg: '#fff5f7', accent: '#ec4899', desc: 'Soft fairytale' },
+                { name: 'Unicorn 🦄', bg: '#f5f3ff', accent: '#8b5cf6', desc: 'Kids party' },
+                { name: 'Fun & Colorful', bg: '#fff0f5', accent: '#ff69b4', desc: 'Confetti pop' },
+                { name: 'Elegant', bg: '#fdfbf7', accent: '#d4af37', desc: 'Timeless gold' },
+                { name: 'Retro Neon', bg: '#2b2b2b', accent: '#00ff00', desc: 'Arcade cool' },
+                { name: 'Minimal', bg: '#ffffff', accent: '#111827', desc: 'Clean & calm' },
+              ].map((t) => (
+                <div key={t.name} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition-shadow text-left">
+                  <div className="h-16 rounded-xl mb-3 flex items-center justify-center text-2xl" style={{ backgroundColor: t.bg }}>
+                    <span className="w-6 h-6 rounded-full border border-black/10 inline-block" style={{ backgroundColor: t.accent }} />
+                  </div>
+                  <p className="font-bold text-sm text-gray-900">{t.name}</p>
+                  <p className="text-xs text-gray-500">{t.desc}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Milestone-age strip (internal linking to /ages programmatic hub) */}
+          <section className="max-w-6xl mx-auto mb-16 text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Wishes by Milestone Age</h2>
+            <p className="text-gray-600 text-sm sm:text-base mb-6">Sweet 16 to golden 50th — words written for the exact moment.</p>
+            <div className="flex flex-wrap justify-center gap-2.5">
+              {agePages.map((a) => (
+                <Link
+                  key={a.age}
+                  href={`/ages/${a.age}`}
+                  className="px-4 py-2 rounded-2xl bg-white border border-purple-100 shadow-sm hover:border-purple-400 hover:shadow-md transition-all flex flex-col items-center leading-tight"
+                >
+                  <span className="font-extrabold text-gray-900 text-lg">{a.age}</span>
+                  <span className="font-semibold text-gray-500 text-[11px]">{a.navTitle} birthday</span>
+                </Link>
+              ))}
+              <Link
+                href="/ages"
+                className="px-4 py-2.5 rounded-2xl bg-gray-900 text-white font-bold hover:bg-gray-800 transition-all"
+              >
+                All ages →
+              </Link>
+            </div>
           </section>
 
           {/* AI Search Summary Block (Search Everywhere / GEO Optimization) */}
@@ -151,7 +244,7 @@ export default function Home() {
               <div className="text-center">
                 <div className="w-12 h-12 bg-pink-100 text-pink-700 rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-4">2</div>
                 <h3 className="font-bold text-gray-900 mb-2">Upload & Style</h3>
-                <p className="text-sm text-gray-600">Select a design theme (Elegant, Fun, Retro, Minimal) and attach favorite photos.</p>
+                <p className="text-sm text-gray-600">Pick from 8 free themes (Royal, Midnight, Princess, Unicorn + more) and attach favorite photos.</p>
               </div>
               <div className="text-center">
                 <div className="w-12 h-12 bg-indigo-100 text-indigo-700 rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-4">3</div>
@@ -300,6 +393,7 @@ export default function Home() {
                 <ul className="space-y-2 text-sm">
                   <li><a href="#create" className="hover:text-white transition-colors">Create Birthday Card</a></li>
                   <li><Link href="/wishes" className="hover:text-white transition-colors">Birthday Wishes Hub</Link></li>
+                  <li><Link href="/ages" className="hover:text-white transition-colors">Wishes by Age</Link></li>
                   <li><a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
                   <li><a href="#features" className="hover:text-white transition-colors">Key Features</a></li>
                   <li><a href="#faqs" className="hover:text-white transition-colors">FAQs</a></li>
@@ -320,6 +414,7 @@ export default function Home() {
               <div>
                 <h3 className="text-white font-bold text-sm mb-3">Trust & Transparency</h3>
                 <p className="text-sm text-gray-400 mb-2">Free to use forever. No signup required.</p>
+                <p className="text-sm text-gray-400 mb-2"><SupportButton variant="link" /></p>
                 <p className="text-xs text-gray-500">© {new Date().getFullYear()} BirthdayGen. All rights reserved.</p>
               </div>
             </div>

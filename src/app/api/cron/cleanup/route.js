@@ -13,20 +13,37 @@ export async function GET(request) {
     try {
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
+        // Retention policy: pages whose creator opted into the free annual
+        // reminder are KEPT (they power next year's reminder loop).
+        // Everything else older than 30 days is removed with its photos.
+        const staleFilter = {
+            createdAt: {
+                lt: thirtyDaysAgo,
+            },
+            reminderEmail: null,
+        };
+
         // 1. Find old pages and their photos
         const oldPages = await prisma.birthdayPage.findMany({
-            where: {
-                createdAt: {
-                    lt: thirtyDaysAgo,
-                },
-            },
+            where: staleFilter,
             include: {
                 photos: true,
             },
         });
 
+        const keptPages = await prisma.birthdayPage.count({
+            where: {
+                createdAt: {
+                    lt: thirtyDaysAgo,
+                },
+                reminderEmail: {
+                    not: null,
+                },
+            },
+        });
+
         if (oldPages.length === 0) {
-            return NextResponse.json({ success: true, message: 'No old pages to clean up' });
+            return NextResponse.json({ success: true, message: 'No old pages to clean up', keptReminderPages: keptPages });
         }
 
         // 2. Collect all blob URLs to delete
@@ -39,18 +56,16 @@ export async function GET(request) {
         }
 
         // 4. Delete pages from DB (Cascade will delete Photo records)
+        // Reminder opt-ins are excluded by staleFilter and survive.
         const deleteResult = await prisma.birthdayPage.deleteMany({
-            where: {
-                createdAt: {
-                    lt: thirtyDaysAgo,
-                },
-            },
+            where: staleFilter,
         });
 
         return NextResponse.json({
             success: true,
             deletedPages: deleteResult.count,
-            deletedBlobs: blobUrls.length
+            deletedBlobs: blobUrls.length,
+            keptReminderPages: keptPages
         });
 
     } catch (error) {
