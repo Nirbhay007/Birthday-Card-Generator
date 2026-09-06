@@ -53,10 +53,6 @@ export default function CandleBlower({ onBlow, age, recipientName }) {
 
     const candleCount = getCandleCount(age);
 
-    useEffect(() => {
-        return () => stopListening();
-    }, []);
-
     const startListening = async () => {
         try {
             const stream = await navigator?.mediaDevices?.getUserMedia({ audio: true, video: false });
@@ -116,6 +112,10 @@ export default function CandleBlower({ onBlow, age, recipientName }) {
         setCandlesBlown(false);
         setVolume(0);
     };
+
+    useEffect(() => {
+        return () => stopListening();
+    }, []);
 
     return (
         <section className="flex flex-col items-center justify-center space-y-6 py-6" aria-label="Interactive virtual candle blowing section">
@@ -189,8 +189,8 @@ export default function CandleBlower({ onBlow, age, recipientName }) {
                 <div className="w-72 sm:w-96 h-24 bg-gradient-to-b from-violet-400 via-purple-500 to-indigo-600 rounded-b-3xl border border-purple-700/20 shadow-xl flex items-center justify-center gap-3 text-2xl" aria-hidden="true">
                     <span>🎈</span><span>🎁</span><span>🎈</span>
                 </div>
-                {/* Plate */}
-                <div className="mt-[-4px] w-80 sm:w-[28rem] h-5 bg-gradient-to-b from-gray-100 to-gray-300 rounded-full shadow-md border border-gray-200" aria-hidden="true" />
+                {/* Plate — w-72 fits 320px screens inside padded containers */}
+                <div className="mt-[-4px] w-72 sm:w-[28rem] h-5 bg-gradient-to-b from-gray-100 to-gray-300 rounded-full shadow-md border border-gray-200" aria-hidden="true" />
             </div>
 
             {/* Controls */}

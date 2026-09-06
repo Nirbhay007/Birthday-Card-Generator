@@ -85,7 +85,7 @@ export default function SupportButton({ variant = 'pill' }) {
                     aria-label="Support BirthdayGen"
                 >
                     <div
-                        className="w-full max-w-sm bg-white rounded-3xl p-6 sm:p-7 shadow-2xl relative text-center"
+                        className="w-full max-w-sm bg-white rounded-3xl p-6 sm:p-7 shadow-2xl relative text-center max-h-[90vh] overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button

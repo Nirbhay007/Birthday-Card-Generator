@@ -99,7 +99,7 @@ export default function CreateForm({ formData, setFormData }) {
     useEffect(() => {
         stepShownAt.current = Date.now();
         armedSubmit.current = false;
-        try { document.activeElement?.blur?.(); } catch {}
+        try { document.activeElement?.blur?.(); } catch { }
     }, [step]);
 
     // Restore autosaved draft once (only when form is untouched)
@@ -118,7 +118,7 @@ export default function CreateForm({ formData, setFormData }) {
                     }
                     return prev;
                 });
-            } catch {}
+            } catch { }
         }, 0);
         return () => clearTimeout(t);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,7 +130,7 @@ export default function CreateForm({ formData, setFormData }) {
             if (formData.recipientName || formData.message || (formData.photos || []).length > 0) {
                 localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...formData, savedAt: Date.now() }));
             }
-        } catch {}
+        } catch { }
     }, [formData]);
 
     // Auto-populate message if user arrived from /wishes/[slug] or /ages/[age] with ?wish=...
@@ -195,7 +195,7 @@ export default function CreateForm({ formData, setFormData }) {
             });
             const data = await res.json();
             if (data.success) {
-                try { localStorage.removeItem(DRAFT_KEY); } catch {}
+                try { localStorage.removeItem(DRAFT_KEY); } catch { }
                 router.push(`/b/${data.id}`);
             } else {
                 alert('Failed to create page: ' + data.error);
@@ -241,8 +241,8 @@ export default function CreateForm({ formData, setFormData }) {
                                     aria-current={active ? 'step' : undefined}
                                 >
                                     {done ? <Check className="w-3.5 h-3.5" /> : <Icon className="w-3.5 h-3.5" />}
-                                    <span className="hidden xs:inline sm:inline">{i + 1}. {s.label}</span>
-                                    <span className="xs:hidden sm:hidden">{i + 1}</span>
+                                    <span className="hidden sm:inline">{i + 1}. {s.label}</span>
+                                    <span className="sm:hidden">{i + 1}</span>
                                 </button>
                             </li>
                         );
@@ -507,13 +507,13 @@ export default function CreateForm({ formData, setFormData }) {
                     </div>
                 )}
 
-                {/* Nav */}
-                <div className="flex items-center gap-3 mt-8">
+                {/* Nav — stacked on phones (Generate on top), side-by-side on desktop */}
+                <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-3 mt-8">
                     {step > 1 && (
                         <button
                             type="button"
                             onClick={() => setStep((s) => s - 1)}
-                            className="inline-flex items-center gap-1.5 px-5 py-3.5 rounded-xl border-2 border-gray-200 text-gray-700 font-bold hover:border-purple-300 hover:text-purple-700 transition-all cursor-pointer"
+                            className="inline-flex items-center justify-center gap-1.5 px-5 py-3.5 rounded-xl border-2 border-gray-200 text-gray-700 font-bold hover:border-purple-300 hover:text-purple-700 transition-all cursor-pointer"
                         >
                             <ArrowLeft className="w-4 h-4" /> Back
                         </button>
@@ -532,7 +532,7 @@ export default function CreateForm({ formData, setFormData }) {
                             disabled={loading}
                             aria-busy={loading}
                             onClick={handleGenerateClick}
-                            className="flex-1 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus:ring-4 focus:ring-purple-300 cursor-pointer"
+                            className="flex-1 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold text-base sm:text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:scale-[0.98] disabled:transform-none transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-4 focus-visible:ring-purple-300 cursor-pointer"
                         >
                             {loading ? (
                                 <><Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" /> Wrapping your surprise...</>

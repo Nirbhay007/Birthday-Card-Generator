@@ -116,7 +116,7 @@ export default async function BirthdayPage({ params }) {
                         gallery={<PhotoGallery photos={page.photos} />}
                         audioSlot={page.music !== 'off' ? <AudioPlayer track={page.music || 'classic'} /> : null}
                         shareSlot={
-                            <footer className="text-center pb-12 pt-6">
+                            <footer className="text-center pb-24 sm:pb-12 pt-6">
                                 <p className="text-sm opacity-70 mb-4 font-medium">Made with ❤️ using BirthdayGen{page.senderName ? ` by ${page.senderName}` : ''}</p>
                                 <ShareButtons pageId={page.id} title={`Happy Birthday ${page.recipientName}!`} text={`🎉 I made a birthday surprise for ${page.recipientName} — tap to open, blow candles & view memories!`} />
 
