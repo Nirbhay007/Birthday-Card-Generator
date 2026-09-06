@@ -344,6 +344,29 @@ export default function Home() {
             </div>
           </section>
 
+          {/* Sister product: anniversary cards (same audience, adjacent intent) */}
+          <section className="max-w-6xl mx-auto my-20 bg-gradient-to-br from-rose-50 via-amber-50 to-rose-50 p-8 sm:p-12 rounded-3xl border border-rose-200/70 shadow-sm text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-8">
+            <div className="max-w-xl">
+              <span className="inline-block text-xs font-semibold uppercase tracking-wider text-rose-700 bg-white/70 border border-rose-200 px-3 py-1 rounded-full mb-3">
+                💍 From the same makers
+              </span>
+              <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Anniversary coming up too?</h2>
+              <p className="text-gray-600 leading-relaxed text-sm sm:text-base">
+                Birthdays aren&apos;t the only milestone. Build a cinematic anniversary invitation with
+                couple photos, romantic music, galleries, and venue maps — free, same 30-second magic.
+              </p>
+            </div>
+            <a
+              href="https://invite.nirbhay.online/"
+              target="_blank"
+              rel="noopener"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-gray-800 transition-all shadow-lg hover:scale-105 whitespace-nowrap text-base"
+            >
+              <span>Make an anniversary card</span>
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          </section>
+
           {/* FAQs Section */}
           <section id="faqs" className="max-w-4xl mx-auto my-20">
             <div className="text-center mb-10">
@@ -394,6 +417,7 @@ export default function Home() {
                   <li><a href="#create" className="hover:text-white transition-colors">Create Birthday Card</a></li>
                   <li><Link href="/wishes" className="hover:text-white transition-colors">Birthday Wishes Hub</Link></li>
                   <li><Link href="/ages" className="hover:text-white transition-colors">Wishes by Age</Link></li>
+                  <li><a href="https://invite.nirbhay.online/" target="_blank" rel="noopener" className="hover:text-white transition-colors">Anniversary Cards 💍</a></li>
                   <li><a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
                   <li><a href="#features" className="hover:text-white transition-colors">Key Features</a></li>
                   <li><a href="#faqs" className="hover:text-white transition-colors">FAQs</a></li>
