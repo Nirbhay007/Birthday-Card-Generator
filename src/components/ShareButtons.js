@@ -3,16 +3,39 @@
 import React, { useState } from 'react';
 import { Share2, Copy, Check, MessageCircle, Send, Twitter, Facebook } from 'lucide-react';
 
+function isPreviewUrl() {
+    try {
+        const q = new URLSearchParams(window.location.search);
+        if (!q.has('preview')) return false;
+        const v = (q.get('preview') || '').toLowerCase();
+        return v === '' || v === '1' || v === 'true' || v === 'yes' || v === 'on';
+    } catch {
+        return false;
+    }
+}
+
 export default function ShareButtons({ title, text, pageId }) {
     const [copied, setCopied] = useState(false);
 
-    const getUrl = () => (typeof window !== 'undefined' ? window.location.href : '');
+    // Share the canonical URL: strip the preview flag so recipients count normally.
+    const getUrl = () => {
+        if (typeof window === 'undefined') return '';
+        try {
+            const u = new URL(window.location.href);
+            u.searchParams.delete('preview');
+            return u.toString();
+        } catch {
+            return window.location.href;
+        }
+    };
     const shareText = text || 'Check out this personalized birthday surprise page! 🎉 Tap to blow candles!';
 
-    // Fire-and-forget share counter for future growth analytics
+    // Fire-and-forget share counter for future growth analytics.
+    // Skipped in preview mode so owner testing never inflates counts.
     const trackShare = () => {
         if (!pageId) return;
         try {
+            if (isPreviewUrl()) return;
             fetch(`/api/birthday/${pageId}/react`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

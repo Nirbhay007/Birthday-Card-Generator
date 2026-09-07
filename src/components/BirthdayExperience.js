@@ -22,15 +22,29 @@ function useTypewriter(text, start, speed = 70) {
     return out;
 }
 
-export default function BirthdayExperience({ page, photos, gallery, shareSlot, audioSlot }) {
+function isPreviewUrl() {
+    try {
+        const q = new URLSearchParams(window.location.search);
+        if (!q.has('preview')) return false;
+        const v = (q.get('preview') || '').toLowerCase();
+        return v === '' || v === '1' || v === 'true' || v === 'yes' || v === 'on';
+    } catch {}
+    return false;
+}
+
+export default function BirthdayExperience({ page, photos, gallery, shareSlot, audioSlot, preview = false }) {
     const [opened, setOpened] = useState(false);
     const [hearts, setHearts] = useState([]);
     const [heartCount, setHeartCount] = useState(page.loves || 0);
     const [viewCount, setViewCount] = useState(page.viewCount || 0);
+    // Server prop covers first paint; live URL check covers client-side nav.
+    const [previewMode] = useState(() => preview || (typeof window !== 'undefined' && isPreviewUrl()));
     const typedName = useTypewriter(page.recipientName || 'Friend', opened, 90);
 
-    // Count one view per visit (session-guarded), fire-and-forget
+    // Count one view per visit (session-guarded), fire-and-forget.
+    // Skipped entirely in preview mode so owner visits never count.
     useEffect(() => {
+        if (previewMode || (typeof window !== 'undefined' && isPreviewUrl())) return;
         try {
             const key = `bgen-viewed-${page.id}`;
             if (sessionStorage.getItem(key)) return;
@@ -44,7 +58,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                 .then((d) => { if (d.success && typeof d.viewCount === 'number') setViewCount(d.viewCount); })
                 .catch(() => {});
         } catch {}
-    }, [page.id]);
+    }, [page.id, previewMode]);
 
     const handleOpen = () => {
         setOpened(true);
@@ -61,6 +75,8 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
         const id = Date.now() + Math.random();
         setHearts((h) => [...h.slice(-14), id]);
         setTimeout(() => setHearts((h) => h.filter((x) => x !== id)), 1600);
+        // Preview mode: animate locally only, never touch the counter.
+        if (previewMode) return;
         // Every tap animates; only the first tap per browser session is
         // counted (the server cookie is the authoritative second layer).
         try {

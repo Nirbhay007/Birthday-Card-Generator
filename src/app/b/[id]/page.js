@@ -10,6 +10,24 @@ import { getBreadcrumbSchema, getGreetingCardSchema } from '@/lib/seo';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
+/**
+ * Preview mode (for the site owner to peek at any page without counting):
+ * append ?preview=1 to the URL, e.g. /b/abc123?preview=1
+ * While previewing, no view/love/share counters are incremented
+ * (enforced client-side + in the react API), and shared/copied links are
+ * stripped of the flag so recipients count normally.
+ */
+function isPreviewMode(searchParams) {
+    if (!searchParams) return false;
+    const raw = searchParams.preview;
+    const val = Array.isArray(raw) ? raw[0] : raw;
+    // Bare ?preview (val === '') counts as preview on.
+    // Explicit ?preview=0 / false / no / off opts back out.
+    if (val === undefined || val === null) return false;
+    const v = String(val).toLowerCase();
+    return v === '' || v === '1' || v === 'true' || v === 'yes' || v === 'on';
+}
+
 export async function generateMetadata({ params }) {
     const { id } = await params;
     const page = await prisma.birthdayPage.findUnique({
@@ -57,8 +75,13 @@ export async function generateMetadata({ params }) {
     };
 }
 
-export default async function BirthdayPage({ params }) {
+export default async function BirthdayPage({ params, searchParams }) {
     const { id } = await params;
+    // In Next 15+, searchParams is a Promise — await it when thenable.
+    const resolvedSearch = searchParams && typeof searchParams.then === 'function'
+        ? await searchParams
+        : (searchParams || {});
+    const preview = isPreviewMode(resolvedSearch);
     const page = await prisma.birthdayPage.findUnique({
         where: { id },
         include: {
@@ -110,8 +133,14 @@ export default async function BirthdayPage({ params }) {
                 </nav>
 
                 <div className="container mx-auto px-4 py-6 max-w-4xl relative z-10">
+                    {preview && (
+                        <p className="mb-4 text-center text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200 rounded-full px-4 py-2">
+                            👀 Preview mode — views & reactions are paused. <Link href={`/b/${id}`} className="underline">Exit preview</Link>
+                        </p>
+                    )}
                     <BirthdayExperience
                         page={page}
+                        preview={preview}
                         photos={page.photos}
                         gallery={<PhotoGallery photos={page.photos} />}
                         audioSlot={page.music !== 'off' ? <AudioPlayer track={page.music || 'classic'} /> : null}

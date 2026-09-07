@@ -26,6 +26,25 @@ function throttled(ip) {
 
 const COUNTS = { viewCount: true, loves: true, shares: true };
 
+// Preview guard (defense in depth): POSTs carrying ?preview=1 — or the
+// x-preview: 1 header — return current counts without incrementing.
+// The client already skips firing in preview mode; this covers direct API
+// calls, curl, and future callers that forward the page URL.
+function isPreviewRequest(request) {
+    try {
+        const { searchParams } = new URL(request.url);
+        if (searchParams.has('preview')) {
+            const v = (searchParams.get('preview') || '').toLowerCase();
+            if (v === '' || v === '1' || v === 'true' || v === 'yes' || v === 'on') return true;
+        }
+    } catch {}
+    try {
+        const h = (request.headers.get('x-preview') || '').toLowerCase();
+        if (h === '1' || h === 'true' || h === 'yes' || h === 'on') return true;
+    } catch {}
+    return false;
+}
+
 export async function POST(request, { params }) {
     try {
         const { id } = await params;
@@ -46,6 +65,11 @@ export async function POST(request, { params }) {
         const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
         if (throttled(ip)) {
             return NextResponse.json({ success: false, error: 'Slow down' }, { status: 429 });
+        }
+
+        if (isPreviewRequest(request)) {
+            const page = await prisma.birthdayPage.findUnique({ where: { id }, select: COUNTS }).catch(() => null);
+            return NextResponse.json({ success: true, preview: true, ...(page || { viewCount: 0, loves: 0, shares: 0 }) });
         }
 
         const jar = await cookies();
