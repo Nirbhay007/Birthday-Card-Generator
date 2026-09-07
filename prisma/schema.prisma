@@ -51,3 +51,24 @@ model SupportEvent {
 
   @@index([event, createdAt])
 }
+
+// Premium payment receipts (append-only). Created when a Razorpay order is
+// made, marked paid after signature verification. Standalone table —
+// additive migration only, existing data untouched.
+model PremiumOrder {
+  id        String    @id @default(cuid())
+  provider  String    @default("razorpay")
+  orderId   String    @unique // Razorpay order id, e.g. 'order_...'
+  paymentId String?   // Razorpay payment id, filled on success
+  amount    Int       // smallest currency unit (paise / cents)
+  currency  String    // 'INR' | 'USD'
+  status    String    @default("created") // 'created' | 'paid' | 'failed'
+  createdAt DateTime  @default(now())
+  paidAt    DateTime?
+  // Magic-link token: unlock_<random>. Whoever opens /premium?...&key=<token>
+  // is treated as the payer — no accounts needed. Shareable by design
+  // (giver pays, recipient opens), unguessable (192-bit random + DB check).
+  unlockToken String?  @unique
+
+  @@index([status, createdAt])
+}

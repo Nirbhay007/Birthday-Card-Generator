@@ -164,6 +164,29 @@ export default function Home() {
             </div>
           </section>
 
+          {/* Premium Universe — one slim, distinct upsell band (dark card, links to /premium) */}
+          <section className="max-w-6xl mx-auto mb-16">
+            <Link
+              href="/premium"
+              className="group flex flex-col sm:flex-row items-center justify-between gap-5 rounded-3xl bg-[#0d0719] border border-[#f2c14e]/30 p-6 sm:p-8 shadow-lg hover:shadow-2xl hover:border-[#f2c14e]/60 transition-all"
+            >
+              <span className="text-center sm:text-left">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#f2c14e] border border-[#f2c14e]/40 rounded-full px-3 py-1 mb-3">
+                  👑 Premium Universe
+                </span>
+                <span className="block text-xl sm:text-2xl font-extrabold text-white">
+                  Don’t just wish them. Wreck them <span className="text-[#f7dc9a]">(happy tears).</span>
+                </span>
+                <span className="block text-sm text-[#b9aed4] mt-1.5">
+                  Birthday · Anniversary · Valentine’s — sealed letter, starlit acts & candle finale. Preview free, unlock for ₹49.
+                </span>
+              </span>
+              <span className="shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] text-sm font-extrabold group-hover:scale-105 transition-transform">
+                Preview the magic <ArrowRight className="w-4 h-4" aria-hidden="true" />
+              </span>
+            </Link>
+          </section>
+
           {/* Milestone-age strip (internal linking to /ages programmatic hub) */}
           <section className="max-w-6xl mx-auto mb-16 text-center">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Wishes by Milestone Age</h2>

@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Volume2, VolumeX, Music } from 'lucide-react';
-import { MELODY, NOTE_FREQS, SYNTH_CONFIG, getTrackName, BIRTHDAY_OPENED_EVENT } from '@/lib/music';
+import { MELODY, MELODIES, NOTE_FREQS, SYNTH_CONFIG, getTrackName, BIRTHDAY_OPENED_EVENT } from '@/lib/music';
 
-function scheduleMelodyLoop(ctx, config, onEnd) {
+function scheduleMelodyLoop(ctx, config, melody, onEnd) {
     const timers = [];
     const beatMs = config.beat * 1000;
     let t = ctx.currentTime + 0.1;
 
-    MELODY.forEach(([note, beats]) => {
+    (melody || MELODY).forEach(([note, beats]) => {
         const freq = NOTE_FREQS[note];
         const dur = beats * config.beat;
         const delayMs = Math.max(0, (t - ctx.currentTime) * 1000);
@@ -37,13 +37,18 @@ function scheduleMelodyLoop(ctx, config, onEnd) {
 
 export default function AudioPlayer({ track = 'classic', src = '/happy-birthday.mp3', autoPlay = true }) {
     const [playing, setPlaying] = useState(false);
+    // If a remote MP3 ever fails (CDN hiccup, blocked hotlink), silently melt
+    // into the built-in synth waltz rather than leaving them in silence.
+    const [audioFailed, setAudioFailed] = useState(false);
+    const activeTrack = audioFailed ? 'waltz' : track;
+    const isSynth = !!SYNTH_CONFIG[activeTrack];
     const audioRef = useRef(null);
     const ctxRef = useRef(null);
     const cancelLoopRef = useRef(null);
     // Whether the user wants sound (independent of browser autoplay blocks)
     const wantSound = useRef(track !== 'off' && autoPlay);
-    const trackRef = useRef(track);
-    trackRef.current = track;
+    const trackRef = useRef(activeTrack);
+    trackRef.current = activeTrack;
 
     const stopSynth = useCallback(() => {
         if (cancelLoopRef.current) cancelLoopRef.current();
@@ -66,9 +71,10 @@ export default function AudioPlayer({ track = 'classic', src = '/happy-birthday.
             }
             const loop = () => {
                 if (!wantSound.current || !ctxRef.current) return;
-                const cfg = SYNTH_CONFIG[trackRef.current];
+                const trackId = trackRef.current;
+                const cfg = SYNTH_CONFIG[trackId];
                 if (!cfg) return;
-                cancelLoopRef.current = scheduleMelodyLoop(ctxRef.current, cfg, () => {
+                cancelLoopRef.current = scheduleMelodyLoop(ctxRef.current, cfg, MELODIES[trackId] || MELODY, () => {
                     if (wantSound.current && ctxRef.current) loop();
                 });
             };
@@ -83,10 +89,10 @@ export default function AudioPlayer({ track = 'classic', src = '/happy-birthday.
 
     const startPlayback = useCallback(() => {
         if (!wantSound.current) return;
-        if (trackRef.current === 'classic') {
-            audioRef.current?.play().then(() => setPlaying(true)).catch(() => {});
-        } else if (trackRef.current === 'musicbox' || trackRef.current === 'party') {
+        if (SYNTH_CONFIG[trackRef.current]) {
             if (startSynthLoop()) setPlaying(true);
+        } else if (trackRef.current !== 'off') {
+            audioRef.current?.play().then(() => setPlaying(true)).catch(() => {});
         }
     }, [startSynthLoop]);
 
@@ -108,12 +114,40 @@ export default function AudioPlayer({ track = 'classic', src = '/happy-birthday.
 
     useEffect(() => () => stopSynth(), [stopSynth]);
 
-    if (track === 'off') return null;
+    // CDN fallback recovery: if the remote file died mid-flow, the synth
+    // waltz takes over without the visitor lifting a finger.
+    useEffect(() => {
+        if (audioFailed && wantSound.current) startPlayback();
+    }, [audioFailed, startPlayback]);
+
+    // Seamless track switching: when the giver picks another track mid-party,
+    // crossfade by stopping the old engine and starting the new one at once.
+    // Imperative only (no setState) so it stays lint-clean and instant.
+    // Runs every render, guarded by ref — the tap that changed the track is
+    // still a fresh user gesture, so mobile browsers allow the new play().
+    const prevTrack = useRef(activeTrack);
+    useEffect(() => {
+        if (prevTrack.current === activeTrack) return;
+        prevTrack.current = activeTrack;
+        if (!wantSound.current || !playing) return;
+        try { audioRef.current?.pause(); } catch {}
+        stopSynth();
+        if (SYNTH_CONFIG[activeTrack]) {
+            startSynthLoop();
+        } else if (activeTrack !== 'off') {
+            try {
+                audioRef.current?.load();
+                audioRef.current?.play().catch(() => {});
+            } catch {}
+        }
+    });
+
+    if (activeTrack === 'off') return null;
 
     const togglePlay = async () => {
         if (playing) {
             wantSound.current = false;
-            if (trackRef.current === 'classic') audioRef.current?.pause();
+            if (!isSynth) audioRef.current?.pause();
             stopSynth();
             setPlaying(false);
         } else {
@@ -124,16 +158,24 @@ export default function AudioPlayer({ track = 'classic', src = '/happy-birthday.
 
     return (
         <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-1.5">
-            {track !== 'classic' && (
+            {activeTrack !== 'classic' && (
                 <span className="text-[10px] font-bold bg-gray-900/85 text-purple-200 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg">
-                    <Music className="w-3 h-3" /> {getTrackName(track)}
+                    <Music className="w-3 h-3" /> {getTrackName(activeTrack)}
                 </span>
             )}
-            {track === 'classic' && <audio ref={audioRef} src={src} loop preload="auto" />}
+            {!isSynth && (
+                <audio
+                    ref={audioRef}
+                    src={src}
+                    loop
+                    preload={activeTrack === 'classic' ? 'auto' : 'none'}
+                    onError={() => setAudioFailed(true)}
+                />
+            )}
             <button
                 onClick={togglePlay}
                 className="bg-gray-900/90 text-white backdrop-blur-md p-3.5 rounded-full shadow-2xl hover:bg-gray-800 transition-all focus:outline-none focus:ring-4 focus:ring-purple-500 flex items-center justify-center cursor-pointer"
-                aria-label={playing ? `Mute background music (${getTrackName(track)})` : `Play background music (${getTrackName(track)})`}
+                aria-label={playing ? `Mute background music (${getTrackName(activeTrack)})` : `Play background music (${getTrackName(activeTrack)})`}
                 title={playing ? 'Mute music' : 'Play music'}
             >
                 {playing ? <Volume2 className="w-6 h-6 text-purple-400" /> : <VolumeX className="w-6 h-6 text-gray-400" />}

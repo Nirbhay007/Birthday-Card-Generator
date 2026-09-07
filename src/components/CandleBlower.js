@@ -126,8 +126,8 @@ export default function CandleBlower({ onBlow, age, recipientName }) {
                 </div>
             )}
 
-            {/* Cake */}
-            <div className="relative flex flex-col items-center select-none" role="img" aria-label={candlesBlown ? 'Birthday cake with blown out candles' : 'Birthday cake with lit candles'}>
+            {/* Cake — fluid below 256px so padded cards on 320px phones never overflow; identical sizes above */}
+            <div className="relative flex flex-col items-center select-none w-full max-w-64 sm:w-80 sm:max-w-none mx-auto" role="img" aria-label={candlesBlown ? 'Birthday cake with blown out candles' : 'Birthday cake with lit candles'}>
                 {/* Candles row */}
                 <div className="relative flex items-end justify-center gap-2 sm:gap-3 h-28 mb-[-6px] z-10">
                     {Array.from({ length: candleCount }).map((_, i) => (
@@ -169,7 +169,7 @@ export default function CandleBlower({ onBlow, age, recipientName }) {
                 </div>
 
                 {/* Top frosting */}
-                <div className="relative z-[5] w-64 sm:w-80 h-8 bg-gradient-to-b from-white to-pink-100 rounded-t-2xl border border-pink-200 shadow-sm overflow-visible">
+                <div className="relative z-[5] w-full h-8 bg-gradient-to-b from-white to-pink-100 rounded-t-2xl border border-pink-200 shadow-sm overflow-visible">
                     <div className="absolute -bottom-3 left-0 w-full flex justify-around" aria-hidden="true">
                         {Array.from({ length: 12 }).map((_, i) => (
                             <span key={i} className="block w-5 h-5 bg-pink-100 border-b border-x border-pink-200 rounded-b-full" />
@@ -180,17 +180,17 @@ export default function CandleBlower({ onBlow, age, recipientName }) {
                     </div>
                 </div>
                 {/* Cake body top tier */}
-                <div className="w-64 sm:w-80 h-20 bg-gradient-to-b from-pink-300 via-pink-400 to-rose-500 border-x border-pink-600/20 flex items-center justify-center shadow-lg">
+                <div className="w-full h-20 bg-gradient-to-b from-pink-300 via-pink-400 to-rose-500 border-x border-pink-600/20 flex items-center justify-center shadow-lg">
                     <span className="text-white/95 font-extrabold tracking-widest text-sm sm:text-base drop-shadow">★ HAPPY BIRTHDAY ★</span>
                 </div>
                 {/* Divider icing */}
-                <div className="w-72 sm:w-96 h-4 bg-gradient-to-b from-white to-amber-100 border border-amber-200 rounded-full shadow-sm z-10" aria-hidden="true" />
+                <div className="w-[112%] sm:w-[120%] h-4 bg-gradient-to-b from-white to-amber-100 border border-amber-200 rounded-full shadow-sm z-10" aria-hidden="true" />
                 {/* Cake body bottom tier */}
-                <div className="w-72 sm:w-96 h-24 bg-gradient-to-b from-violet-400 via-purple-500 to-indigo-600 rounded-b-3xl border border-purple-700/20 shadow-xl flex items-center justify-center gap-3 text-2xl" aria-hidden="true">
+                <div className="w-[112%] sm:w-[120%] h-24 bg-gradient-to-b from-violet-400 via-purple-500 to-indigo-600 rounded-b-3xl border border-purple-700/20 shadow-xl flex items-center justify-center gap-3 text-2xl" aria-hidden="true">
                     <span>🎈</span><span>🎁</span><span>🎈</span>
                 </div>
-                {/* Plate — w-72 fits 320px screens inside padded containers */}
-                <div className="mt-[-4px] w-72 sm:w-[28rem] h-5 bg-gradient-to-b from-gray-100 to-gray-300 rounded-full shadow-md border border-gray-200" aria-hidden="true" />
+                {/* Plate — stays inside padded containers on every screen */}
+                <div className="mt-[-4px] w-[112%] sm:w-[140%] h-5 bg-gradient-to-b from-gray-100 to-gray-300 rounded-full shadow-md border border-gray-200" aria-hidden="true" />
             </div>
 
             {/* Controls */}

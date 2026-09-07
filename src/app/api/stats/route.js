@@ -98,6 +98,26 @@ export async function GET(request) {
             ]);
             const supportJson = JSON.parse(JSON.stringify({ supportByDayRaw }, (_, v) => (typeof v === 'bigint' ? Number(v) : v)));
             const counts = Object.fromEntries(byEvent.map((r) => [r.event, r._count.event]));
+            // Revenue truth lives in PremiumOrder (paid rows only). Isolated so
+            // a missing table can never break the rest of stats.
+            let revenue = { paidOrders: 0, inrPaise: 0, usdCents: 0 };
+            try {
+                const paid = await prisma.premiumOrder.groupBy({
+                    by: ['currency'],
+                    _count: { currency: true },
+                    _sum: { amount: true },
+                    where: { status: 'paid' },
+                });
+                for (const row of paid) {
+                    if (row.currency === 'INR') {
+                        revenue.paidOrders += row._count.currency;
+                        revenue.inrPaise += row._sum.amount || 0;
+                    } else if (row.currency === 'USD') {
+                        revenue.paidOrders += row._count.currency;
+                        revenue.usdCents += row._sum.amount || 0;
+                    }
+                }
+            } catch {}
             support = {
                 modalOpens: counts.modal_open || 0,
                 payClicks: counts.pay_click || 0,
@@ -105,6 +125,7 @@ export async function GET(request) {
                 // pay_click measures UPI *intent* — UPI provides no success callback.
                 payClicksByAmount: payByAmount.map((r) => ({ amount: r.amount, clicks: r._count.amount })),
                 last14Days: supportJson.supportByDayRaw,
+                revenue,
             };
         } catch (supportError) {
             console.error('Support stats unavailable (pending migration?):', supportError?.message || supportError);

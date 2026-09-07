@@ -12,7 +12,7 @@ import prisma from '@/lib/prisma';
  * not being migrated yet) never break the donate modal — they just log.
  */
 
-const EVENTS = new Set(['modal_open', 'pay_click', 'copy_upi']);
+const EVENTS = new Set(['modal_open', 'pay_click', 'copy_upi', 'paywall_open', 'checkout_start', 'premium_unlock']);
 
 // Best-effort per-IP throttle, mirroring the birthday react route.
 const WINDOW_MS = 60_000;

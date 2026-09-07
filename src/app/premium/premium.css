@@ -1,0 +1,308 @@
+/* BirthdayGen Premium — cinematic birthday universe.
+   Deep midnight + champagne gold. Mobile-first, transform/opacity only. */
+
+.prm-root {
+    --prm-bg0: #070412;
+    --prm-bg1: #120826;
+    --prm-bg2: #1e0f38;
+    --prm-gold: #f2c14e;
+    --prm-gold-soft: #f7dc9a;
+    --prm-rose: #fb7185;
+    --prm-ink: #f6f1e7;
+    --prm-muted: #b9aed4;
+    background: radial-gradient(120% 90% at 50% 0%, var(--prm-bg2) 0%, var(--prm-bg1) 45%, var(--prm-bg0) 100%);
+    color: var(--prm-ink);
+    overflow-x: clip;
+}
+
+/* Premium looks: set data-ptheme on <main>, every act inherits the vars. */
+main[data-ptheme='rose'] {
+    --prm-bg0: #12040e;
+    --prm-bg1: #250a1c;
+    --prm-bg2: #3b0a22;
+    --prm-gold: #fda4af;
+    --prm-gold-soft: #fecdd3;
+    --prm-gold-deep: #9f1239;
+    --prm-glint: #fff1f2;
+    --prm-rose: #fb7185;
+    --prm-ink: #fdf2f4;
+    --prm-muted: #d8b4c0;
+}
+main[data-ptheme='ocean'] {
+    --prm-bg0: #02141f;
+    --prm-bg1: #04263b;
+    --prm-bg2: #063651;
+    --prm-gold: #5eead4;
+    --prm-gold-soft: #99f6e4;
+    --prm-gold-deep: #0f766e;
+    --prm-glint: #f0fdfa;
+    --prm-rose: #38bdf8;
+    --prm-ink: #ecfdf9;
+    --prm-muted: #9fc3d4;
+}
+main[data-ptheme='sunset'] {
+    --prm-bg0: #170903;
+    --prm-bg1: #2a1204;
+    --prm-bg2: #3a1503;
+    --prm-gold: #fbbf24;
+    --prm-gold-soft: #fde68a;
+    --prm-gold-deep: #9a3412;
+    --prm-glint: #fffbeb;
+    --prm-rose: #fb923c;
+    --prm-ink: #fff7ed;
+    --prm-muted: #d6b49a;
+}
+
+.prm-serif { font-family: var(--font-playfair), Georgia, serif; }
+.prm-body { font-family: var(--font-lato), system-ui, sans-serif; }
+
+.prm-gold-text {
+    /* Solid gold always paints first — gradient upgrades it only where
+       background-clip:text truly works, so this line can never vanish. */
+    color: #eec25e;
+}
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    .prm-gold-text {
+        background: linear-gradient(100deg, var(--prm-gold-deep, #8a5a13) 0%, var(--prm-gold-soft) 25%, var(--prm-glint, #fff7dd) 50%, var(--prm-gold) 75%, var(--prm-gold-deep, #8a5a13) 100%);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: transparent;
+        animation: prm-shimmer 5s linear infinite;
+    }
+}
+
+@keyframes prm-shimmer {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
+
+.prm-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--prm-gold-soft);
+    border: 1px solid rgba(242, 193, 78, 0.35);
+    background: rgba(242, 193, 78, 0.08);
+    border-radius: 999px;
+    padding: 0.45rem 1rem;
+}
+
+.prm-h-display {
+    font-size: clamp(2.6rem, 9vw, 6.5rem);
+    line-height: 1.02;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+.prm-h-act {
+    font-size: clamp(1.9rem, 6vw, 3.4rem);
+    line-height: 1.08;
+    font-weight: 800;
+}
+
+.prm-lead {
+    font-size: clamp(1.02rem, 2.6vw, 1.3rem);
+    line-height: 1.75;
+    color: var(--prm-muted);
+}
+
+/* Solid-gold fallbacks if gradient text ever fails to paint. */
+main[data-ptheme='rose'] .prm-gold-text { color: #fda4af; }
+main[data-ptheme='ocean'] .prm-gold-text { color: #5eead4; }
+main[data-ptheme='sunset'] .prm-gold-text { color: #fbbf24; }
+
+/* ---------- Scroll reveals (IntersectionObserver adds .is-visible) ---------- */
+.prm-reveal {
+    opacity: 0;
+    transform: translateY(34px) scale(0.985);
+    transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1), transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--prm-d, 0ms);
+    will-change: opacity, transform;
+}
+.prm-reveal.is-visible { opacity: 1; transform: none; }
+
+/* Progressive enhancement: gentle scroll-linked drift where supported */
+@supports ((animation-timeline: view()) and (animation-range: entry)) {
+    @media (prefers-reduced-motion: no-preference) {
+        .prm-drift {
+            animation: prm-drift auto linear both;
+            animation-timeline: view(block);
+            animation-range: entry 100% cover 40%;
+        }
+    }
+}
+@keyframes prm-drift {
+    from { transform: translateY(26px); }
+    to { transform: translateY(-26px); }
+}
+
+/* Heavy acts render lazily without layout shift */
+.prm-act { content-visibility: auto; contain-intrinsic-size: auto 80vh; }
+
+/* ---------- Wax seal gate ---------- */
+.prm-seal {
+    width: clamp(120px, 32vw, 168px);
+    height: clamp(120px, 32vw, 168px);
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 35% 30%, #ff8fa3, #e11d48 55%, #881337 100%);
+    box-shadow: 0 0 0 6px rgba(225, 29, 72, 0.18), 0 0 70px rgba(225, 29, 72, 0.55), inset 0 -8px 24px rgba(0, 0, 0, 0.45);
+    animation: prm-seal-pulse 2.4s ease-in-out infinite;
+    cursor: pointer;
+    border: none;
+}
+@keyframes prm-seal-pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 6px rgba(225,29,72,0.18), 0 0 60px rgba(225,29,72,0.45), inset 0 -8px 24px rgba(0,0,0,0.45); }
+    50% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(225,29,72,0.10), 0 0 95px rgba(225,29,72,0.7), inset 0 -8px 24px rgba(0,0,0,0.45); }
+}
+
+.prm-envelope {
+    background: linear-gradient(160deg, #2a1650, #170b30);
+    border: 1px solid rgba(242, 193, 78, 0.28);
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- Letter paper ---------- */
+.prm-paper {
+    background: linear-gradient(175deg, #fffdf6 0%, #faf3e3 60%, #f3e7cf 100%);
+    color: #3d2c17;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.55);
+}
+
+/* ---------- Locker ---------- */
+.prm-lock-blur {
+    filter: blur(14px) saturate(1.1);
+    user-select: none;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 98%);
+    mask-image: linear-gradient(to bottom, black 55%, transparent 98%);
+}
+
+.prm-locker-card {
+    background: rgba(14, 8, 28, 0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(242, 193, 78, 0.35);
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.65), 0 0 60px rgba(242, 193, 78, 0.12);
+}
+
+.prm-shimmer-btn {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+.prm-shimmer-btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.45) 50%, transparent 70%);
+    transform: translateX(-120%);
+    animation: prm-btn-sheen 2.8s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes prm-btn-sheen {
+    0% { transform: translateX(-120%); }
+    55%, 100% { transform: translateX(120%); }
+}
+
+.prm-float-slow { animation: prm-floaty 6s ease-in-out infinite; }
+@keyframes prm-floaty {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-14px); }
+}
+
+.prm-caret::after {
+    content: "▍";
+    color: var(--prm-gold);
+    animation: prm-blink 1s steps(1) infinite;
+}
+@keyframes prm-blink { 50% { opacity: 0; } }
+
+.prm-scroll-cue { animation: prm-cue 1.8s ease-in-out infinite; }
+@keyframes prm-cue {
+    0%, 100% { transform: translateY(0); opacity: 0.9; }
+    50% { transform: translateY(10px); opacity: 0.4; }
+}
+
+.prm-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(242, 193, 78, 0.6), transparent);
+}
+
+/* Reason / vow cards */
+.prm-card {
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(242, 193, 78, 0.22);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: transform 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+}
+.prm-card:hover, .prm-card:active {
+    transform: translateY(-6px);
+    border-color: rgba(242, 193, 78, 0.55);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), 0 0 40px rgba(242, 193, 78, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .prm-gold-text, .prm-seal, .prm-shimmer-btn::after,
+    .prm-float-slow, .prm-scroll-cue, .prm-caret::after { animation: none !important; }
+    .prm-reveal { opacity: 1; transform: none; transition: none; }
+}
+
+/* ---------- GSAP SplitText lines ---------- */
+.prm-gsap-line { will-change: transform, opacity; }
+
+/* ---------- Locker glitch headline (pure CSS, works everywhere) ---------- */
+.prm-glitch { position: relative; display: inline-block; }
+@media (prefers-reduced-motion: no-preference) {
+    .prm-glitch::before, .prm-glitch::after {
+        content: attr(data-text);
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        opacity: 0;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+    .prm-glitch::before { color: #f2c14e; animation: prm-glitch-a 4.2s infinite steps(1); }
+    .prm-glitch::after { color: #fb7185; animation: prm-glitch-b 4.2s infinite steps(1); }
+}
+@keyframes prm-glitch-a {
+    0%, 90%, 100% { opacity: 0; transform: none; clip-path: inset(0 0 100% 0); }
+    91% { opacity: 0.9; transform: translate(-5px, -2px); clip-path: inset(8% 0 58% 0); }
+    93% { opacity: 0.9; transform: translate(5px, 2px); clip-path: inset(62% 0 6% 0); }
+    95% { opacity: 0; transform: none; }
+}
+@keyframes prm-glitch-b {
+    0%, 90%, 100% { opacity: 0; transform: none; clip-path: inset(0 0 100% 0); }
+    92% { opacity: 0.9; transform: translate(5px, 1px); clip-path: inset(40% 0 30% 0); }
+    94% { opacity: 0.9; transform: translate(-4px, -1px); clip-path: inset(75% 0 2% 0); }
+    96% { opacity: 0; transform: none; }
+}
+
+/* ---------- Classified redaction sweep over the blurred ghost ---------- */
+.prm-redact { position: relative; overflow: hidden; }
+@media (prefers-reduced-motion: no-preference) {
+    .prm-redact::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(100deg, transparent 20%, rgba(242, 193, 78, 0.4) 50%, transparent 80%);
+        animation: prm-redact-sweep 3.2s ease-in-out infinite;
+        pointer-events: none;
+    }
+}
+@keyframes prm-redact-sweep {
+    0% { transform: translateX(-110%); }
+    55%, 100% { transform: translateX(110%); }
+}

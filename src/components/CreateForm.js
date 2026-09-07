@@ -424,6 +424,19 @@ export default function CreateForm({ formData, setFormData }) {
                                     </button>
                                 ))}
                             </div>
+                            {/* Premium upsell — contextual, one slim row under the free themes */}
+                            <a
+                                href={`/premium${formData.recipientName?.trim() ? `?to=${encodeURIComponent(formData.recipientName.trim())}${formData.senderName?.trim() ? `&from=${encodeURIComponent(formData.senderName.trim())}` : ''}` : ''}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-amber-300 bg-gradient-to-r from-[#1a0f2e] to-[#2d1b4e] px-4 py-3 hover:shadow-lg transition-shadow group"
+                            >
+                                <span className="text-left">
+                                    <span className="block text-sm font-extrabold text-[#f7dc9a]">👑 Premium Universe <span className="ml-1 text-[10px] font-bold bg-[#f2c14e] text-[#241031] px-1.5 py-0.5 rounded-full align-middle">₹49</span></span>
+                                    <span className="block text-xs text-[#b9aed4] mt-0.5">Sealed letter, starlit acts & candle finale they’ll replay for years</span>
+                                </span>
+                                <span className="shrink-0 text-xs font-bold text-[#241031] bg-[#f2c14e] px-3 py-1.5 rounded-full group-hover:scale-105 transition-transform">Preview</span>
+                            </a>
                         </div>
 
                         <div>
