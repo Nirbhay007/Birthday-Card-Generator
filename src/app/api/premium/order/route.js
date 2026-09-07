@@ -32,8 +32,9 @@ function throttled(ip) {
 function razorpayClient() {
     // Key ID is public by design — fall back to the NEXT_PUBLIC copy so a
     // missing server-only var can never silently force test mode.
-    const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
-    const secret = process.env.RAZORPAY_KEY_SECRET || '';
+    // .trim() because pasted secrets often carry invisible whitespace.
+    const keyId = (process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '').trim();
+    const secret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
     if (!keyId || !secret) return null;
     return new Razorpay({ key_id: keyId, key_secret: secret });
 }
@@ -81,7 +82,18 @@ export async function POST(request) {
             keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID,
         });
     } catch (error) {
-        console.error('Premium order error:', error?.error?.description || error?.message || error);
+        const desc = error?.error?.description || error?.message || error;
+        console.error('Premium order error:', desc);
+        // 401 from Razorpay = our key/secret pair is wrong (test/live mixed,
+        // typo, or pasted with whitespace). Say so plainly — generic 502s
+        // waste everyone's evening.
+        const status = error?.statusCode || error?.error?.code;
+        if (status === 401 || /authentication|unauthori[sz]ed/i.test(String(desc))) {
+            return NextResponse.json(
+                { success: false, error: 'Payment gateway rejected our keys. The owner has been notified — please try again in a bit.' },
+                { status: 502 }
+            );
+        }
         return NextResponse.json({ success: false, error: 'Could not start checkout. Please try again.' }, { status: 502 });
     }
 }

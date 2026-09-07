@@ -17,7 +17,7 @@ import prisma from '@/lib/prisma';
  */
 
 export async function POST(request) {
-    const secret = process.env.RAZORPAY_WEBHOOK_SECRET || '';
+    const secret = (process.env.RAZORPAY_WEBHOOK_SECRET || '').trim();
     let payload = null;
     try {
         const raw = await request.text();

@@ -24,7 +24,7 @@ export async function POST(request) {
         const { provider, orderId, paymentId, signature } = body || {};
 
         if (provider === 'razorpay') {
-            const secret = process.env.RAZORPAY_KEY_SECRET || '';
+            const secret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
             if (!secret) return bad('Card verification is not connected yet (missing RAZORPAY_KEY_SECRET).', 503);
             if (!orderId || !paymentId || !signature) return bad('Incomplete payment details.');
 
