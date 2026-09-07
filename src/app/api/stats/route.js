@@ -72,6 +72,44 @@ export async function GET(request) {
         // BigInt-safe serialization (counts can exceed Number range in theory)
         const json = JSON.parse(JSON.stringify({ perDay }, (_, v) => (typeof v === 'bigint' ? Number(v) : v)));
 
+        // Donation funnel (isolated try/catch: stats must keep working even if
+        // the SupportEvent table hasn't been migrated yet — then support: null).
+        let support = null;
+        try {
+            const [byEvent, payByAmount, supportByDayRaw] = await Promise.all([
+                prisma.supportEvent.groupBy({
+                    by: ['event'],
+                    _count: { event: true },
+                }),
+                prisma.supportEvent.groupBy({
+                    by: ['amount'],
+                    _count: { amount: true },
+                    where: { event: 'pay_click', amount: { not: null } },
+                    orderBy: { _count: { amount: 'desc' } },
+                    take: 10,
+                }),
+                prisma.$queryRaw`
+                    SELECT DATE("createdAt")::text AS day, "event" AS event, COUNT(*)::int AS clicks
+                    FROM "SupportEvent"
+                    WHERE "createdAt" >= ${since}
+                    GROUP BY DATE("createdAt"), "event"
+                    ORDER BY day ASC
+                `,
+            ]);
+            const supportJson = JSON.parse(JSON.stringify({ supportByDayRaw }, (_, v) => (typeof v === 'bigint' ? Number(v) : v)));
+            const counts = Object.fromEntries(byEvent.map((r) => [r.event, r._count.event]));
+            support = {
+                modalOpens: counts.modal_open || 0,
+                payClicks: counts.pay_click || 0,
+                upiCopies: counts.copy_upi || 0,
+                // pay_click measures UPI *intent* — UPI provides no success callback.
+                payClicksByAmount: payByAmount.map((r) => ({ amount: r.amount, clicks: r._count.amount })),
+                last14Days: supportJson.supportByDayRaw,
+            };
+        } catch (supportError) {
+            console.error('Support stats unavailable (pending migration?):', supportError?.message || supportError);
+        }
+
         return NextResponse.json({
             success: true,
             generatedAt: new Date().toISOString(),
@@ -96,6 +134,7 @@ export async function GET(request) {
             creationsBySource: bySource
                 .filter((s) => s.source)
                 .map((s) => ({ source: s.source, pages: s._count.source })),
+            support,
         });
     } catch (error) {
         console.error('Stats error:', error?.message || error);

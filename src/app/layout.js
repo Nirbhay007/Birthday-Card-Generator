@@ -2,7 +2,7 @@ import { Inter, Playfair_Display, Lato, Fredoka, Quicksand, Press_Start_2P, VT32
 import "./globals.css";
 import "./themes.css";
 import { getWebSiteSchema, getOrganizationSchema } from "@/lib/seo";
-
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
@@ -108,6 +108,7 @@ export default function RootLayout({ children }) {
       <body className={`${inter.variable} ${playfair.variable} ${lato.variable} ${fredoka.variable} ${quicksand.variable} ${pressStart.variable} ${vt323.variable}`}>
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

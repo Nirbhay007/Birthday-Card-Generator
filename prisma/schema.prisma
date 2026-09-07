@@ -39,3 +39,15 @@ model Photo {
   pageId    String
   page      BirthdayPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
 }
+
+// Donation-funnel analytics (append-only, no PII).
+// New standalone table — existing tables are untouched by its migration.
+model SupportEvent {
+  id        String   @id @default(cuid())
+  event     String   // 'modal_open' | 'pay_click' | 'copy_upi'
+  amount    Int?     // selected rupee amount (pay_click only)
+  path      String?  // page path that drove the click, e.g. '/wishes/mom'
+  createdAt DateTime @default(now())
+
+  @@index([event, createdAt])
+}

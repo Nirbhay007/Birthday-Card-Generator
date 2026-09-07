@@ -22,6 +22,27 @@ export default function SupportButton({ variant = 'pill' }) {
     const validAmount = Number.isFinite(effective) && effective >= 1 && effective <= 100000 ? Math.trunc(effective) : null;
     const upiUrl = buildUpiUrl(UPI_ID, validAmount);
 
+    // Donation-funnel analytics: fire-and-forget, never blocks the UI.
+    // A pay click measures payment *intent* (UPI gives no success callback).
+    const trackSupport = (event, withAmount = false) => {
+        try {
+            fetch('/api/support/track', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event,
+                    amount: withAmount ? validAmount : null,
+                    path: typeof window !== 'undefined' ? window.location.pathname : null,
+                }),
+            }).catch(() => {});
+        } catch {}
+    };
+
+    const openModal = () => {
+        trackSupport('modal_open');
+        setOpen(true);
+    };
+
     useEffect(() => {
         if (!open) return;
         const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
@@ -30,6 +51,7 @@ export default function SupportButton({ variant = 'pill' }) {
     }, [open]);
 
     const copyId = async () => {
+        trackSupport('copy_upi');
         try {
             await navigator.clipboard.writeText(UPI_ID);
         } catch {
@@ -51,7 +73,7 @@ export default function SupportButton({ variant = 'pill' }) {
             {variant === 'pill' && (
                 <button
                     type="button"
-                    onClick={() => setOpen(true)}
+                    onClick={openModal}
                     className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-sm transition-all shadow-sm hover:shadow-md cursor-pointer focus:outline-none focus:ring-4 focus:ring-amber-200"
                 >
                     <HeartHandshake className="w-4 h-4" /> Support BirthdayGen
@@ -60,7 +82,7 @@ export default function SupportButton({ variant = 'pill' }) {
             {variant === 'link' && (
                 <button
                     type="button"
-                    onClick={() => setOpen(true)}
+                    onClick={openModal}
                     className="underline decoration-dotted underline-offset-4 hover:opacity-80 transition-opacity cursor-pointer"
                 >
                     Support BirthdayGen ❤️
@@ -69,7 +91,7 @@ export default function SupportButton({ variant = 'pill' }) {
             {variant === 'inline' && (
                 <button
                     type="button"
-                    onClick={() => setOpen(true)}
+                    onClick={openModal}
                     className="text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
                 >
                     chip in to keep it free ❤️
@@ -135,6 +157,7 @@ export default function SupportButton({ variant = 'pill' }) {
 
                         <a
                             href={upiUrl}
+                            onClick={() => trackSupport('pay_click', true)}
                             className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
                         >
                             <Smartphone className="w-5 h-5" />
