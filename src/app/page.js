@@ -15,7 +15,7 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.on
 const FAQS = [
   {
     question: "What is BirthdayGen?",
-    answer: "BirthdayGen is a free online tool that lets you generate interactive, personalized digital birthday card microsites featuring custom messages, photo galleries, ambient music, and interactive virtual candle blowing."
+    answer: "BirthdayGen is a free birthday website maker. It lets you generate an interactive, personalized birthday website — gift reveal, custom messages, photo galleries, music and mic-powered virtual candle blowing — shareable on WhatsApp in one tap. No signup needed."
   },
   {
     question: "How does the virtual candle blowing work?",
@@ -32,6 +32,14 @@ const FAQS = [
   {
     question: "Can I customize the design themes and add photos?",
     answer: "Yes! You can select from 8 beautiful free themes (Elegant, Fun & Colorful, Royal Gold, Midnight Stars, Princess, Unicorn Kids, Retro Neon, Minimal) and upload personal photo memories to create a custom photo gallery."
+  },
+  {
+    question: "Can I make a birthday website for free?",
+    answer: "Yes. Every BirthdayGen birthday website is free: pick a theme, add the name, message and photos, choose music, and share the link. Premium cinematic universes with sealed letters and extra acts start at ₹49."
+  },
+  {
+    question: "Birthday website or birthday card — which is better?",
+    answer: "A card is read once; a birthday website is an experience. Your link opens a gift reveal, blowable candles, a photo gallery and your message — replayable for years. If you only need words, start from our free birthday wishes collection."
   },
   {
     question: "Are user photos and data private?",
@@ -90,14 +98,14 @@ export default function Home() {
               </span>
             </div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mb-4 tracking-tight leading-tight">
-              Send a <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-amber-500">Personalized Birthday Card</span><br />
+              Create a Free <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-amber-500">Birthday Website</span><br />
               They&apos;ll Never Forget
             </h1>
             <p className="text-base sm:text-lg font-bold text-gray-700 mb-4">
               They tap a gift 🎁 → candles flicker → they blow → happy tears 🥹
             </p>
             <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Design a free interactive birthday card in seconds — their name, your message,
+              Design a free interactive birthday website in seconds — their name, your message,
               favorite photos, music and real mic-powered candle blowing, shareable on WhatsApp in one tap.
             </p>
             <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -187,6 +195,31 @@ export default function Home() {
             </Link>
           </section>
 
+          {/* Birthday website vs card */}
+          <section className="max-w-6xl mx-auto mb-16">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">More Than a Card: A Whole Birthday Website</h2>
+              <p className="text-gray-600 mt-2 text-sm sm:text-base max-w-2xl mx-auto">A card says happy birthday. A birthday website gives them a place to celebrate — pages to open, candles to blow, memories to replay.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm text-left">
+                <p className="text-2xl mb-2" aria-hidden="true">🎁</p>
+                <p className="font-bold text-sm text-gray-900">Pages, not pictures</p>
+                <p className="text-xs text-gray-500 mt-1">A gift-box reveal page, a candle-blowing page and a photo memory gallery — one shareable birthday website link.</p>
+              </div>
+              <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm text-left">
+                <p className="text-2xl mb-2" aria-hidden="true">📱</p>
+                <p className="font-bold text-sm text-gray-900">Made for WhatsApp</p>
+                <p className="text-xs text-gray-500 mt-1">Your birthday website opens instantly on any phone, no app or signup. Pair it with a perfect <Link href="/wishes" className="text-purple-600 font-semibold hover:underline">birthday wish</Link> or <Link href="/premium" className="text-purple-600 font-semibold hover:underline">go Premium</Link>.</p>
+              </div>
+              <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm text-left">
+                <p className="text-2xl mb-2" aria-hidden="true">🎂</p>
+                <p className="font-bold text-sm text-gray-900">For every age</p>
+                <p className="text-xs text-gray-500 mt-1">From a kid&apos;s first to milestone birthdays — browse <Link href="/ages" className="text-purple-600 font-semibold hover:underline">wishes by age</Link> and build the website around them.</p>
+              </div>
+            </div>
+          </section>
+
           {/* Milestone-age strip (internal linking to /ages programmatic hub) */}
           <section className="max-w-6xl mx-auto mb-16 text-center">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Wishes by Milestone Age</h2>
@@ -218,7 +251,7 @@ export default function Home() {
               What is BirthdayGen? (Quick Summary)
             </h2>
             <p className="text-gray-700 leading-relaxed">
-              <strong>BirthdayGen</strong> is a free, web-based digital birthday card generator that turns standard birthday greetings into interactive web experiences. Unlike traditional static e-cards, BirthdayGen microsites offer <strong>real-time microphone virtual candle blowing</strong>, custom memory photo carousels, responsive theme switching, and background birthday song audio playback—accessible instantly on mobile and desktop without app downloads.
+              <strong>BirthdayGen</strong> is a free, web-based birthday website generator that turns standard greetings into interactive celebrations. Unlike traditional static e-cards, BirthdayGen websites offer <strong>real-time microphone virtual candle blowing</strong>, custom memory photo carousels, responsive theme switching, and background birthday song audio playback—accessible instantly on mobile and desktop without app downloads.
             </p>
           </section>
 
@@ -257,7 +290,7 @@ export default function Home() {
 
           {/* Step-by-Step Guide Section */}
           <section id="how-it-works" className="max-w-4xl mx-auto my-20 bg-white p-8 sm:p-10 rounded-3xl border border-gray-100 shadow-sm">
-            <h2 className="text-3xl font-bold text-center text-gray-900 mb-10">How to Create Your Birthday Page in 3 Easy Steps</h2>
+            <h2 className="text-3xl font-bold text-center text-gray-900 mb-10">How to Create Your Birthday Website in 3 Easy Steps</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center">
                 <div className="w-12 h-12 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center font-bold text-xl mx-auto mb-4">1</div>
@@ -285,7 +318,7 @@ export default function Home() {
                 <thead>
                   <tr className="bg-purple-50 text-purple-900 border-b border-gray-200">
                     <th className="p-4 font-bold">Feature</th>
-                    <th className="p-4 font-bold">BirthdayGen Microsite</th>
+                    <th className="p-4 font-bold">BirthdayGen Website</th>
                     <th className="p-4 font-bold">Standard E-Card (PDF/JPG)</th>
                     <th className="p-4 font-bold">Paper Greeting Card</th>
                   </tr>
@@ -431,7 +464,7 @@ export default function Home() {
               <div className="md:col-span-1">
                 <Link href="/" className="text-xl font-bold text-white mb-3 inline-block">🎉 BirthdayGen</Link>
                 <p className="text-sm text-gray-400">
-                  The ultimate free interactive birthday card microsite generator with photo galleries, music, and mic candle blowing.
+                  The ultimate free interactive birthday website generator with photo galleries, music, and mic candle blowing.
                 </p>
               </div>
               <div>

@@ -9,7 +9,7 @@ export function getWebSiteSchema(siteUrl) {
     '@type': 'WebSite',
     name: 'BirthdayGen',
     url: siteUrl,
-    description: 'Create free personalized interactive birthday pages with custom messages, photo galleries, ambient music, and virtual candle blowing.',
+    description: 'Create a free personalized birthday website with custom messages, photo galleries, ambient music, and virtual candle blowing.',
     publisher: {
       '@type': 'Organization',
       name: 'BirthdayGen Team',
@@ -31,6 +31,7 @@ export function getOrganizationSchema(siteUrl) {
     logo: `${siteUrl}/icon.svg`,
     sameAs: [],
     knowsAbout: [
+      'Birthday Websites',
       'Digital Birthday Cards',
       'Interactive Web Experiences',
       'Personalized Greetings',
@@ -43,7 +44,7 @@ export function getSoftwareApplicationSchema(siteUrl) {
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'BirthdayGen - Personalized Birthday Card Generator',
+    name: 'BirthdayGen - Free Birthday Website Maker',
     operatingSystem: 'Any (Web Browser)',
     applicationCategory: 'MultimediaApplication',
     offers: {
@@ -61,7 +62,7 @@ export function getSoftwareApplicationSchema(siteUrl) {
       'Instant Shareable Link Generation',
       'WhatsApp-ready sharing with personalized preview',
     ],
-    description: 'An interactive web tool to design and send personalized digital birthday greeting microsites in seconds.',
+    description: 'An interactive web tool to design and send a personalized birthday website with greeting cards, photos, music and candle blowing, in seconds.',
   };
 }
 
@@ -84,8 +85,8 @@ export function getHowToSchema(siteUrl) {
   return {
     '@context': 'https://schema.org',
     '@type': 'HowTo',
-    name: 'How to Create a Personalized Birthday Page with BirthdayGen',
-    description: 'Step-by-step guide to generating a custom interactive birthday microsite with photos, personal message, music, and virtual candle blowing.',
+    name: 'How to Create a Personalized Birthday Website with BirthdayGen',
+    description: 'Step-by-step guide to generating a custom interactive birthday website with photos, personal message, music, and virtual candle blowing.',
     step: [
       {
         '@type': 'HowToStep',

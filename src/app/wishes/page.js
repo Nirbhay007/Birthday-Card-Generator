@@ -223,7 +223,7 @@ export default function WishesIndexPage() {
               </div>
               <div>
                 <h4 className="text-white font-bold text-sm mb-3">About BirthdayGen</h4>
-                <p className="text-sm text-gray-400 mb-2">Free online greeting card & microsite generator.</p>
+                <p className="text-sm text-gray-400 mb-2">Free online birthday website & greeting card generator.</p>
                 <p className="text-sm text-gray-400 mb-2"><SupportButton variant="link" /></p>
                 <p className="text-xs text-gray-500">© {new Date().getFullYear()} BirthdayGen. All rights reserved.</p>
               </div>
