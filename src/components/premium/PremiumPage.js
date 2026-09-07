@@ -45,21 +45,12 @@ function celebrate() {
 export default function PremiumPage({ to, from, message, age, occasion, unlockKey, customReasons, customVows, initialPTheme, initialMusic, initialRel, giftPreview }) {
     const deck = getOccasion(occasion);
     const [forceGift, setForceGift] = useState(false);
-    // Edit-entry: someone opening a magic link on a device that already
-    // verified it (owner tweaking, recipient recovering) gets a discreet way
-    // back into the studio. Strangers never see this.
-    const [editMode, setEditMode] = useState(false);
-    const keyInStorage = (() => {
-        try {
-            return !!unlockKey && readStoredKeys().includes(unlockKey);
-        } catch {
-            return false;
-        }
-    })();
     // Gift mode = the recipient's eyes only: pure universe, zero studio
     // chrome (no ribbon, editor, paywall or closer). Magic links (?key=)
-    // always open this way; ?gift=1 previews it.
-    const giftMode = (!!unlockKey || !!giftPreview || forceGift) && !editMode;
+    // always open this way; ?gift=1 previews it. Deliberately no way out
+    // from inside a gift view: recipients must never meet studio tools.
+    // Owners edit at /premium on their own device (snapshot restores it).
+    const giftMode = !!unlockKey || !!giftPreview || forceGift;
     const [ptheme, setPtheme] = useState(() => (PTHEME_IDS.includes(initialPTheme) ? initialPTheme : 'midnight'));
     const [music, setMusic] = useState(() => {
         // Premium-exclusive recordings first; every legacy id still plays.
@@ -295,8 +286,12 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
         : '';
 
     // Payer-only preview: see the universe exactly as the recipient will.
-    // Recipients (URL key, no lastKey) never get the way back out.
+    // A history entry is pushed so the browser BACK button exits the preview
+    // instead of dumping the giver out of the site mid-purchase.
     const previewAsRecipient = () => {
+        try {
+            window.history.pushState({ prmPreview: true }, '');
+        } catch {}
         setForceGift(true);
         setTimeout(() => {
             try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
@@ -308,20 +303,14 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
             try { document.getElementById('prm-magiclink')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch {}
         }, 80);
     };
-    // Same-device edit entry from inside a gift view (owner tweaking their
-    // universe, or anyone recovering it). Returns to the gift on exit.
-    const enterStudio = () => {
-        setEditMode(true);
-        setTimeout(() => {
-            try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
-        }, 80);
-    };
-    const exitStudio = () => {
-        setEditMode(false);
-        setTimeout(() => {
-            try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
-        }, 80);
-    };
+
+    // Browser back inside the preview returns to the studio, not off-site.
+    // Event-handler setState only — no effect-lint concerns.
+    useEffect(() => {
+        const onPopState = () => setForceGift(false);
+        window.addEventListener('popstate', onPopState);
+        return () => window.removeEventListener('popstate', onPopState);
+    }, []);
     // Occasion pills carry the ENTIRE studio state, so switching vibes never
     // drops names, words, look, music or relationship (reload-safe too).
     const studioHref = (occId) => {
@@ -344,24 +333,6 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                     className="fixed bottom-20 sm:bottom-5 left-1/2 -translate-x-1/2 z-50 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-xs font-extrabold text-white shadow-2xl transition-all max-w-[calc(100vw-2rem)]"
                 >
                     ← Back to your magic link
-                </button>
-            )}
-            {editMode && unlockKey && (
-                <button
-                    type="button"
-                    onClick={exitStudio}
-                    className="fixed bottom-20 sm:bottom-5 left-1/2 -translate-x-1/2 z-50 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-xs font-extrabold text-white shadow-2xl transition-all max-w-[calc(100vw-2rem)]"
-                >
-                    ← Back to gift view
-                </button>
-            )}
-            {giftMode && !forceGift && !editMode && keyInStorage && (
-                <button
-                    type="button"
-                    onClick={enterStudio}
-                    className="fixed bottom-20 sm:bottom-5 left-1/2 -translate-x-1/2 z-50 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-xs font-extrabold text-white shadow-2xl transition-all max-w-[calc(100vw-2rem)]"
-                >
-                    <span aria-hidden="true">✏️</span> Tweak this universe
                 </button>
             )}
             {/* Studio ribbon (givers only — recipients never see this) */}
