@@ -19,7 +19,7 @@ import { TRACKS, PREMIUM_TRACKS, getTrackSrc } from '@/lib/music';
 const DEVICE_KEY = 'bgen-premium-unlocked-v1'; // legacy session receipt
 const KEYS_KEY = 'bgen-premium-keys-v1'; // remembered magic-link keys
 const SNAP_KEY = 'bgen-premium-studio-v1'; // last paid universe (no key inside)
-const SNAP_PARAMS = ['occasion', 'to', 'from', 'age', 'msg', 'rs', 'vs', 'theme', 'music', 'musicUrl', 'musicName', 'for'];
+const SNAP_PARAMS = ['occasion', 'to', 'from', 'age', 'msg', 'rs', 'vs', 'theme', 'music', 'musicUrl', 'musicName', 'for', 'mode', 'photo'];
 
 function readStoredKeys() {
     try {
@@ -42,7 +42,7 @@ function celebrate() {
  * Personalize: /premium?occasion=anniversary&to=Priya&from=Rahul&age=2&msg=...
  * Paid access: /premium?...&key=unlock_… (magic link, no accounts needed).
  */
-export default function PremiumPage({ to, from, message, age, occasion, unlockKey, customReasons, customVows, initialPTheme, initialMusic, initialMusicUrl, initialMusicName, initialRel, giftPreview }) {
+export default function PremiumPage({ to, from, message, age, occasion, unlockKey, customReasons, customVows, initialPTheme, initialMusic, initialMusicUrl, initialMusicName, initialRel, initialPhotoUrl, giftPreview, initialMode }) {
     const deck = getOccasion(occasion);
     const [forceGift, setForceGift] = useState(false);
     // Gift mode = the recipient's eyes only: pure universe, zero studio
@@ -51,6 +51,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
     // from inside a gift view: recipients must never meet studio tools.
     // Owners edit at /premium on their own device (snapshot restores it).
     const giftMode = !!unlockKey || !!giftPreview || forceGift;
+    const [mode, setMode] = useState(() => (['cinema', 'keepsake'].includes(initialMode) ? initialMode : 'cinema'));
     const [ptheme, setPtheme] = useState(() => (PTHEME_IDS.includes(initialPTheme) ? initialPTheme : 'midnight'));
     const [music, setMusic] = useState(() => {
         // Premium-exclusive recordings first; every legacy id still plays.
@@ -60,16 +61,26 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
     const [musicUrl, setMusicUrl] = useState(() => initialMusicUrl || '');
     const [musicName, setMusicName] = useState(() => initialMusicName || '');
     const [rel, setRel] = useState(() => (REL_IDS.includes(initialRel) ? initialRel : ''));
+    const [photoUrl, setPhotoUrl] = useState(() => {
+        if (initialPhotoUrl) return initialPhotoUrl;
+        try {
+            if (typeof window !== 'undefined') {
+                return sessionStorage.getItem('prm_cinema_temp_photo') || null;
+            }
+        } catch {}
+        return null;
+    });
+    const [instantQuote, setInstantQuote] = useState(() => message || '');
     const tone = getTone(rel);
     // Studio identity: editable on-page (URL params only prefill). Recipients
     // in gift mode always see the link's values.
     const [toName, setToName] = useState(to);
     const [fromName, setFromName] = useState(from);
     const [ageInput, setAgeInput] = useState(age ? String(age) : '');
-    const effTo = toName.trim() || to;
-    const effFrom = fromName.trim() || from;
-    const parsedAge = /^\d{1,3}$/.test(ageInput.trim()) ? parseInt(ageInput.trim(), 10) : NaN;
-    const effAge = ageInput.trim() === '' ? age : Number.isFinite(parsedAge) && parsedAge >= 1 && parsedAge <= 120 ? parsedAge : null;
+    const effTo = String(toName || '').trim() || to;
+    const effFrom = String(fromName || '').trim() || from;
+    const parsedAge = /^\d{1,3}$/.test(String(ageInput || '').trim()) ? parseInt(String(ageInput || '').trim(), 10) : NaN;
+    const effAge = String(ageInput || '').trim() === '' ? age : Number.isFinite(parsedAge) && parsedAge >= 1 && parsedAge <= 120 ? parsedAge : null;
     // Lazy init: remembered keys unlock instantly (verified when first saved).
     // suppressHydrationWarning on <main> covers returning paid visitors.
     const [unlocked, setUnlocked] = useState(() => {
@@ -93,6 +104,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
     const [copied, setCopied] = useState(false);
     const [keyError, setKeyError] = useState(false);
     const [custom, setCustom] = useState(EMPTY_CUSTOM);
+    const [cinemaPlayerOpen, setCinemaPlayerOpen] = useState(false);
     const keyChecked = useRef(false);
 
     // Giver's live edits win; otherwise honour customs arriving via magic link.
@@ -131,10 +143,12 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                 if (musicName) p.set('musicName', musicName);
             }
             if (rel) p.set('for', rel);
+            if (mode) p.set('mode', mode);
+            if (photoUrl) p.set('photo', photoUrl);
             if (key) p.set('key', key);
             return p;
         },
-        [deck.id, effTo, effFrom, effAge, message, custom, editorActive, customReasons, customVows, ptheme, music, musicUrl, musicName, rel]
+        [deck.id, effTo, effFrom, effAge, message, custom, editorActive, customReasons, customVows, ptheme, music, musicUrl, musicName, rel, mode, photoUrl]
     );
 
     const buildMagicLink = useCallback(
@@ -150,6 +164,16 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
 
     const linkKey = lastKey || knownKey;
     const magicLink = linkKey && !giftMode ? buildMagicLink(linkKey) : '';
+
+    const handleStartFresh = useCallback((e) => {
+        if (e) e.preventDefault();
+        try {
+            localStorage.removeItem(SNAP_KEY);
+            localStorage.removeItem(KEYS_KEY);
+            sessionStorage.removeItem(DEVICE_KEY);
+        } catch {}
+        window.location.href = '/premium';
+    }, []);
 
     // Snapshot the paid universe (key excluded on purpose: restore lands in
     // YOUR studio, unlocked via remembered keys, never a stranger's gift).
@@ -349,18 +373,49 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                         <Crown className="w-4 h-4 text-[#f2c14e] shrink-0" aria-hidden="true" />
                         <span className="text-[#cfc4e8]">
                             <strong className="text-[#f7dc9a]">Premium studio.</strong>{' '}
-                            <span className="hidden sm:inline">Names first, then words, then unlock. </span>
+                            <span className="hidden sm:inline">
+                                {unlocked ? 'Card unlocked — all updates sync live. ' : 'Names first, then words, then unlock. '}
+                            </span>
                             <span className="inline-flex items-center gap-3">
                                 <button type="button" onClick={scrollToCustomize} className="underline decoration-dotted underline-offset-4 hover:text-white inline-flex items-center gap-1">
                                     <PencilLine className="w-3.5 h-3.5" aria-hidden="true" /> Start below
                                 </button>
-                                <Link href="/premium?fresh=1" title="Forget this device's saved universe and start over" className="underline decoration-dotted underline-offset-4 hover:text-white">
+                                <button
+                                    type="button"
+                                    onClick={handleStartFresh}
+                                    title="Forget this device's saved universe and start over"
+                                    className="underline decoration-dotted underline-offset-4 hover:text-white cursor-pointer"
+                                >
                                     Start fresh
-                                </Link>
+                                </button>
                             </span>
                         </span>
                     </span>
-                    <span className="inline-flex flex-wrap items-center justify-center gap-1" role="group" aria-label="Pick an occasion">
+                    <span className="inline-flex flex-wrap items-center justify-center gap-1.5" role="group" aria-label="Pick mode and occasion">
+                        <div className="inline-flex items-center p-0.5 rounded-full bg-black/50 border border-white/15">
+                            <button
+                                type="button"
+                                onClick={() => setMode('cinema')}
+                                className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold transition-all cursor-pointer ${
+                                    mode === 'cinema'
+                                        ? 'bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] shadow-sm'
+                                        : 'text-[#b9aed4] hover:text-white'
+                                }`}
+                            >
+                                ⚡ Instant Cinema
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setMode('keepsake')}
+                                className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold transition-all cursor-pointer ${
+                                    mode === 'keepsake'
+                                        ? 'bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] shadow-sm'
+                                        : 'text-[#b9aed4] hover:text-white'
+                                }`}
+                            >
+                                👑 Keepsake (Full Story)
+                            </button>
+                        </div>
                         {OCCASION_IDS.map((id) => (
                             <Link
                                 key={id}
@@ -425,9 +480,9 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                                 <button
                                     type="button"
                                     onClick={previewAsRecipient}
-                                    className="col-span-2 sm:col-span-1 inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl border border-white/20 text-white text-sm font-extrabold hover:bg-white/10 transition-all"
+                                    className="col-span-2 sm:col-span-1 inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl border border-white/20 text-white text-sm font-extrabold hover:bg-white/10 transition-all cursor-pointer"
                                 >
-                                    <span aria-hidden="true">👁</span> See what {effTo} sees
+                                    <span aria-hidden="true">👁</span> Open recipient view
                                 </button>
                             </div>
                         </div>
@@ -446,14 +501,57 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                 deck={deck}
                 custom={effectiveCustom}
                 tone={tone}
-                unlocked={unlocked}
+                unlocked={unlocked || giftMode}
                 giftMode={giftMode}
+                photoUrl={photoUrl}
+                mode={mode}
+                ptheme={ptheme}
+                customDedication={instantQuote || message}
+                cinemaOpen={cinemaPlayerOpen}
+                onCinemaToggle={setCinemaPlayerOpen}
                 onUnlockRequest={scrollToCustomize}
                 audioSlot={<AudioPlayer track={music} src={getTrackSrc(music, musicUrl) || '/happy-birthday.mp3'} customName={music === 'custom' ? musicName : null} />}
             />
 
             {!giftMode && (
-                <CustomizePanel deck={deck} to={effTo} value={custom} onChange={setCustom} ptheme={ptheme} onPThemeChange={setPtheme} music={music} onMusicChange={setMusic} musicUrl={musicUrl} musicName={musicName} onCustomMusicChange={(item) => { if (item) { setMusicUrl(item.url); setMusicName(item.name); } else { setMusicUrl(''); setMusicName(''); } }} rel={rel} onRelChange={setRel} toName={toName} fromName={fromName} ageInput={ageInput} onToChange={setToName} onFromChange={setFromName} onAgeChange={setAgeInput} showContinue={!unlocked} onContinue={scrollToPaywall} />
+                <CustomizePanel
+                    deck={deck}
+                    to={effTo}
+                    value={custom}
+                    onChange={setCustom}
+                    ptheme={ptheme}
+                    onPThemeChange={setPtheme}
+                    music={music}
+                    onMusicChange={setMusic}
+                    musicUrl={musicUrl}
+                    musicName={musicName}
+                    onCustomMusicChange={(item) => {
+                        if (item) {
+                            setMusicUrl(item.url);
+                            setMusicName(item.name);
+                        } else {
+                            setMusicUrl('');
+                            setMusicName('');
+                        }
+                    }}
+                    rel={rel}
+                    onRelChange={setRel}
+                    toName={toName}
+                    fromName={fromName}
+                    ageInput={ageInput}
+                    onToChange={setToName}
+                    onFromChange={setFromName}
+                    onAgeChange={setAgeInput}
+                    showContinue={!unlocked}
+                    onContinue={scrollToPaywall}
+                    mode={mode}
+                    onModeChange={setMode}
+                    photoUrl={photoUrl}
+                    onPhotoChange={setPhotoUrl}
+                    instantQuote={instantQuote}
+                    onInstantQuoteChange={setInstantQuote}
+                    onWatchCinema={() => setCinemaPlayerOpen(true)}
+                />
             )}
 
             {!unlocked && !giftMode && <Paywall onUnlocked={handleUnlocked} />}
@@ -472,7 +570,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                     <Reveal><p className="prm-eyebrow mb-6">✦ How gifting premium works ✦</p></Reveal>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
                         {[
-                            { n: '1', t: 'Preview the magic', d: 'Unseal Act I above. It is free. Feel exactly what they will feel in the first ten seconds.' },
+                            { n: '1', t: 'Preview the magic', d: 'Unseal the envelope above. Feel exactly what they will feel in the first ten seconds.' },
                             { n: '2', t: 'Make it theirs, then unlock', d: 'Add names, write it in your words, pick the look and music. ₹49 / $1, one payment, no account.' },
                             { n: '3', t: 'Send the magic link', d: 'You get a private link that opens everything on any device. Then wait for the voice note. There is always a voice note.' },
                         ].map((s, i) => (

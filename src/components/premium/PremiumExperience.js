@@ -7,7 +7,7 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
-import { Heart, ChevronDown, Sparkles, Infinity as InfinityIcon, Gift } from 'lucide-react';
+import { Heart, ChevronDown, Sparkles, Infinity as InfinityIcon, Gift, Play, Film, ScrollText } from 'lucide-react';
 import CandleBlower from '@/components/CandleBlower';
 import { BIRTHDAY_OPENED_EVENT } from '@/lib/music';
 import Starfield from './Starfield';
@@ -15,6 +15,8 @@ import Reveal from './Reveal';
 import PremiumLocker from './PremiumLocker';
 import Marquee from './Marquee';
 import Magnetic from './Magnetic';
+import StarlightMemoryPortrait from './StarlightMemoryPortrait';
+import InstantCinemaPlayer from './InstantCinemaPlayer';
 import { OCCASIONS, fill } from './occasions';
 import { TONES } from './relationships';
 
@@ -66,6 +68,12 @@ export default function PremiumExperience({
     tone = null,
     unlocked = false,
     giftMode = false,
+    photoUrl = null,
+    mode = 'cinema',
+    ptheme = 'midnight',
+    customDedication = null,
+    cinemaOpen = null,
+    onCinemaToggle = null,
     onUnlockRequest,
     audioSlot = null,
 }) {
@@ -86,7 +94,12 @@ export default function PremiumExperience({
     const customVows = (custom?.vows || []).map((v) => String(v || '').trim()).filter(Boolean).slice(0, 3);
     const vowsList = customVows.length ? customVows : D.vows;
     const letterText = message || String(custom?.letter || '').trim() || fill(D.letterMid, ctx);
+    // In the actual viewer's link (giftMode), viewers always see the complete universe:
+    const isEffectiveUnlocked = unlocked || giftMode;
     const [unsealed, setUnsealed] = useState(false);
+    const [localCinemaPlayerOpen, setLocalCinemaPlayerOpen] = useState(false);
+    const cinemaPlayerOpen = cinemaOpen !== null ? cinemaOpen : localCinemaPlayerOpen;
+    const setCinemaPlayerOpen = onCinemaToggle || setLocalCinemaPlayerOpen;
     const [hearts, setHearts] = useState([]);
     const [loves, setLoves] = useState(0);
     // Preloader veil: SSR shows it; reduced-motion visitors skip it on first
@@ -109,6 +122,9 @@ export default function PremiumExperience({
         setUnsealed(true);
         try { window.dispatchEvent(new CustomEvent(BIRTHDAY_OPENED_EVENT)); } catch {}
         burst();
+        if (mode === 'cinema') {
+            setTimeout(() => setCinemaPlayerOpen(true), 350);
+        }
     };
 
     // Wax-seal breaking ritual: squash → shatter → universe opens.
@@ -334,7 +350,7 @@ export default function PremiumExperience({
                             <Magnetic strength={34} className="relative mx-auto block w-fit">
                                 <button ref={sealRef} type="button" onClick={sealRitual} className="prm-seal mx-auto relative" aria-label={`Break the seal and open ${to}'s surprise`}>
                                     <span className="prm-serif text-4xl sm:text-5xl text-white/95 font-extrabold select-none" aria-hidden="true">
-                                        {to.charAt(0) || '♥'}
+                                        {(to && typeof to === 'string' ? to.charAt(0) : '') || '♥'}
                                     </span>
                                 </button>
                             </Magnetic>
@@ -352,7 +368,7 @@ export default function PremiumExperience({
                     <section className="prm-hero prm-act relative min-h-[100svh] flex flex-col items-center justify-center text-center px-6 py-20 overflow-hidden">
                         <div className="absolute inset-0" aria-hidden="true"><Starfield /></div>
                         <div className="prm-hero-inner relative z-10 max-w-3xl mx-auto">
-                            <Reveal><p className="prm-eyebrow mb-6">✦ Act I · The Arrival ✦</p></Reveal>
+                            <Reveal><p className="prm-eyebrow mb-6">✦ Especially For You ✦</p></Reveal>
                             <Reveal delay={120}>
                                 <p className="prm-serif italic text-lg sm:text-2xl text-[#f7dc9a] mb-4">{D.heroKicker}</p>
                             </Reveal>
@@ -366,14 +382,60 @@ export default function PremiumExperience({
                                 </p>
                             </Reveal>
                             <Reveal delay={400}>
-                                <button
-                                    type="button"
-                                    onClick={() => scrollToId(unlocked ? 'prm-letter' : 'prm-locker')}
-                                    className="mt-10 inline-flex flex-col items-center gap-2 text-[#f7dc9a] font-bold text-sm tracking-widest uppercase hover:opacity-80 transition-opacity"
-                                >
-                                    {unlocked ? 'Continue the journey' : 'See what’s sealed inside'}
-                                    <ChevronDown className="w-6 h-6 prm-scroll-cue" aria-hidden="true" />
-                                </button>
+                                {/* Starlight 3D Memory Portrait — heartbeat of the whole experience */}
+                                <div className="mt-10 mb-6 flex justify-center">
+                                    <StarlightMemoryPortrait
+                                        to={to}
+                                        rel={''}
+                                        photoUrl={photoUrl}
+                                        locked={!isEffectiveUnlocked}
+                                        customDedication={customDedication}
+                                    />
+                                </div>
+                            </Reveal>
+                            <Reveal delay={550}>
+                                <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                                    {mode === 'cinema' ? (
+                                        <>
+                                            <button
+                                                type="button"
+                                                onClick={() => setCinemaPlayerOpen(true)}
+                                                className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-gradient-to-r from-[#f2c14e] via-[#fb7185] to-[#f43f5e] text-[#241031] font-black text-base shadow-[0_15px_40px_rgba(242,193,78,0.45)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                                            >
+                                                <Play className="w-5 h-5 fill-current" />
+                                                {isEffectiveUnlocked ? 'Play Cinema Tribute 🎬' : 'Preview Cinema Teaser 🎬'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => scrollToId(isEffectiveUnlocked ? 'prm-letter' : 'prm-locker')}
+                                                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-sm border border-white/15 backdrop-blur-md transition-all cursor-pointer"
+                                            >
+                                                {isEffectiveUnlocked ? 'Read Letter Scroll' : 'See what’s sealed inside'}
+                                                <ChevronDown className="w-4 h-4 prm-scroll-cue" aria-hidden="true" />
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button
+                                                type="button"
+                                                onClick={() => scrollToId(isEffectiveUnlocked ? 'prm-letter' : 'prm-locker')}
+                                                className="inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-gradient-to-r from-[#f2c14e] via-[#fb7185] to-[#f43f5e] text-[#241031] font-black text-base shadow-[0_15px_40px_rgba(242,193,78,0.45)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                                            >
+                                                <ScrollText className="w-5 h-5" />
+                                                {isEffectiveUnlocked ? `Read ${to}’s Keepsake Story` : 'See what’s sealed inside'}
+                                                <ChevronDown className="w-4 h-4 prm-scroll-cue" aria-hidden="true" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setCinemaPlayerOpen(true)}
+                                                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-sm border border-white/15 backdrop-blur-md transition-all cursor-pointer"
+                                            >
+                                                <Play className="w-4 h-4 fill-current text-[#f2c14e]" />
+                                                Play Cinema Tribute
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
                             </Reveal>
                         </div>
                     </section>
@@ -382,19 +444,19 @@ export default function PremiumExperience({
                     <Marquee items={D.marquee1.map((s) => fill(s, ctx))} />
 
                     {/* ── LOCKER (locked state) ─────────────────────── */}
-                    {!unlocked && (
+                    {!isEffectiveUnlocked && (
                         <div id="prm-locker">
                             <PremiumLocker to={to} giftMode={giftMode} onUnlock={onUnlockRequest} />
                         </div>
                     )}
 
-                    {/* ── ACTS II–V (unlocked) ──────────────────────── */}
-                    {unlocked && (
+                    {/* ── UNLOCKED KEEPSAKE CHAPTERS ────────────────── */}
+                    {isEffectiveUnlocked && (
                         <>
-                            {/* ACT II · The Letter */}
+                            {/* Chapter · The Letter */}
                             <section id="prm-letter" className="prm-act relative px-5 sm:px-8 py-24 sm:py-32">
                                 <div className="max-w-2xl mx-auto">
-                                    <Reveal className="text-center"><p className="prm-eyebrow mb-6">✦ Act II · The Letter ✦</p></Reveal>
+                                    <Reveal className="text-center"><p className="prm-eyebrow mb-6">✦ Words From The Heart ✦</p></Reveal>
                                     <Reveal>
                                         <h3 className="prm-serif prm-h-act text-center mb-10">
                                             A letter <span className="prm-gold-text">from the heart</span>
@@ -428,72 +490,76 @@ export default function PremiumExperience({
                                 </div>
                             </section>
 
-                            <div className="prm-divider max-w-3xl mx-auto" aria-hidden="true" />
+                            {mode === 'keepsake' && (
+                                <>
+                                    <div className="prm-divider max-w-3xl mx-auto" aria-hidden="true" />
 
-                            {/* ACT III · Reasons (horizontal pin on desktop) */}
-                            <section className="prm-act prm-reasons-pin relative lg:h-screen lg:flex lg:flex-col lg:justify-center overflow-hidden py-24 sm:py-32 lg:py-0">
-                                <div className="max-w-4xl lg:max-w-none mx-auto lg:mx-0 text-center w-full px-5 sm:px-8">
-                                    <Reveal><p className="prm-eyebrow mb-6">✦ Act III · The Reasons ✦</p></Reveal>
-                                    <Reveal>
-                                        <h3 className="prm-serif prm-h-act mb-4">
-                                            {D.reasonsTitleMain} <span className="prm-gold-text">{D.reasonsTitleAccent}</span>
-                                        </h3>
-                                    </Reveal>
-                                    <Reveal delay={200}>
-                                        <p className="prm-lead max-w-xl mx-auto mb-10">{D.reasonsSub} <span className="hidden lg:inline">Keep scrolling. The gallery moves sideways.</span></p>
-                                    </Reveal>
-                                </div>
-                                <div className="prm-reasons-track flex flex-col gap-4 sm:gap-5 lg:flex-row lg:gap-6 lg:w-max lg:px-[8vw] px-5 sm:px-8 max-w-4xl lg:max-w-none mx-auto lg:mx-0 text-left">
-                                    {reasonsList.map((r) => (
-                                        <div key={r.t} className="prm-card rounded-2xl p-6 lg:p-8 lg:w-[26rem] lg:shrink-0">
-                                            <div className="text-3xl lg:text-4xl mb-3" aria-hidden="true">{r.e}</div>
-                                            <h4 className="prm-serif text-xl lg:text-2xl font-bold text-[#f7dc9a] mb-2">{r.t}</h4>
-                                            <p className="text-sm lg:text-base leading-relaxed text-[#cfc4e8]">{fill(r.d, ctx)}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-
-                            <div className="prm-divider max-w-3xl mx-auto" aria-hidden="true" />
-
-                            {/* ACT IV · Vows */}
-                            <section className="prm-act relative px-5 sm:px-8 py-24 sm:py-32 text-center">
-                                <div className="max-w-2xl mx-auto">
-                                    <Reveal><p className="prm-eyebrow mb-6">✦ Act IV · The Vows ✦</p></Reveal>
-                                    <Reveal>
-                                        <h3 className="prm-serif prm-h-act mb-4">
-                                            {T.vowsTitleMain || D.vowsTitleMain} <span className="prm-gold-text">{T.vowsTitleAccent || D.vowsTitleAccent}</span>
-                                        </h3>
-                                    </Reveal>
-                                    <div className="mt-10 space-y-4 text-left">
-                                        {vowsList.map((v, i) => (
-                                            <Reveal key={i} delay={i * 140}>
-                                                <div className="prm-card rounded-2xl p-5 sm:p-6 flex gap-4 items-start">
-                                                    <span className="prm-serif text-3xl font-extrabold prm-gold-text shrink-0" aria-hidden="true">
-                                                        {['I', 'II', 'III'][i]}
-                                                    </span>
-                                                    <p className="prm-serif italic text-base sm:text-lg leading-relaxed pt-1">{v}</p>
-                                                </div>
+                                    {/* ACT III · Reasons (horizontal pin on desktop) */}
+                                    <section className="prm-act prm-reasons-pin relative lg:h-screen lg:flex lg:flex-col lg:justify-center overflow-hidden py-24 sm:py-32 lg:py-0">
+                                        <div className="max-w-4xl lg:max-w-none mx-auto lg:mx-0 text-center w-full px-5 sm:px-8">
+                                            <Reveal><p className="prm-eyebrow mb-6">✦ Why You Mean So Much ✦</p></Reveal>
+                                            <Reveal>
+                                                <h3 className="prm-serif prm-h-act mb-4">
+                                                    {D.reasonsTitleMain} <span className="prm-gold-text">{D.reasonsTitleAccent}</span>
+                                                </h3>
                                             </Reveal>
-                                        ))}
-                                    </div>
-                                    <Reveal delay={200}>
-                                        <p className="mt-8 inline-flex items-center gap-2 text-sm font-bold text-[#f7dc9a]">
-                                            <InfinityIcon className="w-4 h-4" aria-hidden="true" /> A promise for every tomorrow.
-                                        </p>
-                                    </Reveal>
-                                </div>
-                            </section>
+                                            <Reveal delay={200}>
+                                                <p className="prm-lead max-w-xl mx-auto mb-10">{D.reasonsSub} <span className="hidden lg:inline">Keep scrolling. The gallery moves sideways.</span></p>
+                                            </Reveal>
+                                        </div>
+                                        <div className="prm-reasons-track flex flex-col gap-4 sm:gap-5 lg:flex-row lg:gap-6 lg:w-max lg:px-[8vw] px-5 sm:px-8 max-w-4xl lg:max-w-none mx-auto lg:mx-0 text-left">
+                                            {reasonsList.map((r) => (
+                                                <div key={r.t} className="prm-card rounded-2xl p-6 lg:p-8 lg:w-[26rem] lg:shrink-0">
+                                                    <div className="text-3xl lg:text-4xl mb-3" aria-hidden="true">{r.e}</div>
+                                                    <h4 className="prm-serif text-xl lg:text-2xl font-bold text-[#f7dc9a] mb-2">{r.t}</h4>
+                                                    <p className="text-sm lg:text-base leading-relaxed text-[#cfc4e8]">{fill(r.d, ctx)}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
 
-                            <div className="prm-divider max-w-3xl mx-auto" aria-hidden="true" />
+                                    <div className="prm-divider max-w-3xl mx-auto" aria-hidden="true" />
 
-                            <Marquee items={D.marquee2.map((s) => fill(s, ctx))} />
+                                    {/* ACT IV · Vows */}
+                                    <section className="prm-act relative px-5 sm:px-8 py-24 sm:py-32 text-center">
+                                        <div className="max-w-2xl mx-auto">
+                                            <Reveal><p className="prm-eyebrow mb-6">✦ My Promises To You ✦</p></Reveal>
+                                            <Reveal>
+                                                <h3 className="prm-serif prm-h-act mb-4">
+                                                    {T.vowsTitleMain || D.vowsTitleMain} <span className="prm-gold-text">{T.vowsTitleAccent || D.vowsTitleAccent}</span>
+                                                </h3>
+                                            </Reveal>
+                                            <div className="mt-10 space-y-4 text-left">
+                                                {vowsList.map((v, i) => (
+                                                    <Reveal key={i} delay={i * 140}>
+                                                        <div className="prm-card rounded-2xl p-5 sm:p-6 flex gap-4 items-start">
+                                                            <span className="prm-serif text-3xl font-extrabold prm-gold-text shrink-0" aria-hidden="true">
+                                                                {['I', 'II', 'III'][i]}
+                                                            </span>
+                                                            <p className="prm-serif italic text-base sm:text-lg leading-relaxed pt-1">{v}</p>
+                                                        </div>
+                                                    </Reveal>
+                                                ))}
+                                            </div>
+                                            <Reveal delay={200}>
+                                                <p className="mt-8 inline-flex items-center gap-2 text-sm font-bold text-[#f7dc9a]">
+                                                    <InfinityIcon className="w-4 h-4" aria-hidden="true" /> A promise for every tomorrow.
+                                                </p>
+                                            </Reveal>
+                                        </div>
+                                    </section>
+
+                                    <div className="prm-divider max-w-3xl mx-auto" aria-hidden="true" />
+
+                                    <Marquee items={D.marquee2.map((s) => fill(s, ctx))} />
+                                </>
+                            )}
 
                             {/* ACT V · Finale */}
                             <section className="prm-act relative px-5 sm:px-8 py-24 sm:py-32 text-center overflow-hidden">
                                 <div className="absolute inset-0 opacity-60" aria-hidden="true"><Starfield density={0.6} /></div>
                                 <div className="relative z-10 max-w-3xl mx-auto">
-                                    <Reveal><p className="prm-eyebrow mb-6">✦ Act V · The Finale ✦</p></Reveal>
+                                    <Reveal><p className="prm-eyebrow mb-6">✦ Make A Wish ✦</p></Reveal>
                                     <Reveal>
                                         <h3 className="prm-serif prm-h-act mb-4">
                                             {fill(D.finaleTitleMain, ctx)} <span className="prm-gold-text">{fill(D.finaleTitleAccent, ctx)}</span>
@@ -541,7 +607,46 @@ export default function PremiumExperience({
                             </section>
                         </>
                     )}
+                    {unsealed && !cinemaPlayerOpen && mode === 'cinema' && (
+                        <div className="fixed bottom-6 right-6 z-40">
+                            <button
+                                type="button"
+                                onClick={() => setCinemaPlayerOpen(true)}
+                                className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-gradient-to-r from-[#f2c14e] via-[#fb7185] to-[#f43f5e] text-[#241031] font-black text-sm shadow-[0_12px_35px_rgba(242,193,78,0.5)] hover:scale-105 active:scale-95 transition-all backdrop-blur-md"
+                            >
+                                <Film className="w-4 h-4" /> Watch Cinema 🎬
+                            </button>
+                        </div>
+                    )}
                 </>
+            )}
+
+            {cinemaPlayerOpen && (
+                <InstantCinemaPlayer
+                    to={to}
+                    from={from}
+                    photoUrl={photoUrl}
+                    quote={customDedication}
+                    letter={letterText}
+                    age={age}
+                    theme={ptheme === 'ocean' ? 'cyan' : ptheme === 'rose' ? 'rose' : ptheme === 'aurora' ? 'aurora' : 'gold'}
+                    unlocked={isEffectiveUnlocked}
+                    giftMode={giftMode}
+                    onUnlock={() => {
+                        setCinemaPlayerOpen(false);
+                        const paywallEl = document.getElementById('prm-paywall') || document.getElementById('prm-locker');
+                        if (paywallEl) {
+                            paywallEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        } else {
+                            onUnlockRequest?.();
+                        }
+                    }}
+                    onClose={() => setCinemaPlayerOpen(false)}
+                    onCloseToScroll={() => {
+                        setCinemaPlayerOpen(false);
+                        if (!unsealed) setUnsealed(true);
+                    }}
+                />
             )}
 
             {audioSlot}

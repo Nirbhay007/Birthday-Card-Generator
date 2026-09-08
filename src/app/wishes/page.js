@@ -89,7 +89,7 @@ export default function WishesIndexPage() {
             Find the <span className="text-purple-600">Perfect Words</span> for Every Birthday
           </h1>
           <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Never struggle with writer's block again. Browse 170+ curated birthday wishes, copy your favorites, or turn any message into an interactive digital card with virtual candles in one click.
+            Never struggle with writer&apos;s block again. Browse 170+ curated birthday wishes, copy your favorites, or turn any message into an interactive digital card with virtual candles in one click.
           </p>
         </header>
 
@@ -143,7 +143,7 @@ export default function WishesIndexPage() {
             <div className="max-w-xl">
               <h2 className="text-3xl font-extrabold mb-3">Turn Any Wish Into An Interactive Surprise</h2>
               <p className="text-purple-100 leading-relaxed text-sm sm:text-base">
-                Don't just text a message. Turn your heartfelt wish into a full web page with interactive virtual candles the recipient can blow out using their device microphone!
+                Don&apos;t just text a message. Turn your heartfelt wish into a full web page with interactive virtual candles the recipient can blow out using their device microphone!
               </p>
             </div>
             <Link

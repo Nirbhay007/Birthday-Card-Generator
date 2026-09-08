@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PhotoUploader from './PhotoUploader';
+import CinemaTeaserCard from './premium/CinemaTeaserCard';
 import WishInspirationModal from './WishInspirationModal';
 import SupportButton from './SupportButton';
 import {
@@ -160,7 +161,7 @@ export default function CreateForm({ formData, setFormData }) {
         const fromParam = searchParams.get('from');
         if (wishParam && !formData.message) {
             setFormData((prev) => ({ ...prev, message: wishParam }));
-            setStep(2);
+            setTimeout(() => setStep(2), 0);
         }
         if (fromParam && /^(wishes|ages)\/[a-z0-9-]+$/.test(fromParam) && formData.source !== fromParam) {
             setFormData((prev) => ({ ...prev, source: fromParam }));
@@ -599,6 +600,21 @@ export default function CreateForm({ formData, setFormData }) {
                                 {formData.message && <p className="text-xs italic opacity-75 line-clamp-2">&ldquo;{formData.message}&rdquo;</p>}
                                 {formData.senderName && <p className="text-xs font-semibold opacity-70">— With love, {formData.senderName}</p>}
                             </div>
+                        </div>
+
+                        {/* Mobile-only Premium Teaser — desktop sees this in the LivePreview sidebar */}
+                        <div className="lg:hidden mt-2">
+                            <CinemaTeaserCard
+                                recipientName={formData.recipientName}
+                                senderName={formData.senderName}
+                                relationship={formData.relationship}
+                                photoSrc={
+                                    formData.photos && formData.photos.length > 0
+                                        ? (typeof formData.photos[0] === 'string' ? formData.photos[0] : formData.photos[0]?.preview)
+                                        : null
+                                }
+                                compact
+                            />
                         </div>
                     </div>
                 )}

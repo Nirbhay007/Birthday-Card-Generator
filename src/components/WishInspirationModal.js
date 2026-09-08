@@ -122,7 +122,7 @@ export default function WishInspirationModal({ isOpen, onClose, onSelectWish }) 
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-700 leading-relaxed italic">"{wish.text}"</p>
+                <p className="text-sm text-gray-700 leading-relaxed italic">&ldquo;{wish.text}&rdquo;</p>
               </div>
             );
           })}

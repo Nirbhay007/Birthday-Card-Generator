@@ -11,22 +11,22 @@ const OCC_META = {
     birthday: {
         title: 'Premium Birthday Experience. A Heartfelt Surprise They Will Replay for Years',
         description:
-            'A cinematic birthday surprise from the heart: wax-sealed envelope, personal letter, reasons you cherish them, meaningful promises, and an interactive candle finale. Preview Act I free. Unlock for ₹49 (or $1 worldwide).',
+            'A cinematic birthday surprise from the heart: wax-sealed envelope, personal letter, reasons you cherish them, meaningful promises, and an interactive candle finale. Preview free. Unlock for ₹49 (or $1 worldwide).',
     },
     anniversary: {
         title: 'Premium Anniversary Experience. Celebrate Your Story Together',
         description:
-            'A cinematic anniversary surprise: wax-sealed envelope, heartfelt love letter, shared memories, renewed promises, and a starlit celebration. Preview Act I free. Unlock for ₹49 (or $1 worldwide).',
+            'A cinematic anniversary surprise: wax-sealed envelope, heartfelt love letter, shared memories, renewed promises, and a starlit celebration. Preview free. Unlock for ₹49 (or $1 worldwide).',
     },
     valentine: {
         title: 'Premium Valentine Surprise. For the One Who Holds Your Heart',
         description:
-            'A cinematic Valentine surprise: wax-sealed envelope, tender love letter, reasons you adore them, promises, and a starlit celebration. Preview Act I free. Unlock for ₹49 (or $1 worldwide).',
+            'A cinematic Valentine surprise: wax-sealed envelope, tender love letter, reasons you adore them, promises, and a starlit celebration. Preview free. Unlock for ₹49 (or $1 worldwide).',
     },
     friendship: {
         title: 'Premium Friendship Experience. For the Person Who Has Always Had Your Back',
         description:
-            'A cinematic friendship surprise: wax-sealed envelope, honest letter, unforgettable memories, promises, and a celebration of your bond. Preview Act I free. Unlock for ₹49 (or $1 worldwide).',
+            'A cinematic friendship surprise: wax-sealed envelope, honest letter, unforgettable memories, promises, and a celebration of your bond. Preview free. Unlock for ₹49 (or $1 worldwide).',
     },
 };
 
@@ -114,7 +114,13 @@ export default async function PremiumRoute({ searchParams }) {
     const initialMusicName = clean(pick('musicName'), '', 80);
     const rawRel = String(pick('for') || '').toLowerCase();
     const initialRel = REL_IDS.includes(rawRel) ? rawRel : '';
+    const rawPhoto = clean(pick('photo') || pick('photoUrl'), '', 600);
+    const initialPhotoUrl = rawPhoto && (/^https?:\/\//.test(rawPhoto) || rawPhoto.startsWith('/')) ? rawPhoto : null;
     const giftPreview = ['1', 'true', 'yes'].includes(String(pick('gift') || '').toLowerCase());
+    const rawMode = String(pick('mode') || '').toLowerCase();
+    const initialMode = ['cinema', 'keepsake'].includes(rawMode)
+        ? rawMode
+        : (customReasons.length || customVows.length ? 'keepsake' : 'cinema');
 
     const breadcrumbs = getBreadcrumbSchema(baseUrl, [
         { name: 'Home', url: '/' },
@@ -124,7 +130,7 @@ export default async function PremiumRoute({ searchParams }) {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
-            <PremiumPage to={to} from={from} message={message} age={age} occasion={occasion} unlockKey={unlockKey} customReasons={customReasons} customVows={customVows} initialPTheme={initialPTheme} initialMusic={initialMusic} initialMusicUrl={initialMusicUrl} initialMusicName={initialMusicName} initialRel={initialRel} giftPreview={giftPreview} />
+            <PremiumPage to={to} from={from} message={message} age={age} occasion={occasion} unlockKey={unlockKey} customReasons={customReasons} customVows={customVows} initialPTheme={initialPTheme} initialMusic={initialMusic} initialMusicUrl={initialMusicUrl} initialMusicName={initialMusicName} initialRel={initialRel} initialPhotoUrl={initialPhotoUrl} giftPreview={giftPreview} initialMode={initialMode} />
         </>
     );
 }

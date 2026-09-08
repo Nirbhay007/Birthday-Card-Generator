@@ -26,6 +26,18 @@
 }
 
 /* Premium looks: set data-ptheme on <main>, every act inherits the vars. */
+main[data-ptheme='aurora'] {
+    --prm-bg0: #021811;
+    --prm-bg1: #04291f;
+    --prm-bg2: #073a2c;
+    --prm-gold: #34d399;
+    --prm-gold-soft: #6ee7b7;
+    --prm-gold-deep: #065f46;
+    --prm-glint: #ecfdf5;
+    --prm-rose: #10b981;
+    --prm-ink: #f0fdf4;
+    --prm-muted: #86efac;
+}
 main[data-ptheme='rose'] {
     --prm-bg0: #12040e;
     --prm-bg1: #250a1c;
@@ -133,8 +145,9 @@ main[data-ptheme='sunset'] {
 }
 
 /* Solid-gold fallbacks if gradient text ever fails to paint. */
+main[data-ptheme='aurora'] .prm-gold-text { color: #6ee7b7; -webkit-text-fill-color: currentColor; }
 main[data-ptheme='rose'] .prm-gold-text { color: #fda4af; -webkit-text-fill-color: currentColor; }
-main[data-ptheme='ocean'] .prm-gold-text { color: #5eead4; -webkit-text-fill-color: currentColor; }
+main[data-ptheme='ocean'] .prm-gold-text { color: #38bdf8; -webkit-text-fill-color: currentColor; }
 main[data-ptheme='sunset'] .prm-gold-text { color: #fbbf24; -webkit-text-fill-color: currentColor; }
 
 /* ---------- Scroll reveals (IntersectionObserver adds .is-visible) ---------- */
@@ -365,4 +378,23 @@ main[data-ptheme='sunset'] .prm-gold-text { color: #fbbf24; -webkit-text-fill-co
 @keyframes prm-redact-sweep {
     0% { transform: translateX(-110%); }
     55%, 100% { transform: translateX(110%); }
+}
+
+/* ---------- Instant Cinema Theater & Letterboxing ---------- */
+.prm-cin-theater {
+    animation: prm-cin-fadein 0.6s ease-out forwards;
+    backdrop-filter: blur(20px);
+}
+@keyframes prm-cin-fadein {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.prm-cin-item {
+    will-change: transform, opacity, filter;
+}
+
+@keyframes prm-cin-float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(0.5deg); }
 }

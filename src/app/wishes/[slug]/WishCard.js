@@ -33,7 +33,7 @@ export default function WishCard({ wish, source }) {
           ))}
         </div>
         <blockquote className="text-gray-800 text-sm sm:text-base leading-relaxed mb-6 italic">
-          "{wish.text}"
+          &ldquo;{wish.text}&rdquo;
         </blockquote>
       </div>
 
