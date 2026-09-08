@@ -73,7 +73,7 @@ export async function POST(request) {
                 music: validMusic,
                 source: validSource,
                 photos: {
-                    create: photos?.map((url, index) => ({
+                    create: photos?.slice(0, 4).map((url, index) => ({
                         url,
                         order: index,
                     })) || [],

@@ -552,10 +552,11 @@ export default function CreateForm({ formData, setFormData }) {
                 {step === 3 && (
                     <div className="space-y-5 pop-in">
                         <div>
-                            <span className="block text-sm font-semibold text-gray-800 mb-1">Add favorite photos <span className="text-gray-400 text-xs font-normal">(up to 2 — max 5MB each)</span></span>
+                            <span className="block text-sm font-semibold text-gray-800 mb-1">Add favorite photos <span className="text-gray-400 text-xs font-normal">(up to 4 — max 5MB each)</span></span>
                             <PhotoUploader
                                 photos={formData.photos}
                                 setPhotos={(photos) => setFormData((prev) => ({ ...prev, photos: typeof photos === 'function' ? photos(prev.photos) : photos }))}
+                                maxPhotos={4}
                             />
                         </div>
 

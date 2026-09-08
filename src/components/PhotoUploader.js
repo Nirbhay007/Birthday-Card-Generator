@@ -51,7 +51,7 @@ function compressImage(file) {
     });
 }
 
-export default function PhotoUploader({ photos, setPhotos, maxPhotos = 2 }) {
+export default function PhotoUploader({ photos, setPhotos, maxPhotos = 4 }) {
     const [processing, setProcessing] = useState(false);
     const [progress, setProgress] = useState('');
     const [errorMsg, setErrorMsg] = useState('');
@@ -164,7 +164,7 @@ export default function PhotoUploader({ photos, setPhotos, maxPhotos = 2 }) {
                         {processing ? <Loader2 className="w-7 h-7 animate-spin text-purple-600" /> : <Upload className="w-7 h-7 text-purple-500" />}
                         <p className="text-xs font-bold text-gray-700">{isDragActive ? 'Drop photos here' : 'Choose from gallery'}</p>
                         <p className="text-[11px] text-gray-400">
-                            {progress || (photos.length >= maxPhotos ? 'Limit reached (2 photos)' : `JPG, PNG, WebP • max 5MB (up to ${maxPhotos})`)}
+                            {progress || (photos.length >= maxPhotos ? `Limit reached (${maxPhotos} photos)` : `JPG, PNG, WebP • max 5MB (up to ${maxPhotos})`)}
                         </p>
                     </div>
                 </div>
