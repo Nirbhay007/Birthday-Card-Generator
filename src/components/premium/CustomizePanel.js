@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Check, Sparkles, Palette, Music as MusicIcon } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Check, Sparkles, Palette, Music as MusicIcon, Upload, Loader2, Trash2, AlertCircle, X, RefreshCw } from 'lucide-react';
 import { fill } from './occasions';
 import { PTHEMES } from './looks';
 import { RELATIONSHIPS, getTone } from './relationships';
@@ -32,9 +32,50 @@ const templateLinkCls =
  * its words appear, offers the occasion template as a starting point, and
  * everything flows into the unlocked experience AND the magic link.
  */
-export default function CustomizePanel({ deck, to, value, onChange, ptheme, onPThemeChange, music, onMusicChange, rel, onRelChange, toName, fromName, ageInput, onToChange, onFromChange, onAgeChange, showContinue, onContinue }) {
+export default function CustomizePanel({ deck, to, value, onChange, ptheme, onPThemeChange, music, onMusicChange, rel, onRelChange, toName, fromName, ageInput, onToChange, onFromChange, onAgeChange, showContinue, onContinue, musicUrl, musicName, onCustomMusicChange }) {
     const [filled, setFilled] = useState(null);
+    const [uploadingMusic, setUploadingMusic] = useState(false);
+    const [musicError, setMusicError] = useState('');
+    const musicInputRef = useRef(null);
     const tone = getTone(rel);
+
+    const handleAudioUpload = async (e) => {
+        setMusicError('');
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = '';
+
+        if (file.size > 8 * 1024 * 1024) {
+            setMusicError(`Audio file exceeds 8MB limit (${(file.size / (1024 * 1024)).toFixed(1)}MB). Please choose a song under 8MB.`);
+            return;
+        }
+
+        const isAudio = file.type.startsWith('audio/') || /\.(mp3|m4a|wav|aac|ogg|webm)$/i.test(file.name);
+        if (!isAudio) {
+            setMusicError('Please choose a valid audio file (MP3, M4A, WAV, AAC, or OGG).');
+            return;
+        }
+
+        setUploadingMusic(true);
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            const res = await fetch('/api/upload', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.success) {
+                const cleanName = file.name.replace(/\.[^/.]+$/, '').slice(0, 40);
+                onCustomMusicChange?.({ url: data.url, name: cleanName });
+                onMusicChange('custom');
+            } else {
+                setMusicError(data.error || 'Failed to upload song. Please try again.');
+            }
+        } catch (err) {
+            console.error('Audio upload error:', err);
+            setMusicError('Network error while uploading song. Please try again.');
+        } finally {
+            setUploadingMusic(false);
+        }
+    };
 
     const set = (patch) => onChange({ ...value, ...patch });
     const setReason = (i, patch) => {
@@ -282,8 +323,8 @@ export default function CustomizePanel({ deck, to, value, onChange, ptheme, onPT
                             <p className="font-extrabold text-[#f7dc9a] inline-flex items-center gap-1.5 pt-2">
                                 <MusicIcon className="w-4 h-4" aria-hidden="true" /> And the sound
                             </p>
-                            <p className="text-xs text-[#b9aed4] -mt-3">Starts playing the moment they break the seal. Real studio recordings, reserved for premium. Royalty-free, cleared for gifting.</p>
-                            <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Music">
+                            <p className="text-xs text-[#b9aed4] -mt-3">Starts playing the moment they break the seal. Choose a studio recording or upload their favorite song from your device.</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="radiogroup" aria-label="Music">
                                 {[...PREMIUM_TRACKS, TRACKS.find((t) => t.id === 'off')].filter(Boolean).map((t) => (
                                     <button
                                         key={t.id}
@@ -300,7 +341,88 @@ export default function CustomizePanel({ deck, to, value, onChange, ptheme, onPT
                                         <span className="block text-[11px] text-[#6d6486] mt-0.5">{t.desc}</span>
                                     </button>
                                 ))}
+
+                                {/* Custom Music Option */}
+                                {musicUrl ? (
+                                    <div
+                                        onClick={() => onMusicChange('custom')}
+                                        role="radio"
+                                        aria-checked={music === 'custom'}
+                                        className={`col-span-1 sm:col-span-2 rounded-2xl border px-4 py-3 text-left transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${music === 'custom' ? 'border-[#f2c14e] bg-[rgba(242,193,78,0.1)] shadow-[0_0_20px_rgba(242,193,78,0.15)]' : 'border-white/15 bg-white/[0.02] hover:border-white/30'}`}
+                                    >
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <span className="text-xl" aria-hidden="true">🎵</span>
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-bold text-[#f7dc9a] truncate flex items-center gap-1.5">
+                                                    <span className="truncate">{musicName || 'Your Custom Song'}</span>
+                                                    {music === 'custom' && <Check className="w-4 h-4 text-[#7ee2a8] shrink-0" aria-hidden="true" />}
+                                                </p>
+                                                <p className="text-[11px] text-[#b9aed4]">Uploaded from your device • Cleared for gifting</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto" onClick={(e) => e.stopPropagation()}>
+                                            <button
+                                                type="button"
+                                                onClick={() => musicInputRef.current?.click()}
+                                                disabled={uploadingMusic}
+                                                className="inline-flex items-center gap-1 text-[11px] font-bold text-[#f7dc9a] hover:text-white px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                                            >
+                                                <RefreshCw className="w-3 h-3" /> Change
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    onCustomMusicChange?.(null);
+                                                    onMusicChange('beats');
+                                                }}
+                                                className="inline-flex items-center gap-1 text-[11px] font-bold text-[#fda4af] hover:text-red-300 px-2 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 transition-colors"
+                                            >
+                                                <Trash2 className="w-3 h-3" /> Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={false}
+                                        disabled={uploadingMusic}
+                                        onClick={() => musicInputRef.current?.click()}
+                                        className="col-span-1 sm:col-span-2 rounded-2xl border border-dashed border-[#f2c14e]/40 hover:border-[#f2c14e] bg-[rgba(242,193,78,0.04)] hover:bg-[rgba(242,193,78,0.08)] px-4 py-3 text-left transition-all cursor-pointer group"
+                                    >
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="flex items-center gap-2 text-sm font-bold text-[#f7dc9a] group-hover:text-white transition-colors">
+                                                {uploadingMusic ? <Loader2 className="w-4 h-4 animate-spin text-[#f2c14e]" /> : <Upload className="w-4 h-4 text-[#f2c14e]" />}
+                                                {uploadingMusic ? 'Uploading your song from device...' : 'Upload your own song from device'}
+                                            </span>
+                                            <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#f2c14e]/20 text-[#f7dc9a]">
+                                                Premium
+                                            </span>
+                                        </div>
+                                        <span className="block text-[11px] text-[#b9aed4] mt-0.5">MP3, M4A, WAV, AAC, OGG • Max 8MB</span>
+                                    </button>
+                                )}
                             </div>
+
+                            <input
+                                ref={musicInputRef}
+                                type="file"
+                                accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg"
+                                className="hidden"
+                                onChange={handleAudioUpload}
+                            />
+
+                            {musicError && (
+                                <div role="alert" className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-red-500/10 border border-red-500/30 px-3.5 py-2.5 text-xs text-red-200">
+                                    <span className="flex items-center gap-1.5">
+                                        <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                                        {musicError}
+                                    </span>
+                                    <button type="button" onClick={() => setMusicError('')} className="text-red-400 hover:text-white p-1" aria-label="Dismiss error">
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </Reveal>
 

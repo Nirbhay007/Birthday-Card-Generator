@@ -19,7 +19,7 @@ import { TRACKS, PREMIUM_TRACKS, getTrackSrc } from '@/lib/music';
 const DEVICE_KEY = 'bgen-premium-unlocked-v1'; // legacy session receipt
 const KEYS_KEY = 'bgen-premium-keys-v1'; // remembered magic-link keys
 const SNAP_KEY = 'bgen-premium-studio-v1'; // last paid universe (no key inside)
-const SNAP_PARAMS = ['occasion', 'to', 'from', 'age', 'msg', 'rs', 'vs', 'theme', 'music', 'for'];
+const SNAP_PARAMS = ['occasion', 'to', 'from', 'age', 'msg', 'rs', 'vs', 'theme', 'music', 'musicUrl', 'musicName', 'for'];
 
 function readStoredKeys() {
     try {
@@ -42,7 +42,7 @@ function celebrate() {
  * Personalize: /premium?occasion=anniversary&to=Priya&from=Rahul&age=2&msg=...
  * Paid access: /premium?...&key=unlock_… (magic link, no accounts needed).
  */
-export default function PremiumPage({ to, from, message, age, occasion, unlockKey, customReasons, customVows, initialPTheme, initialMusic, initialRel, giftPreview }) {
+export default function PremiumPage({ to, from, message, age, occasion, unlockKey, customReasons, customVows, initialPTheme, initialMusic, initialMusicUrl, initialMusicName, initialRel, giftPreview }) {
     const deck = getOccasion(occasion);
     const [forceGift, setForceGift] = useState(false);
     // Gift mode = the recipient's eyes only: pure universe, zero studio
@@ -54,9 +54,11 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
     const [ptheme, setPtheme] = useState(() => (PTHEME_IDS.includes(initialPTheme) ? initialPTheme : 'midnight'));
     const [music, setMusic] = useState(() => {
         // Premium-exclusive recordings first; every legacy id still plays.
-        const ids = [...PREMIUM_TRACKS.map((t) => t.id), ...TRACKS.map((t) => t.id)];
+        const ids = [...PREMIUM_TRACKS.map((t) => t.id), ...TRACKS.map((t) => t.id), 'custom'];
         return ids.includes(initialMusic) ? initialMusic : 'beats';
     });
+    const [musicUrl, setMusicUrl] = useState(() => initialMusicUrl || '');
+    const [musicName, setMusicName] = useState(() => initialMusicName || '');
     const [rel, setRel] = useState(() => (REL_IDS.includes(initialRel) ? initialRel : ''));
     const tone = getTone(rel);
     // Studio identity: editable on-page (URL params only prefill). Recipients
@@ -124,11 +126,15 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
             if (vs.length) p.set('vs', JSON.stringify(vs));
             if (ptheme !== 'midnight') p.set('theme', ptheme);
             if (music !== 'beats') p.set('music', music);
+            if (music === 'custom' && musicUrl) {
+                p.set('musicUrl', musicUrl);
+                if (musicName) p.set('musicName', musicName);
+            }
             if (rel) p.set('for', rel);
             if (key) p.set('key', key);
             return p;
         },
-        [deck.id, effTo, effFrom, effAge, message, custom, editorActive, customReasons, customVows, ptheme, music, rel]
+        [deck.id, effTo, effFrom, effAge, message, custom, editorActive, customReasons, customVows, ptheme, music, musicUrl, musicName, rel]
     );
 
     const buildMagicLink = useCallback(
@@ -443,11 +449,11 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                 unlocked={unlocked}
                 giftMode={giftMode}
                 onUnlockRequest={scrollToCustomize}
-                audioSlot={<AudioPlayer track={music} src={getTrackSrc(music) || '/happy-birthday.mp3'} />}
+                audioSlot={<AudioPlayer track={music} src={getTrackSrc(music, musicUrl) || '/happy-birthday.mp3'} customName={music === 'custom' ? musicName : null} />}
             />
 
             {!giftMode && (
-                <CustomizePanel deck={deck} to={effTo} value={custom} onChange={setCustom} ptheme={ptheme} onPThemeChange={setPtheme} music={music} onMusicChange={setMusic} rel={rel} onRelChange={setRel} toName={toName} fromName={fromName} ageInput={ageInput} onToChange={setToName} onFromChange={setFromName} onAgeChange={setAgeInput} showContinue={!unlocked} onContinue={scrollToPaywall} />
+                <CustomizePanel deck={deck} to={effTo} value={custom} onChange={setCustom} ptheme={ptheme} onPThemeChange={setPtheme} music={music} onMusicChange={setMusic} musicUrl={musicUrl} musicName={musicName} onCustomMusicChange={(item) => { if (item) { setMusicUrl(item.url); setMusicName(item.name); } else { setMusicUrl(''); setMusicName(''); } }} rel={rel} onRelChange={setRel} toName={toName} fromName={fromName} ageInput={ageInput} onToChange={setToName} onFromChange={setFromName} onAgeChange={setAgeInput} showContinue={!unlocked} onContinue={scrollToPaywall} />
             )}
 
             {!unlocked && !giftMode && <Paywall onUnlocked={handleUnlocked} />}

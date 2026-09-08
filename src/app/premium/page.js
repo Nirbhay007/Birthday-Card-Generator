@@ -106,9 +106,12 @@ export default async function PremiumRoute({ searchParams }) {
     const customVows = parseVows(pick('vs'));
     const rawTheme = String(pick('theme') || 'midnight').toLowerCase();
     const initialPTheme = PTHEME_IDS.includes(rawTheme) ? rawTheme : 'midnight';
-    const musicIds = [...PREMIUM_TRACKS.map((t) => t.id), ...TRACKS.map((t) => t.id)];
+    const musicIds = [...PREMIUM_TRACKS.map((t) => t.id), ...TRACKS.map((t) => t.id), 'custom'];
     const rawMusic = String(pick('music') || 'beats').toLowerCase();
     const initialMusic = musicIds.includes(rawMusic) ? rawMusic : 'beats';
+    const rawMusicUrl = clean(pick('musicUrl'), '', 600);
+    const initialMusicUrl = rawMusicUrl && /^https?:\/\//.test(rawMusicUrl) ? rawMusicUrl : null;
+    const initialMusicName = clean(pick('musicName'), '', 80);
     const rawRel = String(pick('for') || '').toLowerCase();
     const initialRel = REL_IDS.includes(rawRel) ? rawRel : '';
     const giftPreview = ['1', 'true', 'yes'].includes(String(pick('gift') || '').toLowerCase());
@@ -121,7 +124,7 @@ export default async function PremiumRoute({ searchParams }) {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
-            <PremiumPage to={to} from={from} message={message} age={age} occasion={occasion} unlockKey={unlockKey} customReasons={customReasons} customVows={customVows} initialPTheme={initialPTheme} initialMusic={initialMusic} initialRel={initialRel} giftPreview={giftPreview} />
+            <PremiumPage to={to} from={from} message={message} age={age} occasion={occasion} unlockKey={unlockKey} customReasons={customReasons} customVows={customVows} initialPTheme={initialPTheme} initialMusic={initialMusic} initialMusicUrl={initialMusicUrl} initialMusicName={initialMusicName} initialRel={initialRel} giftPreview={giftPreview} />
         </>
     );
 }

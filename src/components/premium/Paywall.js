@@ -204,6 +204,7 @@ export default function Paywall({ onUnlocked }) {
 
                         <ul className="mt-6 text-left text-[13px] leading-relaxed text-[#e9e2f5] space-y-2 max-w-sm mx-auto">
                             <li>✉️ The letter, 6 reasons, vows + candle finale — all 5 acts</li>
+                            <li>🎵 Studio recordings + upload any song from your device</li>
                             <li>🔗 Private magic link · works on any device · never expires</li>
                             <li>💜 Happy-tears promise — loved twice or we refund you</li>
                         </ul>

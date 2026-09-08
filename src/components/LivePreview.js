@@ -36,15 +36,21 @@ export default function LivePreview({ data }) {
                             ) : null}
                         </div>
 
-                        {photos && photos.length > 0 ? (
-                            <div className="w-full aspect-square mb-4 rounded-xl overflow-hidden shadow-lg">
-                                <img src={photos[0]} alt="Preview" className="w-full h-full object-cover" />
-                            </div>
-                        ) : (
-                            <div className="w-full aspect-square mb-4 rounded-xl bg-black/5 border border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 text-xs gap-1">
-                                <span className="text-2xl">📸</span> Your photo here
-                            </div>
-                        )}
+                        {(() => {
+                            const coverSrc = photos && photos.length > 0
+                                ? (typeof photos[0] === 'string' ? photos[0] : photos[0]?.preview)
+                                : null;
+
+                            return coverSrc ? (
+                                <div className="w-full aspect-square mb-4 rounded-xl overflow-hidden shadow-lg">
+                                    <img src={coverSrc} alt="Preview" className="w-full h-full object-cover" />
+                                </div>
+                            ) : (
+                                <div className="w-full aspect-square mb-4 rounded-xl bg-black/5 border border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 text-xs gap-1">
+                                    <span className="text-2xl">📸</span> Your photo here
+                                </div>
+                            );
+                        })()}
 
                         <p className="text-sm opacity-80 mb-2 line-clamp-4">
                             {message || 'Your message will appear here...'}

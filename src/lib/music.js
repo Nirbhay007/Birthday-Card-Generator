@@ -95,7 +95,8 @@ export const SYNTH_CONFIG = {
     fanfare: { beat: 0.27, type: 'triangle', gain: 0.15, decay: 0.8 },
 };
 
-export function getTrackName(id) {
+export function getTrackName(id, customName = null) {
+    if (id === 'custom') return customName || 'Your Custom Song';
     return (
         TRACKS.find((t) => t.id === id) ||
         PREMIUM_TRACKS.find((t) => t.id === id) ||
@@ -104,8 +105,9 @@ export function getTrackName(id) {
     ).name;
 }
 
-/** Remote MP3 url for file-based tracks (classic + premium recordings). */
-export function getTrackSrc(id) {
+/** Remote MP3 url for file-based tracks (classic + premium recordings + custom). */
+export function getTrackSrc(id, customUrl = null) {
+    if (id === 'custom') return customUrl || null;
     if (id === 'classic') return '/happy-birthday.mp3';
     return PREMIUM_TRACKS.find((t) => t.id === id)?.src || null;
 }

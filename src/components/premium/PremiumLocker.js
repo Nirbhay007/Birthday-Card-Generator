@@ -1,6 +1,6 @@
 'use client';
 
-import { Lock, Mail, Sparkles, Flame, BadgeCheck } from 'lucide-react';
+import { Lock, Mail, Sparkles, Flame, BadgeCheck, Music } from 'lucide-react';
 import Link from 'next/link';
 import Reveal from './Reveal';
 import Magnetic from './Magnetic';
@@ -56,6 +56,7 @@ export default function PremiumLocker({ to = 'them', priceLabel = '₹49', giftM
                             {[
                                 { icon: Mail, text: 'The Letter. An honest message they will read again and again' },
                                 { icon: Sparkles, text: 'The Reasons. Six meaningful qualities that make them unforgettable' },
+                                { icon: Music, text: 'The Sound. Studio recordings or your favorite song from your device' },
                                 { icon: Flame, text: 'The Finale. Heartfelt promises, an interactive candle ritual, and starlit wishes' },
                             ].map((r) => (
                                 <li key={r.text} className="flex items-start gap-3">

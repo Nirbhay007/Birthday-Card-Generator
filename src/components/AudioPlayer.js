@@ -35,7 +35,7 @@ function scheduleMelodyLoop(ctx, config, melody, onEnd) {
     return () => timers.forEach(clearTimeout);
 }
 
-export default function AudioPlayer({ track = 'classic', src = '/happy-birthday.mp3', autoPlay = true }) {
+export default function AudioPlayer({ track = 'classic', src = '/happy-birthday.mp3', autoPlay = true, customName = null }) {
     const [playing, setPlaying] = useState(false);
     // If a remote MP3 ever fails (CDN hiccup, blocked hotlink), silently melt
     // into the built-in synth waltz rather than leaving them in silence.
@@ -48,7 +48,10 @@ export default function AudioPlayer({ track = 'classic', src = '/happy-birthday.
     // Whether the user wants sound (independent of browser autoplay blocks)
     const wantSound = useRef(track !== 'off' && autoPlay);
     const trackRef = useRef(activeTrack);
-    trackRef.current = activeTrack;
+
+    useEffect(() => {
+        trackRef.current = activeTrack;
+    }, [activeTrack]);
 
     const stopSynth = useCallback(() => {
         if (cancelLoopRef.current) cancelLoopRef.current();
@@ -96,13 +99,13 @@ export default function AudioPlayer({ track = 'classic', src = '/happy-birthday.
         }
     }, [startSynthLoop]);
 
-    // Best-effort autoplay on mount (works on desktop when the visit
-    // follows a user click); mobile reliably starts via the gift-open tap.
+    // Best-effort autoplay on mount
     useEffect(() => {
-        startPlayback();
-        // Mount-only attempt
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        const timer = setTimeout(() => {
+            startPlayback();
+        }, 100);
+        return () => clearTimeout(timer);
+    }, [startPlayback]);
 
     // The gift-open tap is a real gesture: this listener runs synchronously
     // inside it, so browsers (incl. iOS Safari) allow audio to start here.
@@ -114,21 +117,22 @@ export default function AudioPlayer({ track = 'classic', src = '/happy-birthday.
 
     useEffect(() => () => stopSynth(), [stopSynth]);
 
-    // CDN fallback recovery: if the remote file died mid-flow, the synth
-    // waltz takes over without the visitor lifting a finger.
+    // CDN fallback recovery: if remote file died, synth waltz takes over
     useEffect(() => {
         if (audioFailed && wantSound.current) startPlayback();
     }, [audioFailed, startPlayback]);
 
-    // Seamless track switching: when the giver picks another track mid-party,
-    // crossfade by stopping the old engine and starting the new one at once.
-    // Imperative only (no setState) so it stays lint-clean and instant.
-    // Runs every render, guarded by ref — the tap that changed the track is
-    // still a fresh user gesture, so mobile browsers allow the new play().
+    // Seamless track/src switching
     const prevTrack = useRef(activeTrack);
+    const prevSrc = useRef(src);
     useEffect(() => {
-        if (prevTrack.current === activeTrack) return;
+        const trackChanged = prevTrack.current !== activeTrack;
+        const srcChanged = prevSrc.current !== src;
+        if (!trackChanged && !srcChanged) return;
+
         prevTrack.current = activeTrack;
+        prevSrc.current = src;
+
         if (!wantSound.current || !playing) return;
         try { audioRef.current?.pause(); } catch {}
         stopSynth();
@@ -143,6 +147,8 @@ export default function AudioPlayer({ track = 'classic', src = '/happy-birthday.
     });
 
     if (activeTrack === 'off') return null;
+
+    const displayName = getTrackName(activeTrack, customName);
 
     const togglePlay = async () => {
         if (playing) {
@@ -159,8 +165,8 @@ export default function AudioPlayer({ track = 'classic', src = '/happy-birthday.
     return (
         <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-1.5">
             {activeTrack !== 'classic' && (
-                <span className="text-[10px] font-bold bg-gray-900/85 text-purple-200 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg">
-                    <Music className="w-3 h-3" /> {getTrackName(activeTrack)}
+                <span className="text-[10px] font-bold bg-gray-900/85 text-purple-200 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg max-w-[200px] truncate">
+                    <Music className="w-3 h-3 shrink-0" /> <span className="truncate">{displayName}</span>
                 </span>
             )}
             {!isSynth && (
@@ -175,7 +181,7 @@ export default function AudioPlayer({ track = 'classic', src = '/happy-birthday.
             <button
                 onClick={togglePlay}
                 className="bg-gray-900/90 text-white backdrop-blur-md p-3.5 rounded-full shadow-2xl hover:bg-gray-800 transition-all focus:outline-none focus:ring-4 focus:ring-purple-500 flex items-center justify-center cursor-pointer"
-                aria-label={playing ? `Mute background music (${getTrackName(activeTrack)})` : `Play background music (${getTrackName(activeTrack)})`}
+                aria-label={playing ? `Mute background music (${displayName})` : `Play background music (${displayName})`}
                 title={playing ? 'Mute music' : 'Play music'}
             >
                 {playing ? <Volume2 className="w-6 h-6 text-purple-400" /> : <VolumeX className="w-6 h-6 text-gray-400" />}

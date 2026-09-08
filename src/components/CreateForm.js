@@ -81,6 +81,7 @@ export default function CreateForm({ formData, setFormData }) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [loading, setLoading] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState('');
     const [inspirationOpen, setInspirationOpen] = useState(false);
     const [step, setStep] = useState(1);
     const [nameError, setNameError] = useState('');
@@ -128,7 +129,8 @@ export default function CreateForm({ formData, setFormData }) {
     useEffect(() => {
         try {
             if (formData.recipientName || formData.message || (formData.photos || []).length > 0) {
-                localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...formData, savedAt: Date.now() }));
+                const cleanPhotos = (formData.photos || []).filter((p) => typeof p === 'string' && p.startsWith('http'));
+                localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...formData, photos: cleanPhotos, savedAt: Date.now() }));
             }
         } catch { }
     }, [formData]);
@@ -187,11 +189,36 @@ export default function CreateForm({ formData, setFormData }) {
             return;
         }
         setLoading(true);
+        setLoadingMessage('Uploading photos...');
         try {
+            const finalPhotoUrls = [];
+            const rawPhotos = formData.photos || [];
+            for (let i = 0; i < rawPhotos.length; i++) {
+                const item = rawPhotos[i];
+                if (typeof item === 'string') {
+                    finalPhotoUrls.push(item);
+                } else if (item && item.file) {
+                    setLoadingMessage(`Uploading photo ${i + 1} of ${rawPhotos.length}...`);
+                    const fd = new FormData();
+                    fd.append('file', item.file);
+                    const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
+                    const uploadData = await uploadRes.json();
+                    if (uploadData.success && uploadData.url) {
+                        finalPhotoUrls.push(uploadData.url);
+                    } else {
+                        throw new Error(uploadData.error || 'Failed to upload photo');
+                    }
+                }
+            }
+
+            setLoadingMessage('Wrapping your surprise...');
             const res = await fetch('/api/birthday', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({
+                    ...formData,
+                    photos: finalPhotoUrls,
+                }),
             });
             const data = await res.json();
             if (data.success) {
@@ -202,9 +229,10 @@ export default function CreateForm({ formData, setFormData }) {
             }
         } catch (error) {
             console.error('Error creating page:', error);
-            alert('An error occurred. Please try again.');
+            alert(error.message || 'An error occurred. Please try again.');
         } finally {
             setLoading(false);
+            setLoadingMessage('');
         }
     };
 
@@ -470,7 +498,7 @@ export default function CreateForm({ formData, setFormData }) {
                 {step === 3 && (
                     <div className="space-y-5 pop-in">
                         <div>
-                            <span className="block text-sm font-semibold text-gray-800 mb-1">Add favorite photos <span className="text-gray-400 text-xs font-normal">(up to 8 — they auto-shrink for fast sharing)</span></span>
+                            <span className="block text-sm font-semibold text-gray-800 mb-1">Add favorite photos <span className="text-gray-400 text-xs font-normal">(up to 2 — max 5MB each)</span></span>
                             <PhotoUploader
                                 photos={formData.photos}
                                 setPhotos={(photos) => setFormData((prev) => ({ ...prev, photos: typeof photos === 'function' ? photos(prev.photos) : photos }))}
@@ -490,7 +518,7 @@ export default function CreateForm({ formData, setFormData }) {
                                 </span>
                             </label>
                             <p className="text-[11px] text-gray-500 pl-6">
-                                Pages stay active 30 days — with this ticked, we&apos;ll keep yours alive for next year 💜
+                                Photos stay active 7 days after the birthday — tick below to keep them for next year 💜
                             </p>
                             {formData.remindNextYear && (
                                 <input
@@ -548,7 +576,7 @@ export default function CreateForm({ formData, setFormData }) {
                             className="flex-1 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold text-base sm:text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:scale-[0.98] disabled:transform-none transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-4 focus-visible:ring-purple-300 cursor-pointer"
                         >
                             {loading ? (
-                                <><Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" /> Wrapping your surprise...</>
+                                <><Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" /> {loadingMessage || 'Wrapping your surprise...'}</>
                             ) : (
                                 <><Sparkles className="w-5 h-5" aria-hidden="true" /> Generate Free Birthday Page</>
                             )}
