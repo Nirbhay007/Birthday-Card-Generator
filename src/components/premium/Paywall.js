@@ -130,8 +130,15 @@ export default function Paywall({ onUnlocked }) {
                             ))}
                         </div>
 
-                        <p className="prm-serif text-6xl sm:text-7xl font-extrabold prm-gold-text" suppressHydrationWarning>{price.label}</p>
-                        <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#b9aed4] mt-2 mb-8">one-time · theirs forever</p>
+                        <p className="prm-offer-badge mb-5">🎉 Launch offer · {price.off} ends soon</p>
+
+                        <p className="text-lg sm:text-xl font-bold text-[#e9e2f5]">
+                            <span className="prm-strike" aria-label={`Regular price ${price.mrpLabel}`}>{price.mrpLabel}</span>{' '}
+                            <span className="prm-serif text-6xl sm:text-7xl font-extrabold prm-gold-text align-middle" suppressHydrationWarning>{price.label}</span>{' '}
+                            <span className="prm-off-pill">{price.off}</span>
+                        </p>
+                        <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#b9aed4] mt-3 mb-1">one-time · theirs forever</p>
+                        <p className="text-sm font-bold text-[#7ee2a8] mb-8">{price.saveLabel} today · less than a pizza slice · less than chai for two</p>
 
                         <div className="space-y-3">
                             <Magnetic strength={26} className="block">
@@ -144,7 +151,7 @@ export default function Paywall({ onUnlocked }) {
                                     {status.phase === 'verifying'
                                         ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
                                         : <Zap className="w-5 h-5" aria-hidden="true" />}
-                                    {region === 'IN' ? 'Pay ₹49 with UPI, card or netbanking' : 'Pay $1 securely by card'}
+                                    {`Unlock everything for ${price.label} · ${price.saveLabel.toLowerCase()}`}
                                 </button>
                             </Magnetic>
 
@@ -195,9 +202,14 @@ export default function Paywall({ onUnlocked }) {
                             <p role="status" className="mt-4 text-sm font-semibold text-[#f7dc9a]">{status.message}</p>
                         )}
 
+                        <ul className="mt-6 text-left text-[13px] leading-relaxed text-[#e9e2f5] space-y-2 max-w-sm mx-auto">
+                            <li>✉️ The letter, 6 reasons, vows + candle finale — all 5 acts</li>
+                            <li>🔗 Private magic link · works on any device · never expires</li>
+                            <li>💜 Happy-tears promise — loved twice or we refund you</li>
+                        </ul>
+
                         <p className="mt-6 text-xs leading-relaxed text-[#b9aed4]">
-                            Secured by Razorpay. And our happy tears promise. If they do not replay it twice,
-                            reply to your receipt and we refund you.
+                            Secured by Razorpay {region === 'IN' ? '(UPI, cards, netbanking)' : '(cards worldwide)'}. One payment, no subscription, no account.
                         </p>
                     </div>
                 </Reveal>

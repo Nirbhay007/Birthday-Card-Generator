@@ -12,8 +12,28 @@ export const PREMIUM_PRODUCT = {
     name: 'Premium Birthday Universe',
 };
 
-export const PREMIUM_PRICE_INR = { amount: 49, currency: 'INR', label: '₹49', method: 'upi' };
-export const PREMIUM_PRICE_INTL = { amount: 1, currency: 'USD', label: '$1', method: 'card' };
+export const PREMIUM_PRICE_INR = {
+    amount: 49,
+    currency: 'INR',
+    label: '₹49',
+    method: 'upi',
+    // Display-only anchoring (server charges `amount` — never the MRP).
+    mrp: 199,
+    mrpLabel: '₹199',
+    off: '75% OFF',
+    saveLabel: 'Save ₹150',
+};
+export const PREMIUM_PRICE_INTL = {
+    amount: 1,
+    currency: 'USD',
+    label: '$1',
+    method: 'card',
+    // Display-only anchoring (server charges `amount` — never the MRP).
+    mrp: 3,
+    mrpLabel: '$3',
+    off: '67% OFF',
+    saveLabel: 'Save $2',
+};
 
 /**
  * Best-effort home-country detection. Timezone is the strongest free signal
@@ -24,7 +44,7 @@ export function detectRegion(timeZone) {
     try {
         const tz = timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || '';
         if (/asia\/kolkata|asia\/calcutta/i.test(tz)) return 'IN';
-    } catch {}
+    } catch { }
     return 'INTL';
 }
 

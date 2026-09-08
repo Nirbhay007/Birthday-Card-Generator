@@ -43,6 +43,7 @@ export default function PremiumLocker({ to = 'them', priceLabel = '₹49', giftM
                             <Lock className="w-7 h-7 text-[#241031]" aria-hidden="true" />
                         </div>
                         <p className="prm-eyebrow mb-4">🔒 4 acts still sealed</p>
+                        <p className="mb-4"><span className="prm-offer-badge">🎉 Launch offer · 75% off</span></p>
                         <h3 className="prm-serif text-2xl sm:text-4xl font-extrabold leading-tight mb-4">
                             The part that makes them <span className="prm-gold-text prm-glitch" data-text="cry happy tears">cry happy tears</span> is behind this lock.
                         </h3>
@@ -77,7 +78,7 @@ export default function PremiumLocker({ to = 'them', priceLabel = '₹49', giftM
                                     onClick={onUnlock}
                                     className="prm-shimmer-btn w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-4 rounded-full bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] font-extrabold text-base sm:text-lg shadow-[0_20px_60px_rgba(242,193,78,0.4)] transition-transform hover:scale-[1.03] active:scale-95"
                                 >
-                                    Unlock everything for {priceLabel}
+                                    Unlock everything · <s className="prm-strike">₹199</s> {priceLabel}
                                 </button>
                             )}
                         </Magnetic>
@@ -85,6 +86,7 @@ export default function PremiumLocker({ to = 'them', priceLabel = '₹49', giftM
                             <BadgeCheck className="w-4 h-4 text-[#7ee2a8]" aria-hidden="true" />
                             One-time payment · Theirs forever · Happy-tears guarantee
                         </p>
+                        <p className="mt-1.5 text-xs font-bold text-[#7ee2a8]">$1 worldwide · less than a pizza slice</p>
                     </div>
                 </Reveal>
             </div>
