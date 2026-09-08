@@ -77,6 +77,13 @@ function applyTone(message, tone, name) {
     return first.split(' ').slice(0, 26).join(' ') + '…';
 }
 
+function formatDateInputValue(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 export default function CreateForm({ formData, setFormData }) {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -85,12 +92,24 @@ export default function CreateForm({ formData, setFormData }) {
     const [inspirationOpen, setInspirationOpen] = useState(false);
     const [step, setStep] = useState(1);
     const [nameError, setNameError] = useState('');
+    const [dateError, setDateError] = useState('');
     const [toneMsg, setToneMsg] = useState('');
+
+    // Allow belated birthdays up to 30 days in the past, and upcoming up to 365 days ahead
+    const { minDate, maxDate } = React.useMemo(() => {
+        const now = new Date();
+        const min = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+        const max = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 365);
+        return {
+            minDate: formatDateInputValue(min),
+            maxDate: formatDateInputValue(max),
+        };
+    }, []);
     const restoredRef = useRef(false);
     // Guards against accidental submits: the Generate button sits exactly
     // where Continue was, so a double-click/double-tap on Continue would
     // otherwise land its second click on Generate and submit instantly.
-    const stepShownAt = useRef(Date.now());
+    const stepShownAt = useRef(0);
     const armedSubmit = useRef(false);
 
     const set = (patch) => setFormData((prev) => ({ ...prev, ...patch }));
@@ -149,11 +168,24 @@ export default function CreateForm({ formData, setFormData }) {
     }, [searchParams, formData.message, formData.source, setFormData]);
 
     const goNext = () => {
-        if (step === 1 && !formData.recipientName.trim()) {
-            setNameError('Please add their name — it makes the whole surprise personal ✨');
-            return;
+        if (step === 1) {
+            if (!formData.recipientName.trim()) {
+                setNameError('Please add their name — it makes the whole surprise personal ✨');
+                return;
+            }
+            if (formData.birthdayDate) {
+                if (formData.birthdayDate < minDate) {
+                    setDateError('Date cannot be more than 30 days in the past (for belated wishes)');
+                    return;
+                }
+                if (formData.birthdayDate > maxDate) {
+                    setDateError('Please select a birthday within the next 12 months');
+                    return;
+                }
+            }
         }
         setNameError('');
+        setDateError('');
         setStep((s) => Math.min(3, s + 1));
     };
 
@@ -187,6 +219,18 @@ export default function CreateForm({ formData, setFormData }) {
             setStep(1);
             setNameError('Please add their name — it makes the whole surprise personal ✨');
             return;
+        }
+        if (formData.birthdayDate) {
+            if (formData.birthdayDate < minDate) {
+                setStep(1);
+                setDateError('Date cannot be more than 30 days in the past (for belated wishes)');
+                return;
+            }
+            if (formData.birthdayDate > maxDate) {
+                setStep(1);
+                setDateError('Please select a birthday within the next 12 months');
+                return;
+            }
         }
         setLoading(true);
         setLoadingMessage('Uploading photos...');
@@ -333,10 +377,20 @@ export default function CreateForm({ formData, setFormData }) {
                                     id="birthdayDate"
                                     name="birthdayDate"
                                     type="date"
-                                    className={inputCls}
+                                    min={minDate}
+                                    max={maxDate}
+                                    className={cn(inputCls, dateError && 'border-red-400 ring-2 ring-red-100')}
                                     value={formData.birthdayDate || ''}
-                                    onChange={(e) => set({ birthdayDate: e.target.value })}
+                                    onChange={(e) => {
+                                        set({ birthdayDate: e.target.value });
+                                        if (dateError) setDateError('');
+                                    }}
                                 />
+                                {dateError ? (
+                                    <p className="text-xs text-red-600 font-semibold mt-1.5">{dateError}</p>
+                                ) : (
+                                    <p className="text-[11px] text-gray-400 mt-1">Upcoming or up to 30 days belated</p>
+                                )}
                             </div>
                             <div>
                                 <label htmlFor="age" className="block text-sm font-semibold text-gray-800 mb-1">

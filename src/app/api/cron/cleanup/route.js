@@ -14,18 +14,19 @@ export async function GET(request) {
         const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
         const twentyFourHoursAgo = new Date(now - 24 * 60 * 60 * 1000);
 
-        // 1. Find non-reminder pages whose birthday was >7 days ago (or created >7 days ago if no date set)
-        // that still have photos attached.
+        // 1. Find non-reminder pages created >7 days ago whose birthday was >7 days ago (or created >7 days ago if no date set)
+        // that still have photos attached. Belated cards created recently are protected for at least 7 days from creation.
         // We preserve BirthdayPage rows in DB for marketing/retargeting data, but delete photos from Blob storage.
         const expiredPages = await prisma.birthdayPage.findMany({
             where: {
                 reminderEmail: null,
+                createdAt: { lt: sevenDaysAgo },
                 photos: {
                     some: {},
                 },
                 OR: [
                     { birthdayDate: { lt: sevenDaysAgo } },
-                    { birthdayDate: null, createdAt: { lt: sevenDaysAgo } },
+                    { birthdayDate: null },
                 ],
             },
             include: {

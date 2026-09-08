@@ -45,11 +45,24 @@ export async function POST(request) {
             ? source.slice(0, 60)
             : null;
 
+        let validBirthdayDate = null;
+        if (birthdayDate) {
+            const parsed = new Date(birthdayDate);
+            if (!Number.isNaN(parsed.getTime())) {
+                const now = Date.now();
+                const minTime = now - 35 * 24 * 60 * 60 * 1000; // allow buffer for timezone differences
+                const maxTime = now + 370 * 24 * 60 * 60 * 1000; // allow buffer up to ~1 year ahead
+                if (parsed.getTime() >= minTime && parsed.getTime() <= maxTime) {
+                    validBirthdayDate = parsed;
+                }
+            }
+        }
+
         // Create the page and photos in a transaction
         const page = await prisma.birthdayPage.create({
             data: {
                 recipientName: String(recipientName).slice(0, 80),
-                birthdayDate: birthdayDate ? new Date(birthdayDate) : null,
+                birthdayDate: validBirthdayDate,
                 message: typeof message === 'string' ? message.slice(0, 2000) : null,
                 theme: theme || 'elegant',
                 ipAddress: ip,
