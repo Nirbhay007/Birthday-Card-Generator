@@ -11,6 +11,7 @@ export const TONES = {
         signOff: 'Forever yours',
         vowsTitleMain: null, // null = keep the occasion deck's titles
         vowsTitleAccent: null,
+        letterIntro: null,
         letterMid: null, // null = keep the occasion deck's words
         vows: null,
     },
@@ -18,26 +19,30 @@ export const TONES = {
         id: 'family',
         signOff: 'With all my love',
         vowsTitleMain: 'Three promises,',
-        vowsTitleAccent: 'kept always',
+        vowsTitleAccent: 'from the heart',
+        letterIntro:
+            'Everything good in my life has been shaped by your love, patience, and guidance.',
         letterMid:
-            'You have given me everything and asked for nothing. Not once. I stopped counting the sacrifices a long time ago, because I ran out of numbers before I ran out of love.',
+            'You have given me so much over the years, often in quiet ways that asked for nothing in return. Through every high and low, your support has been my steady ground. Words will never be enough to thank you, but I want you to feel just how deeply you are loved and appreciated today.',
         vows: [
-            'I vow to call more, visit more, and never make you ask twice.',
-            'I vow to eat on time, drive safe, and take care of myself. Your usual worries, handled.',
-            'I vow to make you proud in small ways, every single day. Starting with this.',
+            'I promise to call more, stay close, and never let the busyness of life get in the way of family.',
+            'I promise to take care of myself, live by the values you taught me, and make you proud.',
+            'I promise to always be there for you with open arms, just like you have always been there for me.',
         ],
     },
     friend: {
         id: 'friend',
-        signOff: 'Your partner in crime',
+        signOff: 'Always in your corner',
         vowsTitleMain: 'Three promises,',
-        vowsTitleAccent: 'pinky swear',
+        vowsTitleAccent: 'between friends',
+        letterIntro:
+            'We may not always say the sentimental things out loud, but I hope you know how much our friendship means to me.',
         letterMid:
-            'You have seen me at my worst. Tired, broke, mid haircut disaster. And you stayed. Mostly for the snacks, but still. That is the whole review. Five stars.',
+            'Through the chaotic days, late-night talks, spontaneous plans, and all the times life was overwhelming, you have always shown up. A loyal friend is rare, and I truly hit the jackpot having you in my corner.',
         vows: [
-            'I vow to always reply “on my way” even when I have not left yet. Some traditions are sacred.',
-            'I vow to hype up your worst ideas just enough that you actually do them.',
-            'I vow that distance, jobs, and adulting will never downgrade us. Best friends load forever.',
+            'I promise to always answer when you need to talk, vent, or just sit in comfortable silence.',
+            'I promise to cheer the loudest for your dreams, and remind you of your strength whenever you doubt it.',
+            'I promise that no matter how busy adult life gets, our bond will always remain a priority.',
         ],
     },
 };

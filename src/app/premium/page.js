@@ -9,24 +9,24 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.on
 
 const OCC_META = {
     birthday: {
-        title: 'Premium Birthday Universe. The ₹49 Surprise They Will Replay for Years',
+        title: 'Premium Birthday Experience. A Heartfelt Surprise They Will Replay for Years',
         description:
-            'A cinematic premium birthday experience: sealed envelope, starlit arrival, a letter that says what you never could, reasons, vows and a candle finale. Preview Act I free. Unlock everything for ₹49 (or $1 worldwide).',
+            'A cinematic birthday surprise from the heart: wax-sealed envelope, personal letter, reasons you cherish them, meaningful promises, and an interactive candle finale. Preview Act I free. Unlock for ₹49 (or $1 worldwide).',
     },
     anniversary: {
-        title: 'Premium Anniversary Universe. Say It Bigger Than Flowers Ever Could',
+        title: 'Premium Anniversary Experience. Celebrate Your Story Together',
         description:
-            'A cinematic premium anniversary surprise: sealed envelope, starlit arrival, love letter, reasons, renewed vows and a candle finale. Preview Act I free. Unlock everything for ₹49 (or $1 worldwide).',
+            'A cinematic anniversary surprise: wax-sealed envelope, heartfelt love letter, shared memories, renewed promises, and a starlit celebration. Preview Act I free. Unlock for ₹49 (or $1 worldwide).',
     },
     valentine: {
-        title: 'Premium Valentine Universe. Better Than Roses That Die in a Week',
+        title: 'Premium Valentine Surprise. For the One Who Holds Your Heart',
         description:
-            'A cinematic premium Valentine surprise: sealed envelope, starlit arrival, love letter, reasons, vows and a candle finale. Preview Act I free. Unlock everything for ₹49 (or $1 worldwide).',
+            'A cinematic Valentine surprise: wax-sealed envelope, tender love letter, reasons you adore them, promises, and a starlit celebration. Preview Act I free. Unlock for ₹49 (or $1 worldwide).',
     },
     friendship: {
-        title: 'Premium Friendship Universe. For Your Favourite Human, No Occasion Needed',
+        title: 'Premium Friendship Experience. For the Person Who Has Always Had Your Back',
         description:
-            'A cinematic premium friendship surprise: sealed envelope, starlit arrival, honest letter, six funny reasons, pinky-swear promises and a candle finale. Preview Act I free. Unlock for ₹49 (or $1 worldwide).',
+            'A cinematic friendship surprise: wax-sealed envelope, honest letter, unforgettable memories, promises, and a celebration of your bond. Preview Act I free. Unlock for ₹49 (or $1 worldwide).',
     },
 };
 

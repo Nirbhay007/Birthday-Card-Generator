@@ -148,9 +148,9 @@ export default function CustomizePanel({ deck, to, value, onChange, ptheme, onPT
                                     </button>
                                 ))}
                             </div>
-                            {rel && tone.id !== 'romantic' && deck.id === 'birthday' && (
+                            {rel && tone.id !== 'romantic' && (
                                 <p className="text-[11px] leading-relaxed text-[#f7dc9a]/90 bg-[rgba(242,193,78,0.07)] border border-[rgba(242,193,78,0.25)] rounded-xl px-3.5 py-2.5">
-                                    Heads up: Birthday words lean a little romantic. Tweak them below in your voice, or switch to the Friendship occasion up top for playful.
+                                    Tone updated: Templates are now tailored with {tone.id === 'family' ? 'warm family gratitude' : 'honest friendship'}. You can also write your own words below.
                                 </p>
                             )}
                         </div>
@@ -174,7 +174,7 @@ export default function CustomizePanel({ deck, to, value, onChange, ptheme, onPT
                                     maxLength={LIMITS.letter}
                                     value={value.letter}
                                     onChange={(e) => set({ letter: e.target.value })}
-                                    placeholder="That story only you two know. The night everything changed. The thing they did last month that you still think about..."
+                                    placeholder="Share a memory, what makes them special to you, or something you want them to always remember..."
                                     aria-label="Your letter paragraph"
                                     className={`${inputCls} resize-y min-h-[110px] leading-relaxed`}
                                 />
@@ -207,7 +207,7 @@ export default function CustomizePanel({ deck, to, value, onChange, ptheme, onPT
                                             value={r.t}
                                             maxLength={LIMITS.title}
                                             onChange={(e) => setReason(i, { t: e.target.value })}
-                                            placeholder={['A title, like “Fries thief”', 'Another title', 'One more'][i]}
+                                            placeholder={['e.g. Always there for me', 'e.g. Contagious laugh', 'One more quality'][i]}
                                             aria-label={`Reason ${i + 1} title`}
                                             className={inputCls}
                                         />
@@ -215,7 +215,7 @@ export default function CustomizePanel({ deck, to, value, onChange, ptheme, onPT
                                             value={r.d}
                                             maxLength={LIMITS.line}
                                             onChange={(e) => setReason(i, { d: e.target.value })}
-                                            placeholder="And the one line story behind it"
+                                            placeholder="And a short line explaining why this means so much"
                                             aria-label={`Reason ${i + 1} story`}
                                             className={inputCls}
                                         />
@@ -231,7 +231,7 @@ export default function CustomizePanel({ deck, to, value, onChange, ptheme, onPT
                             <div className="flex items-start justify-between gap-3">
                                 <div>
                                     <p className="font-extrabold text-[#f7dc9a]">5. Three promises</p>
-                                    <p className="text-xs text-[#b9aed4] mt-0.5">Funny is fine. Soppy is fine. These seal Act IV.</p>
+                                    <p className="text-xs text-[#b9aed4] mt-0.5">Heartfelt, meaningful promises that seal Act IV.</p>
                                 </div>
                                 <button type="button" onClick={useVowsTemplate} className={`${templateLinkCls} shrink-0 pt-1`}>
                                     {filled === 'vows' ? 'Filled ✓' : `Use ${tone.id === 'romantic' ? deck.label.toLowerCase() : tone.id} words`}
@@ -244,7 +244,7 @@ export default function CustomizePanel({ deck, to, value, onChange, ptheme, onPT
                                         value={v}
                                         maxLength={LIMITS.vow}
                                         onChange={(e) => setVow(i, e.target.value)}
-                                        placeholder={['I vow to always...', 'I vow to never...', 'I vow that ten years from now...'][i]}
+                                        placeholder={['I promise to always...', 'I promise to stand by you when...', 'I promise that no matter what...'][i]}
                                         aria-label={`Promise ${i + 1}`}
                                         className={inputCls}
                                     />

@@ -45,18 +45,18 @@ export default function PremiumLocker({ to = 'them', priceLabel = '₹49', giftM
                         <p className="prm-eyebrow mb-4">🔒 4 acts still sealed</p>
                         <p className="mb-4"><span className="prm-offer-badge">🎉 Launch offer · 75% off</span></p>
                         <h3 className="prm-serif text-2xl sm:text-4xl font-extrabold leading-tight mb-4">
-                            The part that makes them <span className="prm-gold-text prm-glitch" data-text="cry happy tears">cry happy tears</span> is behind this lock.
+                            The most meaningful part of the surprise is <span className="prm-gold-text">waiting inside</span>.
                         </h3>
                         <p className="prm-lead text-sm sm:text-base mb-6">
-                            A free card says <em>“I remembered.”</em> This says <em>“you are the best
-                            thing that ever happened to me, and I stayed up all night proving it.”</em> Which
-                            one does {to} deserve?
+                            A simple text says you remembered. This shows {to} just how much they
+                            truly mean to you—with a personal letter, reasons they are cherished,
+                            and promises they will keep close forever.
                         </p>
                         <ul className="text-left text-sm sm:text-[0.95rem] space-y-3 mb-8 max-w-sm mx-auto">
                             {[
-                                { icon: Mail, text: 'The Letter. Everything you feel but never say out loud' },
-                                { icon: Sparkles, text: 'The Reasons. Six illustrated reasons they are unforgettable' },
-                                { icon: Flame, text: 'The Finale. Vows, candles, and a sky full of stars' },
+                                { icon: Mail, text: 'The Letter. An honest message they will read again and again' },
+                                { icon: Sparkles, text: 'The Reasons. Six meaningful qualities that make them unforgettable' },
+                                { icon: Flame, text: 'The Finale. Heartfelt promises, an interactive candle ritual, and starlit wishes' },
                             ].map((r) => (
                                 <li key={r.text} className="flex items-start gap-3">
                                     <r.icon className="w-5 h-5 mt-0.5 shrink-0 text-[#f2c14e]" aria-hidden="true" />

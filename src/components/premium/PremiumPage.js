@@ -481,8 +481,8 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                     </div>
                     <Reveal delay={150}>
                         <p className="prm-lead text-sm mt-10 max-w-xl mx-auto">
-                            A WhatsApp happy birthday costs nothing and is worth exactly that.
-                            This costs less than chai for two, and lands like you hired an orchestra.
+                            A quick text is forgotten in an hour.
+                            This costs less than chai for two, and feels like a personal keepsake they will revisit for years.
                         </p>
                     </Reveal>
                 </div>

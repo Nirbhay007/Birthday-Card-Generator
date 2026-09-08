@@ -104,9 +104,9 @@ export default function Paywall({ onUnlocked }) {
                 </Reveal>
                 <Reveal delay={200}>
                         <p className="prm-lead text-sm sm:text-base mb-8">
-                            You will forget the {price.label} by tomorrow. They will replay this on every
-                            bad day for the next ten years. Terrible investment on paper.
-                            Priceless if you love them.
+                            You will forget the {price.label} by tomorrow. But they will remember how you
+                            made them feel today, and revisit this surprise whenever they need a reminder
+                            of how much they are loved.
                         </p>
                 </Reveal>
 

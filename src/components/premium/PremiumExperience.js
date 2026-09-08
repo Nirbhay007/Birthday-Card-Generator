@@ -236,7 +236,8 @@ export default function PremiumExperience({
     // occasion). Isolated here so re-splitting never disturbs the pin above.
     // Titles deliberately use IO Reveals instead — SplitText on React-managed
     // text that changes is what froze the page.
-    const letterSig = `${letterText}||${ageBit}`;
+    const introText = fill(T.letterIntro || D.letterIntro || 'Some people make life feel lighter, warmer, and so much more meaningful just by being around. That is what you have always done for me.', ctx);
+    const letterSig = `${introText}||${letterText}||${ageBit}`;
 
     // Edited text changes section heights above scroll triggers (letter grows,
     // cards added). Re-measure shortly after typing stops, or entrances and
@@ -320,13 +321,13 @@ export default function PremiumExperience({
                         </div>
                     )}
                     <div className="relative z-10 max-w-lg w-full">
-                        <p className="prm-eyebrow mb-6">✦ A premium universe ✦</p>
+                        <p className="prm-eyebrow mb-6">✦ A special surprise ✦</p>
                         <h1 className="prm-serif text-3xl sm:text-5xl font-extrabold mb-3 break-words">
-                            {to}, a sealed universe awaits.
+                            {to}, this was made just for you.
                         </h1>
                         <p className="prm-lead mb-10">
-                            {from} made you something no store sells, no card holds,
-                            and no text message could ever carry. Break the seal to step inside.
+                            {from} put together something special from the heart.
+                            Full of memories, honest words, and love. Tap the seal to step inside.
                         </p>
                         <div className="prm-envelope relative rounded-[2rem] px-6 py-10 sm:p-12 overflow-hidden">
                             <div className="prm-envelope-flash absolute inset-0 opacity-0 bg-[radial-gradient(circle_at_50%_45%,rgba(247,220,154,0.85),transparent_65%)]" aria-hidden="true" />
@@ -396,7 +397,7 @@ export default function PremiumExperience({
                                     <Reveal className="text-center"><p className="prm-eyebrow mb-6">✦ Act II · The Letter ✦</p></Reveal>
                                     <Reveal>
                                         <h3 className="prm-serif prm-h-act text-center mb-10">
-                                            Words I never <span className="prm-gold-text">said out loud</span>
+                                            A letter <span className="prm-gold-text">from the heart</span>
                                         </h3>
                                     </Reveal>
                                     <Reveal delay={200}>
@@ -410,8 +411,7 @@ export default function PremiumExperience({
                                                 freezes (this is what broke age typing). */}
                                             <div key={letterSig} className="prm-gsap-letter prm-serif text-base sm:text-lg leading-[1.9] mt-4 space-y-4">
                                                 <p>
-                                                    Some people walk into your life quietly. Then they rearrange all the
-                                                    furniture in your heart. That is what you did to me.
+                                                    {introText}
                                                 </p>
                                                 <p className="whitespace-pre-line">
                                                     {letterText}
@@ -479,7 +479,7 @@ export default function PremiumExperience({
                                     </div>
                                     <Reveal delay={200}>
                                         <p className="mt-8 inline-flex items-center gap-2 text-sm font-bold text-[#f7dc9a]">
-                                            <InfinityIcon className="w-4 h-4" aria-hidden="true" /> No expiry date. No fine print.
+                                            <InfinityIcon className="w-4 h-4" aria-hidden="true" /> A promise for every tomorrow.
                                         </p>
                                     </Reveal>
                                 </div>
@@ -527,7 +527,7 @@ export default function PremiumExperience({
                                             </div>
                                             <p className="mt-8 flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-[0.25em] text-[#b9aed4]">
                                                 <Sparkles className="w-3.5 h-3.5 text-[#f2c14e]" aria-hidden="true" />
-                                                Made with obsession by {from}
+                                                Made with all my heart by {from}
                                             </p>
                                             <Link
                                                 href="/"
