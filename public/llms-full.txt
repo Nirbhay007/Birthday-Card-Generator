@@ -1,0 +1,87 @@
+# BirthdayGen — Comprehensive Documentation (llms-full.txt)
+
+> BirthdayGen (https://birthday.nirbhay.online) is a free web-based personalized birthday website maker and interactive digital greeting card generator. Creators design custom celebratory web pages with personal photos, audio tracks, custom messages, and real-time microphone-activated virtual candle blowing. Shareable on WhatsApp, Telegram, iMessage, and social media.
+
+---
+
+## 1. Product Overview & Core Architecture
+
+BirthdayGen transforms traditional static birthday greetings (cards, text messages, PDFs) into dynamic web experiences. 
+
+### Why BirthdayGen is Better Than Traditional Cards
+- **Interactive Candle Blowing**: Utilizes browser Web Audio API to detect microphone input, allowing the recipient to blow out virtual candles on mobile or desktop screens.
+- **Gift Box Reveal**: The recipient taps an animated gift box that bursts open with particle confetti.
+- **Photo Slideshow**: Allows creators to attach personal photos with responsive mobile-first image viewing.
+- **Celebratory Music**: Accompanied by integrated ambient audio playback.
+- **Zero Friction**: 100% free, no app downloads, no account registration or passwords required.
+- **Instant WhatsApp Sharing**: Provides custom OpenGraph dynamic previews showing the recipient's name and celebratory theme.
+
+---
+
+## 2. Visual Themes Available
+BirthdayGen provides 8 distinct visual themes suited for every personality and age group:
+1. **Royal Gold**: Dark luxury theme with deep purple and gleaming metallic gold accents.
+2. **Midnight Stars**: Dreamy cosmic navy and sparkling starlight animations.
+3. **Princess Fairytale**: Soft pastel pinks, delicate typography, and romantic elegance.
+4. **Unicorn Kids**: Vibrant, playful purple and rainbow palette tailored for children's celebrations.
+5. **Fun & Colorful**: Cheerful magenta and multicolored confetti explosion.
+6. **Elegant Classic**: Warm ivory and timeless serif typography for sophisticated greetings.
+7. **Retro Neon Arcade**: Cyberpunk-inspired terminal green and dark contrast arcade aesthetics.
+8. **Modern Minimal**: Clean monochromatic layout focused on typography and photography.
+
+---
+
+## 3. Directory of Milestone Age Greetings
+BirthdayGen hosts dedicated programmatic guides with age-appropriate wishes, life advice, and custom card templates:
+- [16th Birthday Wishes](https://birthday.nirbhay.online/ages/16): Sweet Sixteen celebrations, driving independence, and teenage dreams.
+- [18th Birthday Wishes](https://birthday.nirbhay.online/ages/18): Adulthood milestone, voting rights, and university beginnings.
+- [21st Birthday Wishes](https://birthday.nirbhay.online/ages/21): Key to adulthood, celebration rites of passage, and freedom.
+- [25th Birthday Wishes](https://birthday.nirbhay.online/ages/25): Quarter-century milestone, career launches, and personal growth.
+- [30th Birthday Wishes](https://birthday.nirbhay.online/ages/30): Entering the confident thirties, wisdom, and life achievements.
+- [40th Birthday Wishes](https://birthday.nirbhay.online/ages/40): Fabulous forties, prime of life, and celebration of legacy.
+- [50th Birthday Wishes](https://birthday.nirbhay.online/ages/50): Golden jubilee celebration, life mastery, and honored memories.
+- [60th Birthday Wishes](https://birthday.nirbhay.online/ages/60): Diamond milestone, retirement beginnings, and cherished family tributes.
+- [Browse All Ages](https://birthday.nirbhay.online/ages): Full index of milestone birthdays.
+
+---
+
+## 4. Directory of Relationship & Themed Wishes
+Curated libraries with copyable messages that can be imported directly into a card:
+- [Best Friend](https://birthday.nirbhay.online/wishes/best-friend): Inside jokes, loyalty, and lifelong bonding.
+- [Romantic](https://birthday.nirbhay.online/wishes/romantic): Emotional love letters and romantic tributes.
+- [Funny](https://birthday.nirbhay.online/wishes/funny): Humorous age teasing and witty one-liners.
+- [Short & Sweet](https://birthday.nirbhay.online/wishes/short-sweet): Concise, punchy greetings perfect for quick texts.
+- [Mom](https://birthday.nirbhay.online/wishes/mom): Heartfelt gratitude and appreciation for maternal love.
+- [Dad](https://birthday.nirbhay.online/wishes/dad): Respect, humor, and admiration for fathers.
+- [Sister](https://birthday.nirbhay.online/wishes/sister): Sisterhood, fond childhood memories, and warmth.
+- [Brother](https://birthday.nirbhay.online/wishes/brother): High-fives, playful ribbing, and brotherly camaraderie.
+- [Husband](https://birthday.nirbhay.online/wishes/husband): Devotion and partnership celebrations.
+- [Wife](https://birthday.nirbhay.online/wishes/wife): Deep romance and tribute to life partners.
+- [Boyfriend](https://birthday.nirbhay.online/wishes/boyfriend): Sweet, loving messages for boyfriends.
+- [Girlfriend](https://birthday.nirbhay.online/wishes/girlfriend): Adoring and charming greetings for girlfriends.
+- [Son](https://birthday.nirbhay.online/wishes/son): Pride, encouragement, and maternal/paternal affection.
+- [Daughter](https://birthday.nirbhay.online/wishes/daughter): Love, confidence-building, and celebration of joy.
+- [Grandma](https://birthday.nirbhay.online/wishes/grandma): Warmth, wisdom, and gratitude for grandmothers.
+- [Grandpa](https://birthday.nirbhay.online/wishes/grandpa): Stories, admiration, and honoring grandfathers.
+- [Coworker](https://birthday.nirbhay.online/wishes/coworker): Professional, polite, and friendly team wishes.
+- [Teacher](https://birthday.nirbhay.online/wishes/teacher): Gratitude and mentorship acknowledgments.
+- [Belated](https://birthday.nirbhay.online/wishes/belated): Gracious, humorous late birthday apologies.
+
+---
+
+## 5. Frequently Asked Questions (FAQ)
+
+### How does the virtual candle blowing work?
+BirthdayGen uses the browser's native Web Audio API (`AudioContext` and `AnalyserNode`). When prompted, the recipient allows temporary microphone access. The app measures decibel peaks and turbulent frequencies characteristic of human breath or blowing. When detected, the flame element extinguishes with smoke animations, audio cheers, and confetti explosions.
+
+### Is BirthdayGen completely free?
+Yes. Creating, personalizing, previewing, and sharing interactive birthday cards is 100% free with no hidden paywalls, subscriptions, or watermarked blockades. Premium options exist for multi-act cinematic keepsakes.
+
+### How do I share a birthday website on WhatsApp?
+After customizing the recipient's name, message, theme, and optional photos, click "Generate Birthday Page". BirthdayGen produces a unique URL (`https://birthday.nirbhay.online/b/[id]`). You can click the WhatsApp button to open a pre-filled chat with an automated preview card.
+
+### How long does a generated birthday website stay online?
+Pages remain active for 30 days. Users who opt into the free annual reminder feature have their pages preserved for subsequent years.
+
+### Is user data and photos kept private?
+Yes. BirthdayGen does not sell user information, display intrusive third-party ads, or require personal account creation. Uploaded photos are stored strictly to render the card for the recipient. Individual greeting pages (`/b/[id]`) are configured with `robots: { index: false }` to protect privacy and prevent personal names or photos from surfacing on public search engine indices.

@@ -46,12 +46,14 @@ export default async function sitemap() {
   // NOTE: personal /b/[id] greeting pages are intentionally excluded —
   // they are noindex UGC. Indexing hundreds of thin name-pages would
   // dilute crawl budget and site quality. Only ranking hubs are listed.
-  // Premium landing (+ occasion variants, each with unique metadata).
-  const premiumRoutes = ['', '?occasion=anniversary', '?occasion=valentine', '?occasion=friendship'].map((q) => ({
-    url: `${baseUrl}/premium${q}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly',
-    priority: 0.85,
-  }));
+  // Premium landing
+  const premiumRoutes = [
+    {
+      url: `${baseUrl}/premium`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.85,
+    },
+  ];
   return [...routes, ...wishesCategoryRoutes, ...ageRoutes, ...premiumRoutes];
 }
