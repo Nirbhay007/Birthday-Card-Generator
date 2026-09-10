@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { uploadFileToR2 } from '@/lib/r2';
 
 // In-memory sliding-window rate limiting (20 uploads per hour per IP)
 const uploadRateLimit = new Map();
@@ -110,13 +110,19 @@ export async function POST(request) {
         const folder = isAudio ? 'music' : 'photos';
         const pathname = `${folder}/${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`;
 
-        const blob = await put(pathname, file, {
-            access: 'public',
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const contentType = file.type || (isAudio ? 'audio/mpeg' : 'image/jpeg');
+
+        const { url } = await uploadFileToR2({
+            buffer,
+            key: pathname,
+            contentType,
         });
 
         return NextResponse.json({
             success: true,
-            url: blob.url,
+            url,
             name: file.name,
             size: file.size,
             kind: isAudio ? 'audio' : 'photo',
