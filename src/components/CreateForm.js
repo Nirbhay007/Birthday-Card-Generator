@@ -85,6 +85,27 @@ function formatDateInputValue(date) {
     return `${year}-${month}-${day}`;
 }
 
+const FROM_MAP = {
+    'wishes/best-friend': { relationship: 'Best Friend', theme: 'fun' },
+    'wishes/mom': { relationship: 'Mom', theme: 'princess' },
+    'wishes/dad': { relationship: 'Dad', theme: 'elegant' },
+    'wishes/sister': { relationship: 'Sister', theme: 'princess' },
+    'wishes/brother': { relationship: 'Brother', theme: 'retro' },
+    'wishes/romantic': { relationship: 'Partner', theme: 'royal' },
+    'wishes/husband': { relationship: 'Husband', theme: 'royal' },
+    'wishes/wife': { relationship: 'Wife', theme: 'royal' },
+    'wishes/boyfriend': { relationship: 'Boyfriend', theme: 'midnight' },
+    'wishes/girlfriend': { relationship: 'Girlfriend', theme: 'princess' },
+    'wishes/son': { relationship: 'Son', theme: 'unicorn' },
+    'wishes/daughter': { relationship: 'Daughter', theme: 'unicorn' },
+    'wishes/grandma': { relationship: 'Grandma', theme: 'elegant' },
+    'wishes/grandpa': { relationship: 'Grandpa', theme: 'elegant' },
+    'wishes/coworker': { relationship: 'Colleague', theme: 'minimal' },
+    'wishes/teacher': { relationship: 'Teacher', theme: 'elegant' },
+    'wishes/funny': { relationship: 'Friend', theme: 'fun' },
+    'wishes/short-sweet': { relationship: 'Friend', theme: 'fun' },
+};
+
 export default function CreateForm({ formData, setFormData }) {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -95,6 +116,8 @@ export default function CreateForm({ formData, setFormData }) {
     const [nameError, setNameError] = useState('');
     const [dateError, setDateError] = useState('');
     const [toneMsg, setToneMsg] = useState('');
+    const [wishLoadedNotice, setWishLoadedNotice] = useState('');
+    const wishAppliedRef = useRef(false);
 
     // Allow belated birthdays up to 30 days in the past, and upcoming up to 365 days ahead
     const { minDate, maxDate } = React.useMemo(() => {
@@ -112,6 +135,16 @@ export default function CreateForm({ formData, setFormData }) {
     // otherwise land its second click on Generate and submit instantly.
     const stepShownAt = useRef(0);
     const armedSubmit = useRef(false);
+    const formRef = useRef(null);
+
+    const scrollToFormTop = () => {
+        setTimeout(() => {
+            const el = document.getElementById('create') || formRef.current;
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 50);
+    };
 
     const set = (patch) => setFormData((prev) => ({ ...prev, ...patch }));
 
@@ -123,22 +156,29 @@ export default function CreateForm({ formData, setFormData }) {
         try { document.activeElement?.blur?.(); } catch { }
     }, [step]);
 
-    // Restore autosaved draft once (only when form is untouched)
+    // Restore autosaved draft once (only when form is untouched and no incoming wish param)
     useEffect(() => {
         if (restoredRef.current) return;
         restoredRef.current = true;
         const t = setTimeout(() => {
             try {
+                if (wishAppliedRef.current) return;
                 const raw = localStorage.getItem(DRAFT_KEY);
                 if (!raw) return;
                 const draft = JSON.parse(raw);
-                setFormData((prev) => {
-                    const untouched = !prev.recipientName && !prev.message && (prev.photos || []).length === 0;
-                    if (untouched && draft && (draft.recipientName || draft.message)) {
-                        return { ...prev, ...draft };
+                if (draft && (draft.recipientName || draft.message)) {
+                    setFormData((prev) => {
+                        const untouched = !prev.recipientName && !prev.message && (prev.photos || []).length === 0;
+                        if (untouched) {
+                            const { savedStep: _s, ...restDraft } = draft;
+                            return { ...prev, ...restDraft };
+                        }
+                        return prev;
+                    });
+                    if (draft.savedStep && draft.savedStep >= 1 && draft.savedStep <= 3) {
+                        setStep(draft.savedStep);
                     }
-                    return prev;
-                });
+                }
             } catch { }
         }, 0);
         return () => clearTimeout(t);
@@ -150,23 +190,46 @@ export default function CreateForm({ formData, setFormData }) {
         try {
             if (formData.recipientName || formData.message || (formData.photos || []).length > 0) {
                 const cleanPhotos = (formData.photos || []).filter((p) => typeof p === 'string' && p.startsWith('http'));
-                localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...formData, photos: cleanPhotos, savedAt: Date.now() }));
+                localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...formData, photos: cleanPhotos, savedStep: step, savedAt: Date.now() }));
             }
         } catch { }
-    }, [formData]);
+    }, [formData, step]);
 
     // Auto-populate message if user arrived from /wishes/[slug] or /ages/[age] with ?wish=...
     useEffect(() => {
         const wishParam = searchParams.get('wish');
         const fromParam = searchParams.get('from');
-        if (wishParam && !formData.message) {
-            setFormData((prev) => ({ ...prev, message: wishParam }));
-            setTimeout(() => setStep(2), 0);
+
+        if (wishParam && !wishAppliedRef.current) {
+            wishAppliedRef.current = true;
+            const patch = { message: wishParam };
+
+            if (fromParam && FROM_MAP[fromParam]) {
+                patch.relationship = FROM_MAP[fromParam].relationship;
+                patch.theme = FROM_MAP[fromParam].theme;
+            } else if (fromParam) {
+                const ageMatch = fromParam.match(/^ages\/(\d+)$/);
+                if (ageMatch) {
+                    patch.age = parseInt(ageMatch[1], 10);
+                }
+            }
+
+            if (fromParam && /^(wishes|ages)\/[a-z0-9-]+$/.test(fromParam)) {
+                patch.source = fromParam;
+            }
+
+            setFormData((prev) => ({ ...prev, ...patch }));
+            setWishLoadedNotice('✨ Selected wish loaded into your card! Enter their name below to begin.');
+
+            // Scroll smoothly to creator form
+            setTimeout(() => {
+                const el = document.getElementById('create');
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
         }
-        if (fromParam && /^(wishes|ages)\/[a-z0-9-]+$/.test(fromParam) && formData.source !== fromParam) {
-            setFormData((prev) => ({ ...prev, source: fromParam }));
-        }
-    }, [searchParams, formData.message, formData.source, setFormData]);
+    }, [searchParams, setFormData]);
 
     const goNext = () => {
         if (step === 1) {
@@ -188,6 +251,7 @@ export default function CreateForm({ formData, setFormData }) {
         setNameError('');
         setDateError('');
         setStep((s) => Math.min(3, s + 1));
+        scrollToFormTop();
     };
 
     const handleTone = (tone) => {
@@ -286,7 +350,7 @@ export default function CreateForm({ formData, setFormData }) {
 
     return (
         <>
-            <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-6 sm:p-8 bg-white/90 backdrop-blur-md rounded-3xl shadow-xl border border-purple-100">
+            <form ref={formRef} onSubmit={handleSubmit} className="max-w-2xl mx-auto p-6 sm:p-8 bg-white/90 backdrop-blur-md rounded-3xl shadow-xl border border-purple-100">
                 <div className="space-y-2 text-center mb-6">
                     <h2 className="text-3xl font-extrabold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                         Create a Birthday Page
@@ -304,7 +368,12 @@ export default function CreateForm({ formData, setFormData }) {
                             <li key={s.id} className="flex-1">
                                 <button
                                     type="button"
-                                    onClick={() => (s.id < step ? setStep(s.id) : s.id === 1 ? setStep(1) : null)}
+                                    onClick={() => {
+                                        if (s.id < step || s.id === 1) {
+                                            setStep(s.id);
+                                            scrollToFormTop();
+                                        }
+                                    }}
                                     className={cn(
                                         'w-full flex items-center justify-center gap-1.5 rounded-full px-2 py-2 text-xs font-bold transition-all',
                                         active ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
@@ -325,6 +394,22 @@ export default function CreateForm({ formData, setFormData }) {
                 {/* STEP 1 — Who */}
                 {step === 1 && (
                     <div className="space-y-5 pop-in">
+                        {wishLoadedNotice && (
+                            <div className="flex items-center justify-between gap-2 p-3 bg-purple-50 border border-purple-200 text-purple-900 rounded-xl text-xs font-semibold shadow-xs">
+                                <span className="flex items-center gap-1.5">
+                                    <Sparkles className="w-4 h-4 text-purple-600 shrink-0" />
+                                    {wishLoadedNotice}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setWishLoadedNotice('')}
+                                    className="text-purple-600 hover:text-purple-800 font-bold px-1.5 py-0.5 rounded hover:bg-purple-100 transition-colors"
+                                    aria-label="Dismiss notice"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        )}
                         <div>
                             <label htmlFor="recipientName" className="block text-sm font-semibold text-gray-800 mb-1">
                                 Who is it for? <span className="text-red-500" aria-hidden="true">*</span>
@@ -509,10 +594,8 @@ export default function CreateForm({ formData, setFormData }) {
                             </div>
                             {/* Premium upsell — contextual, one slim row under the free themes */}
                             <a
-                                href={`/premium${formData.recipientName?.trim() ? `?to=${encodeURIComponent(formData.recipientName.trim())}${formData.senderName?.trim() ? `&from=${encodeURIComponent(formData.senderName.trim())}` : ''}` : ''}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-amber-300 bg-gradient-to-r from-[#1a0f2e] to-[#2d1b4e] px-4 py-3 hover:shadow-lg transition-shadow group"
+                                href={`/premium?fromBuilder=1${formData.recipientName?.trim() ? `&to=${encodeURIComponent(formData.recipientName.trim())}` : ''}${formData.senderName?.trim() ? `&from=${encodeURIComponent(formData.senderName.trim())}` : ''}${formData.age ? `&age=${encodeURIComponent(formData.age)}` : ''}`}
+                                className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-amber-300 bg-gradient-to-r from-[#1a0f2e] to-[#2d1b4e] px-4 py-3 hover:shadow-lg transition-shadow group cursor-pointer"
                             >
                                 <span className="text-left">
                                     <span className="block text-sm font-extrabold text-[#f7dc9a]">👑 Premium Universe <span className="ml-1 text-[10px] font-bold bg-[#f2c14e] text-[#241031] px-1.5 py-0.5 rounded-full align-middle">₹49</span></span>
@@ -624,7 +707,10 @@ export default function CreateForm({ formData, setFormData }) {
                     {step > 1 && (
                         <button
                             type="button"
-                            onClick={() => setStep((s) => s - 1)}
+                            onClick={() => {
+                                setStep((s) => s - 1);
+                                scrollToFormTop();
+                            }}
                             className="inline-flex items-center justify-center gap-1.5 px-5 py-3.5 rounded-xl border-2 border-gray-200 text-gray-700 font-bold hover:border-purple-300 hover:text-purple-700 transition-all cursor-pointer"
                         >
                             <ArrowLeft className="w-4 h-4" /> Back

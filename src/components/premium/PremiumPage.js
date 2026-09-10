@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import Link from 'next/link';
-import { Crown, PencilLine, Link2, Check, Send } from 'lucide-react';
+import { Crown, PencilLine, Link2, Check, Send, ArrowLeft } from 'lucide-react';
 import AudioPlayer from '@/components/AudioPlayer';
 import PremiumExperience from './PremiumExperience';
 import Paywall from './Paywall';
@@ -42,7 +42,7 @@ function celebrate() {
  * Personalize: /premium?occasion=anniversary&to=Priya&from=Rahul&age=2&msg=...
  * Paid access: /premium?...&key=unlock_… (magic link, no accounts needed).
  */
-export default function PremiumPage({ to, from, message, age, occasion, unlockKey, customReasons, customVows, initialPTheme, initialMusic, initialMusicUrl, initialMusicName, initialRel, initialPhotoUrl, giftPreview, initialMode }) {
+export default function PremiumPage({ to, from, message, age, occasion, unlockKey, customReasons, customVows, initialPTheme, initialMusic, initialMusicUrl, initialMusicName, initialRel, initialPhotoUrl, giftPreview, initialMode, fromBuilder = false }) {
     const deck = getOccasion(occasion);
     const [forceGift, setForceGift] = useState(false);
     // Gift mode = the recipient's eyes only: pure universe, zero studio
@@ -369,6 +369,23 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
             {!giftMode && (
             <div className="sticky top-0 z-40 border-b border-[rgba(242,193,78,0.25)] bg-[rgba(7,4,18,0.85)] backdrop-blur-md">
                 <div className="max-w-5xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-xs sm:text-sm">
+                    {fromBuilder && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (typeof window !== 'undefined' && window.history.length > 1) {
+                                    window.history.back();
+                                } else {
+                                    window.location.href = '/#create';
+                                }
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f2c14e]/15 hover:bg-[#f2c14e]/25 text-[#f7dc9a] border border-[#f2c14e]/40 font-bold text-xs transition-colors cursor-pointer mr-auto sm:mr-0"
+                            title="Return to the card generator"
+                        >
+                            <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Back to card editor</span>
+                        </button>
+                    )}
                     <span className="inline-flex items-center gap-1.5">
                         <Crown className="w-4 h-4 text-[#f2c14e] shrink-0" aria-hidden="true" />
                         <span className="text-[#cfc4e8]">

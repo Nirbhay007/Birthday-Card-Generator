@@ -17,18 +17,23 @@ function isPreviewUrl() {
 export default function ShareButtons({ title, text, pageId }) {
     const [copied, setCopied] = useState(false);
 
-    // Share the canonical URL: strip the preview flag so recipients count normally.
+    // Share the canonical URL: strip the preview flag and map localhost to public URL
     const getUrl = () => {
         if (typeof window === 'undefined') return '';
         try {
             const u = new URL(window.location.href);
             u.searchParams.delete('preview');
+            // When testing locally, use the public domain so WhatsApp scraper can fetch previews & friends can open it
+            if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {
+                const prodBase = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
+                return new URL(u.pathname + u.search + u.hash, prodBase).toString();
+            }
             return u.toString();
         } catch {
             return window.location.href;
         }
     };
-    const shareText = text || 'Check out this personalized birthday surprise page! 🎉 Tap to blow candles!';
+    const shareText = text || 'Open this on your phone and blow out the candles! ✨';
 
     // Fire-and-forget share counter for future growth analytics.
     // Skipped in preview mode so owner testing never inflates counts.
@@ -62,10 +67,18 @@ export default function ShareButtons({ title, text, pageId }) {
         }
     };
 
+    const url = getUrl();
+    const cleanShareText = (text || 'Open this on your phone and blow out the candles! ✨').replace(/—/g, '-');
+    const fullWhatsAppText = `${title ? `${title}\n\n` : ''}${cleanShareText}\n\n${url}`;
+    const encodedWhatsAppUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(fullWhatsAppText)}`;
+
+    const encodedUrl = encodeURIComponent(url);
+    const encodedText = encodeURIComponent(`${title ? `${title} ` : ''}${cleanShareText}`);
+
     const handleShare = async () => {
         if (typeof window !== 'undefined' && navigator?.share) {
             try {
-                await navigator.share({ title: title || 'Happy Birthday!', text: shareText, url: getUrl() });
+                await navigator.share({ title: title || 'Happy Birthday! 🎂', text: cleanShareText, url });
                 trackShare();
             } catch (err) {
                 console.log('Share cancelled');
@@ -80,15 +93,11 @@ export default function ShareButtons({ title, text, pageId }) {
         if (typeof window !== 'undefined') window.open(url, '_blank', 'noopener,noreferrer,width=600,height=540');
     };
 
-    const url = getUrl();
-    const encodedUrl = encodeURIComponent(url);
-    const encodedText = encodeURIComponent(`${title ? `${title} ` : ''}${shareText}`);
-
     return (
         <div className="mt-6">
             <div className="flex flex-wrap justify-center gap-2.5">
                 <button
-                    onClick={() => openPopup(`https://wa.me/?text=${encodedText}%20${encodedUrl}`)}
+                    onClick={() => openPopup(encodedWhatsAppUrl)}
                     className="flex items-center gap-1.5 px-4 py-2.5 bg-[#25D366] text-white rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all text-sm font-bold focus:outline-none focus:ring-4 focus:ring-green-200 cursor-pointer"
                     aria-label="Share on WhatsApp"
                 >

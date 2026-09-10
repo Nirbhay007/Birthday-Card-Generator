@@ -130,6 +130,8 @@ export default function PremiumExperience({
     // Wax-seal breaking ritual: squash → shatter → universe opens.
     const sealRitual = () => {
         if (ritualRunning.current) return;
+        // Synchronous dispatch inside the tap gesture so audio starts immediately on mobile
+        try { window.dispatchEvent(new CustomEvent(BIRTHDAY_OPENED_EVENT)); } catch {}
         try {
             if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
                 unseal();
@@ -649,7 +651,9 @@ export default function PremiumExperience({
                 />
             )}
 
-            {audioSlot}
+            <div className={cinemaPlayerOpen ? 'opacity-0 pointer-events-none transition-opacity duration-300' : 'opacity-100 transition-opacity duration-300'} aria-hidden={cinemaPlayerOpen ? 'true' : undefined}>
+                {audioSlot}
+            </div>
         </div>
     );
 }

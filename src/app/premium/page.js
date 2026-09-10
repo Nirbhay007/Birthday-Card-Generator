@@ -117,6 +117,7 @@ export default async function PremiumRoute({ searchParams }) {
     const rawPhoto = clean(pick('photo') || pick('photoUrl'), '', 600);
     const initialPhotoUrl = rawPhoto && (/^https?:\/\//.test(rawPhoto) || rawPhoto.startsWith('/')) ? rawPhoto : null;
     const giftPreview = ['1', 'true', 'yes'].includes(String(pick('gift') || '').toLowerCase());
+    const fromBuilder = ['1', 'true', 'yes'].includes(String(pick('fromBuilder') || '').toLowerCase());
     const rawMode = String(pick('mode') || '').toLowerCase();
     const initialMode = ['cinema', 'keepsake'].includes(rawMode)
         ? rawMode
@@ -130,7 +131,7 @@ export default async function PremiumRoute({ searchParams }) {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
-            <PremiumPage to={to} from={from} message={message} age={age} occasion={occasion} unlockKey={unlockKey} customReasons={customReasons} customVows={customVows} initialPTheme={initialPTheme} initialMusic={initialMusic} initialMusicUrl={initialMusicUrl} initialMusicName={initialMusicName} initialRel={initialRel} initialPhotoUrl={initialPhotoUrl} giftPreview={giftPreview} initialMode={initialMode} />
+            <PremiumPage to={to} from={from} message={message} age={age} occasion={occasion} unlockKey={unlockKey} customReasons={customReasons} customVows={customVows} initialPTheme={initialPTheme} initialMusic={initialMusic} initialMusicUrl={initialMusicUrl} initialMusicName={initialMusicName} initialRel={initialRel} initialPhotoUrl={initialPhotoUrl} giftPreview={giftPreview} initialMode={initialMode} fromBuilder={fromBuilder} />
         </>
     );
 }

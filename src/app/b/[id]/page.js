@@ -41,13 +41,15 @@ export async function generateMetadata({ params }) {
         };
     }
 
-    const title = `Happy Birthday ${page.recipientName}! 🎉 - Personalized Birthday Card`;
-    const forLine = page.relationship ? ` for your ${page.relationship}` : '';
-    const description = page.message ? `"${page.message.slice(0, 150)}..."` : `A special interactive digital birthday surprise${forLine} created for ${page.recipientName} on BirthdayGen. Tap to open the surprise, blow virtual candles and view photo memories.`;
-    const ogImage = `/api/og?name=${encodeURIComponent(page.recipientName)}${page.age ? `&age=${page.age}` : ''}&theme=${encodeURIComponent(page.theme || 'elegant')}`;
+    const senderParam = page.senderName ? `&sender=${encodeURIComponent(page.senderName)}` : '';
+    const ogImage = `/api/og?name=${encodeURIComponent(page.recipientName)}${page.age ? `&age=${page.age}` : ''}&theme=${encodeURIComponent(page.theme || 'elegant')}${senderParam}`;
+    const absoluteOgImage = `${baseUrl}${ogImage}`;
+
+    const title = `Happy Birthday ${page.recipientName}! 🎂`;
+    const description = `A special birthday surprise for ${page.recipientName} - open on your phone to blow out the candles! ✨`;
 
     return {
-        title,
+        title: `${title} | BirthdayGen`,
         description,
         alternates: {
             canonical: `/b/${id}`,
@@ -58,13 +60,20 @@ export async function generateMetadata({ params }) {
             url: `${baseUrl}/b/${id}`,
             siteName: 'BirthdayGen',
             type: 'article',
-            images: [{ url: ogImage, width: 1200, height: 630, alt: `Happy Birthday ${page.recipientName} - tap to open surprise` }],
+            images: [
+                {
+                    url: absoluteOgImage,
+                    width: 1200,
+                    height: 630,
+                    alt: `Happy Birthday ${page.recipientName} - tap to open surprise`,
+                },
+            ],
         },
         twitter: {
             card: 'summary_large_image',
             title,
             description,
-            images: [ogImage],
+            images: [absoluteOgImage],
         },
         robots: {
             // Personal UGC pages stay shareable but out of the index:
@@ -153,7 +162,11 @@ export default async function BirthdayPage({ params, searchParams }) {
                                     </Link>
                                     {page.senderName ? ` by ${page.senderName}` : ''}
                                 </p>
-                                <ShareButtons pageId={page.id} title={`Happy Birthday ${page.recipientName}!`} text={`🎉 I made a birthday surprise for ${page.recipientName} — tap to open, blow candles & view memories!`} />
+                                <ShareButtons
+                                    pageId={page.id}
+                                    title={`Happy Birthday ${page.recipientName}! 🎂`}
+                                    text="Open this on your phone and blow out the candles! ✨"
+                                />
 
                                 <div className="max-w-xl mx-auto my-6">
                                     <MonetizationSlot slotId={`card-footer-${page.id}`} />

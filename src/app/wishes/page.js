@@ -5,8 +5,48 @@ import SupportButton from '@/components/SupportButton';
 import WhatsNew from '@/components/WhatsNew';
 import { getAllCategories } from '@/lib/wishesData';
 import { getBreadcrumbSchema } from '@/lib/seo';
+import WishCard from './[slug]/WishCard';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
+
+const FEATURED_WISHES = [
+  {
+    category: 'Best Friend',
+    source: 'wishes/best-friend',
+    wish: {
+      id: 'feat-bf',
+      text: "Happy Birthday to my favorite human! Thank you for being the calm in my storm, the soundtrack to my joy, and my absolute ride-or-die. Let's make this year legendary!",
+      tags: ['Best Friend', 'Ride-or-Die']
+    }
+  },
+  {
+    category: 'Romantic & Partner',
+    source: 'wishes/romantic',
+    wish: {
+      id: 'feat-rom',
+      text: "To the love of my life: every day with you is a gift, but today is the most special of all. Happy Birthday to my favorite person in the entire world. I love you more than words can express!",
+      tags: ['Romantic', 'Heartfelt']
+    }
+  },
+  {
+    category: 'Mom',
+    source: 'wishes/mom',
+    wish: {
+      id: 'feat-mom',
+      text: "Happy Birthday, Mom! Thank you for your unconditional love, endless patience, and for always being my biggest cheerleader. You deserve the world and so much more today!",
+      tags: ['Mom', 'Gratitude']
+    }
+  },
+  {
+    category: 'Funny & Playful',
+    source: 'wishes/funny',
+    wish: {
+      id: 'feat-fun',
+      text: "Happy Birthday! Don't think of it as getting older, think of it as leveling up in life with bonus cake privileges. May your candles cost less than your cake this year!",
+      tags: ['Funny', 'Humor']
+    }
+  }
+];
 
 export const metadata = {
   title: 'Birthday Wishes, Quotes & Greetings Library | BirthdayGen',
@@ -95,6 +135,31 @@ export default function WishesIndexPage() {
 
         {/* Category Grid */}
         <main className="container mx-auto px-4 pb-20 max-w-6xl">
+          {/* Quick-start conversion section: Trending wishes with 1-click card creator */}
+          <section className="mb-16">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <Sparkles className="w-6 h-6 text-purple-600" /> Popular Wishes — Ready in 1 Click
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Pick any wish below and click <span className="font-semibold text-purple-700">&quot;Use In Card&quot;</span> to immediately build an interactive 3D birthday experience.
+                </p>
+              </div>
+              <Link
+                href="/#create"
+                className="self-start sm:self-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all hover:scale-105"
+              >
+                <span>✨ Start From Scratch</span>
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {FEATURED_WISHES.map((item) => (
+                <WishCard key={item.wish.id} wish={item.wish} source={item.source} />
+              ))}
+            </div>
+          </section>
+
           <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-2">
             <Gift className="w-6 h-6 text-purple-600" /> Browse by Relationship & Theme
           </h2>

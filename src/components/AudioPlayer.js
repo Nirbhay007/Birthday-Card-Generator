@@ -115,6 +115,24 @@ export default function AudioPlayer({ track = 'classic', src = '/happy-birthday.
         return () => window.removeEventListener(BIRTHDAY_OPENED_EVENT, onOpened);
     }, [startPlayback]);
 
+    // First-touch fallback for mobile browsers: if initial mount autoplay was blocked
+    // due to browser autoplay policies, start audio on the first user interaction.
+    useEffect(() => {
+        if (playing) return;
+        const unlockAudio = (e) => {
+            if (e?.target && e.target.closest?.('[data-audio-toggle]')) return;
+            if (wantSound.current) {
+                startPlayback();
+            }
+        };
+        window.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
+        window.addEventListener('touchstart', unlockAudio, { once: true, passive: true });
+        return () => {
+            window.removeEventListener('pointerdown', unlockAudio);
+            window.removeEventListener('touchstart', unlockAudio);
+        };
+    }, [playing, startPlayback]);
+
     useEffect(() => () => stopSynth(), [stopSynth]);
 
     // CDN fallback recovery: if remote file died, synth waltz takes over
@@ -179,6 +197,7 @@ export default function AudioPlayer({ track = 'classic', src = '/happy-birthday.
                 />
             )}
             <button
+                data-audio-toggle="true"
                 onClick={togglePlay}
                 className="bg-gray-900/90 text-white backdrop-blur-md p-3.5 rounded-full shadow-2xl hover:bg-gray-800 transition-all focus:outline-none focus:ring-4 focus:ring-purple-500 flex items-center justify-center cursor-pointer"
                 aria-label={playing ? `Mute background music (${displayName})` : `Play background music (${displayName})`}
