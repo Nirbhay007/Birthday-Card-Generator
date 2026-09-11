@@ -52,17 +52,6 @@ export function getPremiumPrice(region) {
     return region === 'IN' ? PREMIUM_PRICE_INR : PREMIUM_PRICE_INTL;
 }
 
-export function buildPremiumUpiUrl(payeeId, note = 'BirthdayGen Premium') {
-    const params = new URLSearchParams({
-        pa: payeeId,
-        pn: 'BirthdayGen',
-        cu: 'INR',
-        am: String(PREMIUM_PRICE_INR.amount),
-        tn: note,
-    });
-    return `upi://pay?${params.toString()}`;
-}
-
 /**
  * International card checkout via Razorpay (supports 100+ currencies with
  * auto FX settlement to your Indian bank account).

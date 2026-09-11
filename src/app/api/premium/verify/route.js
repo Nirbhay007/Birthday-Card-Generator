@@ -11,7 +11,7 @@ import prisma from '@/lib/prisma';
  *   3. Mints a magic-link `unlockKey` (stored on the order, returned once).
  * Key body: { provider: 'key', key: 'unlock_…' } — validates a magic link /
  *   remembered device. No signature needed: 192-bit random + DB lookup.
- * Test body: { provider: 'test' | 'upi' } → { success, testMode: true }.
+ * Test body: { provider: 'test' } → { success, testMode: true } (dev/unconfigured only).
  */
 
 function bad(msg, status = 400) {
@@ -96,7 +96,11 @@ export async function POST(request) {
             return NextResponse.json({ success: false, error: 'This link is no longer valid.' }, { status: 200 });
         }
 
-        if (provider === 'upi' || provider === 'test') {
+        if (provider === 'test') {
+            const secret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
+            if (secret && process.env.NODE_ENV === 'production') {
+                return bad('Test mode is disabled.', 403);
+            }
             return NextResponse.json({ success: true, testMode: true });
         }
 
