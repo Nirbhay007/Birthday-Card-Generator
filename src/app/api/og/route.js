@@ -130,7 +130,13 @@ export async function GET(request) {
                     </div>
                 </div>
             ),
-            { width: 1200, height: 630 }
+            {
+                width: 1200,
+                height: 630,
+                headers: {
+                    'Cache-Control': 'public, immutable, no-transform, max-age=31536000, s-maxage=31536000',
+                },
+            }
         );
     } catch (e) {
         return new Response(`OG error: ${e?.message || 'unknown'}`, { status: 500 });

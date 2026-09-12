@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import prisma from '@/lib/prisma';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -9,6 +10,23 @@ import BirthdayExperience from '@/components/BirthdayExperience';
 import { getBreadcrumbSchema, getGreetingCardSchema } from '@/lib/seo';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
+
+/**
+ * Cached per-request fetcher to prevent duplicate Prisma roundtrips
+ * across generateMetadata() and the BirthdayPage component.
+ */
+const getBirthdayPage = cache(async (id) => {
+    return prisma.birthdayPage.findUnique({
+        where: { id },
+        include: {
+            photos: {
+                orderBy: {
+                    order: 'asc',
+                },
+            },
+        },
+    });
+});
 
 /**
  * Preview mode (for the site owner to peek at any page without counting):
@@ -30,9 +48,7 @@ function isPreviewMode(searchParams) {
 
 export async function generateMetadata({ params }) {
     const { id } = await params;
-    const page = await prisma.birthdayPage.findUnique({
-        where: { id },
-    });
+    const page = await getBirthdayPage(id);
 
     if (!page) {
         return {
@@ -91,16 +107,7 @@ export default async function BirthdayPage({ params, searchParams }) {
         ? await searchParams
         : (searchParams || {});
     const preview = isPreviewMode(resolvedSearch);
-    const page = await prisma.birthdayPage.findUnique({
-        where: { id },
-        include: {
-            photos: {
-                orderBy: {
-                    order: 'asc',
-                },
-            },
-        },
-    });
+    const page = await getBirthdayPage(id);
 
     if (!page) {
         notFound();
