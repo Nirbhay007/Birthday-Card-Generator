@@ -8,22 +8,29 @@ import WishInspirationModal from './WishInspirationModal';
 import SupportButton from './SupportButton';
 import {
     Loader2, Sparkles, Bell, ArrowLeft, ArrowRight, Check,
-    User, Palette, Camera, Heart, Laugh, Scissors, Music,
+    User, Palette, Camera, Heart, Laugh, Scissors, Music, Crown, Play, Square,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TRACKS, getTrackName } from '@/lib/music';
+import { FREE_TRACKS, VIP_TRACKS, ALL_TRACKS, getTrackName, playAudioPreview, stopAllAudioPreviews } from '@/lib/music';
 
 const DRAFT_KEY = 'birthdaygen-draft-v1';
 
 const THEMES = [
-    { id: 'elegant', name: 'Elegant', color: '#d4af37', bg: '#fdfbf7', textColor: '#111827' },
-    { id: 'fun', name: 'Fun & Colorful', color: '#ff69b4', bg: '#fff0f5', textColor: '#111827' },
-    { id: 'royal', name: 'Royal Gold 👑', color: '#f5c518', bg: '#1a0f2e', textColor: '#fdf6e3' },
-    { id: 'midnight', name: 'Midnight Stars', color: '#818cf8', bg: '#0b1026', textColor: '#eef2ff' },
-    { id: 'princess', name: 'Princess 💖', color: '#ec4899', bg: '#fff5f7', textColor: '#831843' },
-    { id: 'unicorn', name: 'Unicorn Kids 🦄', color: '#8b5cf6', bg: '#f5f3ff', textColor: '#4c1d95' },
-    { id: 'retro', name: 'Retro Neon', color: '#00ff00', bg: '#2b2b2b', textColor: '#ffffff' },
-    { id: 'minimal', name: 'Minimal', color: '#000000', bg: '#ffffff', textColor: '#111827' },
+    // 2 Free Themes
+    { id: 'fun', name: 'Fun & Colorful', color: '#ff69b4', bg: '#fff0f5', textColor: '#262626', badge: 'Free' },
+    { id: 'elegant', name: 'Classic Ivory', color: '#d4af37', bg: '#fdfbf7', textColor: '#2c2c2c', badge: 'Free' },
+    // VIP Themes (unlocked with paid ₹29 upgrade)
+    { id: 'royal', name: 'Royal Gold', color: '#f5c518', bg: '#120722', textColor: '#fff9e6', vip: true },
+    { id: 'neon', name: 'Cyber Neon', color: '#00f2fe', bg: '#070814', textColor: '#ffffff', vip: true },
+    { id: 'midnight', name: 'Cosmic Galaxy', color: '#818cf8', bg: '#060919', textColor: '#f1f5f9', vip: true },
+    { id: 'princess', name: 'Fairy Princess', color: '#ec4899', bg: '#fff2f6', textColor: '#701a3c', vip: true },
+    { id: 'retro', name: 'Retro Arcade', color: '#39ff14', bg: '#12131c', textColor: '#ffffff', vip: true },
+    { id: 'sunset', name: 'Sunset Luxe', color: '#ff9052', bg: '#1f0b24', textColor: '#fff5eb', vip: true },
+];
+
+const FORM_TRACKS = [
+    ...FREE_TRACKS,
+    ...VIP_TRACKS,
 ];
 
 const RELATIONSHIPS = [
@@ -116,8 +123,36 @@ export default function CreateForm({ formData, setFormData }) {
     const [nameError, setNameError] = useState('');
     const [dateError, setDateError] = useState('');
     const [toneMsg, setToneMsg] = useState('');
+    const [successModalOpen, setSuccessModalOpen] = useState(false);
+    const [createdCard, setCreatedCard] = useState(null);
+    const [previewTrackId, setPreviewTrackId] = useState(null);
+    const audioControllerRef = useRef(null);
     const [wishLoadedNotice, setWishLoadedNotice] = useState('');
     const wishAppliedRef = useRef(false);
+
+    const toggleAudioPreview = (e, trackId) => {
+        e.stopPropagation();
+        if (previewTrackId === trackId) {
+            stopAllAudioPreviews();
+            audioControllerRef.current = null;
+            setPreviewTrackId(null);
+            return;
+        }
+        stopAllAudioPreviews();
+        audioControllerRef.current = null;
+        const controller = playAudioPreview(trackId, () => {
+            setPreviewTrackId((curr) => (curr === trackId ? null : curr));
+        });
+        audioControllerRef.current = controller;
+        setPreviewTrackId(trackId);
+    };
+
+    useEffect(() => {
+        return () => {
+            stopAllAudioPreviews();
+            audioControllerRef.current = null;
+        };
+    }, []);
 
     // Allow belated birthdays up to 30 days in the past, and upcoming up to 365 days ahead
     const { minDate, maxDate } = React.useMemo(() => {
@@ -331,8 +366,11 @@ export default function CreateForm({ formData, setFormData }) {
             });
             const data = await res.json();
             if (data.success) {
-                try { localStorage.removeItem(DRAFT_KEY); } catch { }
-                router.push(`/b/${data.id}`);
+                try {
+                    localStorage.removeItem(DRAFT_KEY);
+                    localStorage.setItem(`bgen_owner_${data.id}`, '1');
+                } catch { }
+                router.push(`/b/${data.id}?created=1`);
             } else {
                 alert('Failed to create page: ' + data.error);
             }
@@ -556,14 +594,21 @@ export default function CreateForm({ formData, setFormData }) {
                         </div>
 
                         <div>
-                            <span id="theme-label" className="block text-sm font-semibold text-gray-800 mb-1">Choose a vibe <span className="text-xs font-normal text-green-700 bg-green-50 px-2 py-0.5 rounded-full ml-1">All free 🎉</span></span>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <span id="theme-label" className="text-sm font-semibold text-gray-800">
+                                    Choose visual theme
+                                </span>
+                                <span className="text-[11px] font-bold text-amber-900 bg-amber-100/90 border border-amber-300 px-2 py-0.5 rounded-full shadow-2xs">
+                                    2 Free · 6 VIP Themes 👑
+                                </span>
+                            </div>
                             {suggestedTheme && suggestedTheme !== formData.theme && (
                                 <button
                                     type="button"
                                     onClick={() => set({ theme: suggestedTheme })}
                                     className="mb-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
                                 >
-                                    ✨ Perfect for {formData.relationship || 'them'}: {(THEMES.find((t) => t.id === suggestedTheme) || {}).name} — tap to apply
+                                    ✨ Recommended for {formData.relationship || 'them'}: {(THEMES.find((t) => t.id === suggestedTheme) || {}).name} — tap to apply
                                 </button>
                             )}
                             <div role="radiogroup" aria-labelledby="theme-label" className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
@@ -575,59 +620,143 @@ export default function CreateForm({ formData, setFormData }) {
                                         aria-checked={formData.theme === theme.id}
                                         onClick={() => set({ theme: theme.id })}
                                         className={cn(
-                                            'relative p-3 rounded-xl border-2 transition-all text-left overflow-hidden group focus:outline-none focus:ring-2 focus:ring-purple-600 cursor-pointer',
-                                            formData.theme === theme.id ? 'border-purple-600 ring-2 ring-purple-200' : 'border-gray-200 hover:border-gray-300'
+                                            'relative p-3 rounded-2xl border-2 transition-all text-left overflow-hidden group focus:outline-none focus:ring-2 focus:ring-purple-600 cursor-pointer',
+                                            formData.theme === theme.id
+                                                ? theme.vip
+                                                    ? 'border-amber-400 ring-2 ring-amber-300/60 shadow-lg scale-[1.02]'
+                                                    : 'border-purple-600 ring-2 ring-purple-200 shadow-md'
+                                                : 'border-gray-200 hover:border-gray-300'
                                         )}
                                         style={{ backgroundColor: theme.bg }}
                                     >
                                         <div className="relative z-10">
-                                            <div className="w-6 h-6 rounded-full mb-2 border border-black/10" style={{ backgroundColor: theme.color }} />
-                                            <span className="text-xs sm:text-sm font-medium" style={{ color: theme.textColor }}>{theme.name}</span>
+                                            <div
+                                                className="w-7 h-7 rounded-full mb-2 border-2 border-white/60 shadow-xs flex items-center justify-center text-[10px]"
+                                                style={{ backgroundColor: theme.color }}
+                                            >
+                                                {theme.vip ? '👑' : '✨'}
+                                            </div>
+                                            <span className="text-xs sm:text-sm font-bold block" style={{ color: theme.textColor }}>
+                                                {theme.name}
+                                            </span>
+                                            <span className="text-[10px] opacity-75 font-medium block" style={{ color: theme.textColor }}>
+                                                {theme.vip ? 'Luminous VIP Glow' : 'Simple & Clean'}
+                                            </span>
                                         </div>
+                                        {theme.vip ? (
+                                            <span className="absolute top-2 right-2 text-[9px] font-extrabold bg-gradient-to-r from-amber-300 to-amber-400 text-gray-950 px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-xs">
+                                                👑 VIP
+                                            </span>
+                                        ) : (
+                                            <span className="absolute top-2 right-2 text-[9px] font-bold bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
+                                                Free
+                                            </span>
+                                        )}
                                         {formData.theme === theme.id && (
-                                            <div className="absolute top-2 right-2 text-purple-600" aria-hidden="true">
-                                                <Check className="w-4 h-4" />
+                                            <div className="absolute bottom-2 right-2 text-amber-500" aria-hidden="true">
+                                                <Check className="w-4 h-4 font-bold" />
                                             </div>
                                         )}
                                     </button>
                                 ))}
                             </div>
-                            {/* Premium upsell — contextual, one slim row under the free themes */}
-                            <a
-                                href={`/premium?fromBuilder=1${formData.recipientName?.trim() ? `&to=${encodeURIComponent(formData.recipientName.trim())}` : ''}${formData.senderName?.trim() ? `&from=${encodeURIComponent(formData.senderName.trim())}` : ''}${formData.age ? `&age=${encodeURIComponent(formData.age)}` : ''}`}
-                                className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-amber-300 bg-gradient-to-r from-[#1a0f2e] to-[#2d1b4e] px-4 py-3 hover:shadow-lg transition-shadow group cursor-pointer"
-                            >
-                                <span className="text-left">
-                                    <span className="block text-sm font-extrabold text-[#f7dc9a]">👑 Premium Universe <span className="ml-1 text-[10px] font-bold bg-[#f2c14e] text-[#241031] px-1.5 py-0.5 rounded-full align-middle">₹49</span></span>
-                                    <span className="block text-xs text-[#b9aed4] mt-0.5">Sealed letter, starlit acts & candle finale they’ll replay for years</span>
-                                </span>
-                                <span className="shrink-0 text-xs font-bold text-[#241031] bg-[#f2c14e] px-3 py-1.5 rounded-full group-hover:scale-105 transition-transform">Preview</span>
-                            </a>
+                            {THEMES.find((t) => t.id === formData.theme)?.vip && (
+                                <div className="mt-2.5 p-3 rounded-2xl bg-gradient-to-r from-amber-50 via-amber-100/60 to-purple-50 border border-amber-300/80 flex items-center gap-2.5 text-xs text-amber-950 pop-in shadow-2xs">
+                                    <Crown className="w-4 h-4 text-amber-600 shrink-0" />
+                                    <span>
+                                        <strong>{(THEMES.find((t) => t.id === formData.theme) || {}).name} (VIP Theme)</strong>: Radiant illuminated borders, custom luxury gift box, and glowing atmosphere selected!
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                         <div>
-                            <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-800 mb-2">
-                                <Music className="w-4 h-4 text-purple-600" /> Party music
-                            </span>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Music choice">
-                                {TRACKS.map((t) => (
-                                    <button
-                                        key={t.id}
-                                        type="button"
-                                        role="radio"
-                                        aria-checked={(formData.music || 'classic') === t.id}
-                                        onClick={() => set({ music: t.id })}
-                                        className={cn(
-                                            'p-3 rounded-xl border-2 text-left transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-600',
-                                            (formData.music || 'classic') === t.id ? 'border-purple-600 bg-purple-50 ring-2 ring-purple-200' : 'border-gray-200 hover:border-gray-300 bg-white'
-                                        )}
-                                    >
-                                        <span className="text-xl" aria-hidden="true">{t.emoji}</span>
-                                        <span className="block text-xs font-bold text-gray-900 mt-1">{t.name}</span>
-                                        <span className="block text-[11px] text-gray-500">{t.desc}</span>
-                                    </button>
-                                ))}
+                            <div className="flex items-center justify-between mb-1.5">
+                                <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-800">
+                                    <Music className="w-4 h-4 text-purple-600" /> Birthday soundtrack
+                                </span>
+                                <span className="text-[11px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full">
+                                    1 Free Tune · 6 VIP Soundtracks 👑
+                                </span>
                             </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5" role="radiogroup" aria-label="Music choice">
+                                {FORM_TRACKS.map((t) => {
+                                    const isPlayingThis = previewTrackId === t.id;
+                                    const isSelected = (formData.music || 'classic') === t.id;
+                                    return (
+                                        <div
+                                            key={t.id}
+                                            role="radio"
+                                            tabIndex={0}
+                                            aria-checked={isSelected}
+                                            onClick={() => set({ music: t.id })}
+                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); set({ music: t.id }); } }}
+                                            className={cn(
+                                                'p-3 rounded-2xl border-2 text-left transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-600 relative group flex flex-col justify-between select-none',
+                                                isSelected
+                                                    ? t.vip
+                                                        ? 'border-amber-400 bg-amber-50/70 ring-2 ring-amber-300/60 shadow-md'
+                                                        : 'border-purple-600 bg-purple-50 ring-2 ring-purple-200 shadow-sm'
+                                                    : 'border-gray-200 hover:border-gray-300 bg-white'
+                                            )}
+                                        >
+                                            <div>
+                                                <div className="flex items-center justify-between gap-1 mb-1">
+                                                    <span className="text-xl" aria-hidden="true">{t.emoji}</span>
+                                                    {t.vip ? (
+                                                        <span className="text-[9px] font-extrabold bg-[#f2c14e] text-[#241031] px-1.5 py-0.5 rounded-full shadow-2xs">
+                                                            👑 VIP
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[9px] font-bold bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
+                                                            Free
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className="block text-xs font-bold text-gray-900 leading-snug">{t.name}</span>
+                                                <span className="block text-[10.5px] text-gray-500 leading-tight mt-0.5">{t.desc}</span>
+                                            </div>
+                                            {t.id !== 'off' && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        set({ music: t.id });
+                                                        toggleAudioPreview(e, t.id);
+                                                    }}
+                                                    className={cn(
+                                                        'mt-2.5 w-full inline-flex items-center justify-center gap-1.5 text-[11px] font-extrabold px-2.5 py-1.5 rounded-xl transition-all cursor-pointer shadow-2xs',
+                                                        isPlayingThis
+                                                            ? 'bg-amber-400 text-gray-950 ring-2 ring-amber-300 animate-pulse'
+                                                            : 'bg-purple-100 hover:bg-purple-200 text-purple-800'
+                                                    )}
+                                                    title={isPlayingThis ? 'Stop preview' : 'Listen to preview'}
+                                                >
+                                                    {isPlayingThis ? (
+                                                        <>
+                                                            <Square className="w-2.5 h-2.5 fill-gray-950" />
+                                                            <span>Stop</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Play className="w-2.5 h-2.5 fill-purple-800" />
+                                                            <span>Preview</span>
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            {FORM_TRACKS.find((t) => t.id === formData.music)?.vip && (
+                                <div className="mt-2.5 p-3 rounded-2xl bg-purple-50/90 border border-purple-200/90 flex items-center gap-2.5 text-xs text-purple-950 pop-in shadow-2xs">
+                                    <Crown className="w-4 h-4 text-purple-600 shrink-0" />
+                                    <span>
+                                        You selected <strong>{(FORM_TRACKS.find((t) => t.id === formData.music) || {}).name}</strong>. Ready to play on your card!
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -636,12 +765,20 @@ export default function CreateForm({ formData, setFormData }) {
                 {step === 3 && (
                     <div className="space-y-5 pop-in">
                         <div>
-                            <span className="block text-sm font-semibold text-gray-800 mb-1">Add favorite photos <span className="text-gray-400 text-xs font-normal">(up to 4 — max 5MB each)</span></span>
+                            <span className="block text-sm font-semibold text-gray-800 mb-1">
+                                Add favorite photos <span className="text-gray-500 text-xs font-normal">(up to 9 photos)</span>
+                            </span>
                             <PhotoUploader
                                 photos={formData.photos}
                                 setPhotos={(photos) => setFormData((prev) => ({ ...prev, photos: typeof photos === 'function' ? photos(prev.photos) : photos }))}
-                                maxPhotos={4}
+                                maxPhotos={9}
                             />
+                            {(formData.photos || []).length > 2 && (
+                                <div className="mt-2.5 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2 pop-in">
+                                    <Crown className="w-4 h-4 text-amber-600 shrink-0" />
+                                    <span>{(formData.photos || []).length} photos added! Cherished memory gallery (3–9 photos) unlocks for ₹29 on creation, or keep first 2 in free mode.</span>
+                                </div>
+                            )}
                         </div>
 
                         <div className="p-4 bg-purple-50/60 rounded-2xl border border-purple-100 space-y-2.5">

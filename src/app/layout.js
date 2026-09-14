@@ -1,4 +1,5 @@
 import { Inter, Playfair_Display, Lato, Fredoka, Quicksand, Press_Start_2P, VT323 } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import "./themes.css";
 import { getWebSiteSchema, getOrganizationSchema } from "@/lib/seo";
@@ -113,6 +114,24 @@ export default function RootLayout({ children }) {
         {children}
         <Analytics />
         <SpeedInsights />
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
+                  page_path: window.location.pathname,
+                });
+              `}
+            </Script>
+          </>
+        )}
       </body>
     </html>
   );

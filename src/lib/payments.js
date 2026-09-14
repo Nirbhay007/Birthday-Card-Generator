@@ -35,6 +35,28 @@ export const PREMIUM_PRICE_INTL = {
     saveLabel: 'Save $2',
 };
 
+export const VIP_CARD_PRICE_INR = {
+    amount: 29,
+    currency: 'INR',
+    label: '₹29',
+    method: 'upi',
+    mrp: 99,
+    mrpLabel: '₹99',
+    off: '70% OFF',
+    saveLabel: 'Save ₹70',
+};
+
+export const VIP_CARD_PRICE_INTL = {
+    amount: 1,
+    currency: 'USD',
+    label: '$1',
+    method: 'card',
+    mrp: 3,
+    mrpLabel: '$3',
+    off: '67% OFF',
+    saveLabel: 'Save $2',
+};
+
 /**
  * Best-effort home-country detection. Timezone is the strongest free signal
  * (locale/language can lie when the user prefers English). Anything that is
@@ -50,6 +72,10 @@ export function detectRegion(timeZone) {
 
 export function getPremiumPrice(region) {
     return region === 'IN' ? PREMIUM_PRICE_INR : PREMIUM_PRICE_INTL;
+}
+
+export function getVipCardPrice(region) {
+    return region === 'IN' ? VIP_CARD_PRICE_INR : VIP_CARD_PRICE_INTL;
 }
 
 /**
@@ -87,11 +113,15 @@ function loadRazorpay() {
  * @returns {Promise<{orderId, paymentId, signature}>} — POST to /api/premium/verify
  * @throws {Error} with `code === 'TEST_MODE'` when server keys are missing.
  */
-export async function createPremiumOrder(region) {
+export async function createPremiumOrder(region, { tier = 'universe', pageId = null } = {}) {
     const r = await fetch('/api/premium/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ region: region === 'INTL' ? 'INTL' : 'IN' }),
+        body: JSON.stringify({
+            region: region === 'INTL' ? 'INTL' : 'IN',
+            tier,
+            pageId,
+        }),
     });
     const d = await r.json().catch(() => ({}));
     if (r.status === 503 || d.testMode) {

@@ -11,8 +11,14 @@ import prisma from '@/lib/prisma';
  */
 
 const PRICES = {
-    IN: { amount: 4900, currency: 'INR' }, // ₹49
-    INTL: { amount: 100, currency: 'USD' }, // $1
+    card_vip: {
+        IN: { amount: 2900, currency: 'INR' }, // ₹29
+        INTL: { amount: 100, currency: 'USD' }, // $1
+    },
+    universe: {
+        IN: { amount: 4900, currency: 'INR' }, // ₹49
+        INTL: { amount: 100, currency: 'USD' }, // $1
+    },
 };
 
 // Best-effort per-IP throttle (mirrors the other counter routes).
@@ -51,7 +57,9 @@ export async function POST(request) {
     try {
         const body = await request.json().catch(() => ({}));
         const region = body?.region === 'INTL' ? 'INTL' : 'IN';
-        const { amount, currency } = PRICES[region];
+        const tier = body?.tier === 'card_vip' ? 'card_vip' : 'universe';
+        const pageId = typeof body?.pageId === 'string' && body.pageId.trim() ? body.pageId.trim().slice(0, 60) : null;
+        const { amount, currency } = (PRICES[tier] || PRICES.universe)[region];
 
         const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
         if (throttled(ip)) {
@@ -62,13 +70,13 @@ export async function POST(request) {
             amount,
             currency,
             receipt: `prem_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
-            notes: { product: 'birthday-premium-universe', region },
+            notes: { product: tier === 'card_vip' ? 'birthday-vip-card' : 'birthday-premium-universe', region, ...(pageId ? { pageId } : {}) },
         });
 
         // Best-effort receipt (never blocks checkout if the table is missing)
         try {
             await prisma.premiumOrder.create({
-                data: { orderId: order.id, amount, currency, status: 'created' },
+                data: { orderId: order.id, amount, currency, status: 'created', pageId, tier },
             });
         } catch (dbError) {
             console.error('PremiumOrder create failed (pending migration?):', dbError?.message || dbError);

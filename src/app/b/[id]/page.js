@@ -9,6 +9,9 @@ import MonetizationSlot from '@/components/MonetizationSlot';
 import BirthdayExperience from '@/components/BirthdayExperience';
 import { getBreadcrumbSchema, getGreetingCardSchema } from '@/lib/seo';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
 /**
@@ -107,6 +110,7 @@ export default async function BirthdayPage({ params, searchParams }) {
         ? await searchParams
         : (searchParams || {});
     const preview = isPreviewMode(resolvedSearch);
+    const autoOpen = resolvedSearch.created === '1' || resolvedSearch.created === 'true' || resolvedSearch.new === '1';
     const page = await getBirthdayPage(id);
 
     if (!page) {
@@ -119,6 +123,35 @@ export default async function BirthdayPage({ params, searchParams }) {
     ]);
 
     const greetingCardSchema = getGreetingCardSchema(baseUrl, page);
+
+    const isVip = !!page.isVip;
+    const FREE_THEMES = ['fun', 'elegant'];
+    const FREE_TRACKS = ['classic', 'off'];
+
+    // In VIP mode, activate the creator's chosen theme and music track.
+    // In Free mode, display clean free defaults while preserving their selected VIP
+    // theme and soundtrack in the database ready for instant activation upon VIP upgrade!
+    const activeTheme = isVip
+        ? (page.theme || 'royal')
+        : (FREE_THEMES.includes(page.theme) ? page.theme : 'fun');
+
+    const activeMusic = isVip
+        ? (page.music || 'classic')
+        : (page.music === 'off' ? 'off' : 'classic');
+
+    const allPhotos = page.photos || [];
+    const visiblePhotos = isVip ? allPhotos : allPhotos.slice(0, 2);
+    const lockedPhotosCount = isVip ? 0 : Math.max(0, allPhotos.length - 2);
+
+    const experiencePage = {
+        ...page,
+        theme: activeTheme,
+        music: activeMusic,
+        originalTheme: page.theme,
+        originalMusic: page.music,
+        isVip,
+        lockedPhotosCount,
+    };
 
     return (
         <>
@@ -133,7 +166,7 @@ export default async function BirthdayPage({ params, searchParams }) {
 
             <main
                 className="min-h-screen transition-colors duration-500 relative overflow-hidden"
-                data-theme={page.theme}
+                data-theme={activeTheme}
                 style={{
                     backgroundColor: 'var(--bg-primary)',
                     color: 'var(--text-primary)',
@@ -155,11 +188,12 @@ export default async function BirthdayPage({ params, searchParams }) {
                         </p>
                     )}
                     <BirthdayExperience
-                        page={page}
+                        page={experiencePage}
                         preview={preview}
-                        photos={page.photos}
-                        gallery={<PhotoGallery photos={page.photos} />}
-                        audioSlot={page.music !== 'off' ? <AudioPlayer track={page.music || 'classic'} /> : null}
+                        autoOpen={autoOpen}
+                        photos={visiblePhotos}
+                        gallery={<PhotoGallery photos={visiblePhotos} lockedCount={lockedPhotosCount} />}
+                        audioSlot={activeMusic !== 'off' ? <AudioPlayer track={activeMusic} /> : null}
                         shareSlot={
                             <footer className="text-center pb-24 sm:pb-12 pt-6">
                                 <p className="text-sm opacity-70 mb-4 font-medium">
@@ -174,6 +208,12 @@ export default async function BirthdayPage({ params, searchParams }) {
                                     title={`Happy Birthday ${page.recipientName}! 🎂`}
                                     text="Open this on your phone and blow out the candles! ✨"
                                 />
+
+                                {page.isVip && (
+                                    <div className="my-4 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-xs font-bold text-amber-900 shadow-xs">
+                                        <span>👑 Specially handcrafted with love for {page.recipientName}{page.senderName ? ` by ${page.senderName}` : ''}</span>
+                                    </div>
+                                )}
 
                                 <div className="max-w-xl mx-auto my-6">
                                     <MonetizationSlot slotId={`card-footer-${page.id}`} />

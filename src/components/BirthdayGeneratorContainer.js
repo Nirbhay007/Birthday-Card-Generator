@@ -17,7 +17,18 @@ export default function BirthdayGeneratorContainer() {
     photos: []
   });
 
-  const themeName = { elegant: 'Elegant', fun: 'Fun', royal: 'Royal 👑', midnight: 'Midnight', princess: 'Princess 💖', unicorn: 'Unicorn 🦄', retro: 'Retro', minimal: 'Minimal' }[formData.theme] || 'Fun';
+  const themeName = {
+    fun: 'Fun',
+    elegant: 'Elegant',
+    royal: 'Royal 👑',
+    neon: 'Neon 👑',
+    midnight: 'Galaxy 👑',
+    princess: 'Princess 👑',
+    retro: 'Retro 👑',
+    sunset: 'Sunset 👑',
+    unicorn: 'Princess 👑',
+    minimal: 'Minimal',
+  }[formData.theme] || 'Fun';
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start max-w-6xl mx-auto">

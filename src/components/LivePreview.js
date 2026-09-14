@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import CinemaTeaserCard from './premium/CinemaTeaserCard';
 import { Sparkles, Smartphone, ArrowRight } from 'lucide-react';
+import { getTrackName } from '@/lib/music';
 
 export default function LivePreview({ data }) {
     const [previewTab, setPreviewTab] = useState('free'); // 'free' | 'cinema'
     const { recipientName, relationship, message, theme, photos, age, senderName, music } = data;
-    const musicLabel = { classic: '🎂 Classic song', musicbox: '🎠 Music box', party: '🎉 Party pop', off: '🔇 Silent' }[music || 'classic'];
+    const musicLabel = getTrackName(music || 'classic');
 
     const coverSrc = photos && photos.length > 0
         ? (typeof photos[0] === 'string' ? photos[0] : photos[0]?.preview)

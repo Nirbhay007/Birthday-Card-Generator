@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function PhotoGallery({ photos }) {
+export default function PhotoGallery({ photos, lockedCount = 0, onUnlockVip = null }) {
     const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
 
     const openLightbox = (index) => setSelectedPhotoIndex(index);
@@ -31,12 +31,12 @@ export default function PhotoGallery({ photos }) {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [selectedPhotoIndex, photos.length]);
 
-    if (!photos || photos.length === 0) return null;
+    if ((!photos || photos.length === 0) && lockedCount === 0) return null;
 
     return (
         <div className="w-full max-w-4xl mx-auto p-4">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {photos.map((photo, index) => (
+                {(photos || []).map((photo, index) => (
                     <motion.button
                         key={photo.id || index}
                         type="button"

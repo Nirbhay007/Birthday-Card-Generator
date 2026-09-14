@@ -29,6 +29,7 @@ model BirthdayPage {
   loves        Int      @default(0)
   shares       Int      @default(0)
   source       String?
+  isVip        Boolean  @default(false)
   photos       Photo[]
 }
 
@@ -65,10 +66,13 @@ model PremiumOrder {
   status    String    @default("created") // 'created' | 'paid' | 'failed'
   createdAt DateTime  @default(now())
   paidAt    DateTime?
+  pageId    String?   // Linked BirthdayPage id for card VIP upgrades
+  tier      String?   @default("universe") // 'card_vip' | 'universe'
   // Magic-link token: unlock_<random>. Whoever opens /premium?...&key=<token>
   // is treated as the payer — no accounts needed. Shareable by design
   // (giver pays, recipient opens), unguessable (192-bit random + DB check).
   unlockToken String?  @unique
 
   @@index([status, createdAt])
+  @@index([pageId])
 }
