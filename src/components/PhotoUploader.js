@@ -2,54 +2,11 @@
 
 import React, { useCallback, useState, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { X, Upload, Loader2, Camera, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+import { X, Upload, Loader2, Camera, ChevronLeft, ChevronRight, AlertCircle, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { compressAndNormalizeImage } from '@/lib/imageUtils';
 
-const MAX_DIM = 1600;
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-
-function compressImage(file) {
-    return new Promise((resolve) => {
-        // Skip tiny files or non-images
-        if (!file.type.startsWith('image/') || file.size < 300 * 1024) {
-            resolve(file);
-            return;
-        }
-        const url = URL.createObjectURL(file);
-        const img = new Image();
-        img.onload = () => {
-            try {
-                const scale = Math.min(1, MAX_DIM / Math.max(img.width, img.height));
-                if (scale >= 1 && file.type === 'image/jpeg') {
-                    URL.revokeObjectURL(url);
-                    resolve(file);
-                    return;
-                }
-                const canvas = document.createElement('canvas');
-                canvas.width = Math.round(img.width * scale);
-                canvas.height = Math.round(img.height * scale);
-                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                canvas.toBlob(
-                    (blob) => {
-                        URL.revokeObjectURL(url);
-                        if (!blob) { resolve(file); return; }
-                        resolve(new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
-                    },
-                    'image/jpeg',
-                    0.82
-                );
-            } catch {
-                URL.revokeObjectURL(url);
-                resolve(file);
-            }
-        };
-        img.onerror = () => {
-            URL.revokeObjectURL(url);
-            resolve(file);
-        };
-        img.src = url;
-    });
-}
+const MAX_RAW_FILE_SIZE = 25 * 1024 * 1024; // 25MB raw camera limit before client compression
 
 export default function PhotoUploader({ photos, setPhotos, maxPhotos = 4 }) {
     const [processing, setProcessing] = useState(false);
@@ -58,21 +15,21 @@ export default function PhotoUploader({ photos, setPhotos, maxPhotos = 4 }) {
     const cameraInputRef = useRef(null);
 
     // Defer network upload to form submission.
-    // Client-side downscaling and instant local preview (0 Blob operations consumed).
+    // Client-side downscaling, HEIC conversion, and instant local preview.
     const handleAddFiles = useCallback(async (fileList) => {
         setErrorMsg('');
         const files = Array.from(fileList || []);
         if (files.length === 0) return;
 
         if (photos.length + files.length > maxPhotos) {
-            setErrorMsg(`You can upload up to ${maxPhotos} photo${maxPhotos === 1 ? '' : 's'} in the free birthday card.`);
+            setErrorMsg(`You can upload up to ${maxPhotos} photo${maxPhotos === 1 ? '' : 's'}.`);
             return;
         }
 
-        // Validate file sizes before processing
+        // Validate raw file sizes before processing
         for (const f of files) {
-            if (f.size > MAX_FILE_SIZE) {
-                setErrorMsg(`"${f.name}" exceeds 5MB (${(f.size / (1024 * 1024)).toFixed(1)}MB). Please select photos under 5MB.`);
+            if (f.size > MAX_RAW_FILE_SIZE) {
+                setErrorMsg(`"${f.name}" exceeds 25MB (${(f.size / (1024 * 1024)).toFixed(1)}MB). Please choose photos under 25MB.`);
                 return;
             }
         }
@@ -80,18 +37,19 @@ export default function PhotoUploader({ photos, setPhotos, maxPhotos = 4 }) {
         setProcessing(true);
         const newPhotos = [];
         for (let i = 0; i < files.length; i++) {
+            const rawFile = files[i];
             setProgress(`Preparing photo ${i + 1} of ${files.length}...`);
             try {
-                const compressed = await compressImage(files[i]);
+                const compressed = await compressAndNormalizeImage(rawFile);
                 const previewUrl = URL.createObjectURL(compressed);
                 newPhotos.push({
                     preview: previewUrl,
                     file: compressed,
-                    name: files[i].name,
+                    name: compressed.name || rawFile.name,
                 });
             } catch (err) {
                 console.error('Image compression error', err);
-                setErrorMsg('Failed to process photo. Please try another image.');
+                setErrorMsg(`Failed to process "${rawFile.name}". Please try another image.`);
             }
         }
 
@@ -127,7 +85,9 @@ export default function PhotoUploader({ photos, setPhotos, maxPhotos = 4 }) {
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
-        accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.webp'] },
+        accept: {
+            'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.heic', '.heif']
+        },
         disabled: processing || photos.length >= maxPhotos,
     });
 
@@ -186,7 +146,7 @@ export default function PhotoUploader({ photos, setPhotos, maxPhotos = 4 }) {
                 <input
                     ref={cameraInputRef}
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.heic,.heif"
                     capture="user"
                     className="hidden"
                     disabled={processing || photos.length >= maxPhotos}
@@ -202,11 +162,15 @@ export default function PhotoUploader({ photos, setPhotos, maxPhotos = 4 }) {
                             const previewSrc = typeof item === 'string' ? item : item.preview;
                             const key = typeof item === 'string' ? `${item}-${index}` : `${item.name || 'photo'}-${index}`;
                             return (
-                                <div key={key} className="relative aspect-square group">
+                                <div key={key} className="relative aspect-square group bg-gray-100 rounded-lg overflow-hidden">
                                     <img
                                         src={previewSrc}
                                         alt={`Upload ${index + 1}`}
                                         className="w-full h-full object-cover rounded-lg border border-gray-200"
+                                        loading="lazy"
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                        }}
                                     />
                                     {index === 0 && (
                                         <span className="absolute bottom-1 left-1 text-[10px] font-bold bg-purple-600 text-white px-1.5 py-0.5 rounded">Cover</span>

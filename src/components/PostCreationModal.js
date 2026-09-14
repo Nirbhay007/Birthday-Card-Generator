@@ -221,7 +221,7 @@ export default function PostCreationModal({
                         </span>
                         {!isVip && (
                             <span className="text-xs text-amber-300/90 font-bold">
-                                <s className="opacity-50 text-[10px] mr-1">₹99</s> {price.label}
+                                <s className="opacity-50 text-[10px] mr-1">{price.mrpLabel}</s> {price.label}
                             </span>
                         )}
                     </div>
@@ -320,7 +320,9 @@ export default function PostCreationModal({
                             </button>
 
                             <p className="text-[10px] text-center text-purple-300/60 mt-2">
-                                Instant UPI / Card activation · One-time · No app needed
+                                {region === 'IN'
+                                    ? 'Instant UPI / Card activation · One-time · No app needed'
+                                    : 'Instant Card activation · One-time · Global access'}
                             </p>
                         </>
                     )}

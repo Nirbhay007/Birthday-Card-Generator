@@ -42,7 +42,7 @@ export default function PhotoGallery({ photos, lockedCount = 0, onUnlockVip = nu
                         type="button"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="aspect-square cursor-pointer rounded-2xl overflow-hidden shadow-md focus:outline-none focus:ring-4 focus:ring-purple-500 border border-gray-100"
+                        className="aspect-square cursor-pointer rounded-2xl overflow-hidden shadow-md focus:outline-none focus:ring-4 focus:ring-purple-500 border border-gray-100 bg-gray-100"
                         onClick={() => openLightbox(index)}
                         aria-label={`View photo memory ${index + 1}`}
                     >
@@ -52,9 +52,19 @@ export default function PhotoGallery({ photos, lockedCount = 0, onUnlockVip = nu
                             className="w-full h-full object-cover"
                             loading="lazy"
                             decoding="async"
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                            }}
                         />
                     </motion.button>
                 ))}
+                {lockedCount > 0 && (
+                    <div className="aspect-square rounded-2xl overflow-hidden border-2 border-dashed border-amber-300/80 bg-amber-50/60 flex flex-col items-center justify-center p-4 text-center text-amber-900 shadow-sm select-none">
+                        <span className="text-2xl mb-1.5" aria-hidden="true">👑</span>
+                        <span className="text-xs font-extrabold">+{lockedCount} more {lockedCount === 1 ? 'memory' : 'memories'}</span>
+                        <span className="text-[10.5px] text-amber-800/80 mt-1 font-medium">VIP Keepsake Gallery</span>
+                    </div>
+                )}
             </div>
 
             <AnimatePresence>

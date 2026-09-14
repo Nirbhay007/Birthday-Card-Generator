@@ -8,6 +8,7 @@ import CelebrationBackground from '@/components/CelebrationBackground';
 import VipCustomizerModal from '@/components/VipCustomizerModal';
 import PostCreationModal from '@/components/PostCreationModal';
 import { BIRTHDAY_OPENED_EVENT } from '@/lib/music';
+import { detectRegion, getVipCardPrice } from '@/lib/payments';
 import { cn } from '@/lib/utils';
 
 function useTypewriter(text, start, speed = 70) {
@@ -79,6 +80,10 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     const [isViewerPreview] = useState(() => isViewerParam());
     const [showCreatorNotice, setShowCreatorNotice] = useState(true);
     const [copiedNotice, setCopiedNotice] = useState(false);
+    const [vipPrice, setVipPrice] = useState(() => (typeof window !== 'undefined' ? getVipCardPrice(detectRegion()) : { label: '₹29' }));
+    useEffect(() => {
+        setVipPrice(getVipCardPrice(detectRegion()));
+    }, []);
     // Server prop covers first paint; live URL check covers client-side nav.
     const [previewMode] = useState(() => preview || (typeof window !== 'undefined' && isPreviewUrl()));
     const typedName = useTypewriter(page.recipientName || 'Friend', opened, 90);
@@ -243,7 +248,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                                     className="inline-flex items-center gap-1.5 font-black text-gray-950 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:brightness-110 px-3.5 py-1.5 rounded-xl shadow-md transition-all cursor-pointer"
                                 >
                                     <Crown className="w-3.5 h-3.5 text-gray-950" />
-                                    <span>Upgrade to VIP (₹29)</span>
+                                    <span>Upgrade to VIP ({vipPrice.label})</span>
                                 </button>
                             )}
                             <a
@@ -401,7 +406,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                                 title="Upgrade card to VIP"
                             >
                                 <Crown className="w-4 h-4 text-gray-950" />
-                                <span>Upgrade to VIP (₹29)</span>
+                                <span>Upgrade to VIP ({vipPrice.label})</span>
                             </button>
                         )}
                         <a

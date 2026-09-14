@@ -343,14 +343,40 @@ export default function CreateForm({ formData, setFormData }) {
                     finalPhotoUrls.push(item);
                 } else if (item && item.file) {
                     setLoadingMessage(`Uploading photo ${i + 1} of ${rawPhotos.length}...`);
-                    const fd = new FormData();
-                    fd.append('file', item.file);
-                    const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
-                    const uploadData = await uploadRes.json();
-                    if (uploadData.success && uploadData.url) {
+                    let uploadData = null;
+                    for (let attempt = 1; attempt <= 2; attempt++) {
+                        try {
+                            const fd = new FormData();
+                            fd.append('file', item.file);
+                            const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
+                            if (!uploadRes.ok) {
+                                let errMsg = `Upload failed with status ${uploadRes.status}`;
+                                try {
+                                    const errJson = await uploadRes.json();
+                                    errMsg = errJson.error || errMsg;
+                                } catch {
+                                    if (uploadRes.status === 413) {
+                                        errMsg = `Photo ${i + 1} is too large. Please select a smaller photo.`;
+                                    }
+                                }
+                                throw new Error(errMsg);
+                            }
+                            uploadData = await uploadRes.json();
+                            if (uploadData && uploadData.success && uploadData.url) {
+                                break;
+                            } else {
+                                throw new Error(uploadData?.error || 'Failed to upload photo');
+                            }
+                        } catch (uploadErr) {
+                            if (attempt === 2) throw uploadErr;
+                            await new Promise((r) => setTimeout(r, 600));
+                        }
+                    }
+
+                    if (uploadData && uploadData.url) {
                         finalPhotoUrls.push(uploadData.url);
                     } else {
-                        throw new Error(uploadData.error || 'Failed to upload photo');
+                        throw new Error(`Failed to upload photo ${i + 1}. Please try again.`);
                     }
                 }
             }
@@ -376,7 +402,11 @@ export default function CreateForm({ formData, setFormData }) {
             }
         } catch (error) {
             console.error('Error creating page:', error);
-            alert(error.message || 'An error occurred. Please try again.');
+            const isNetworkErr = error?.message === 'Failed to fetch' || error?.name === 'TypeError';
+            const userMsg = isNetworkErr
+                ? 'Network connection was interrupted while uploading photos. Please check your internet connection and try again.'
+                : (error.message || 'An error occurred. Please try again.');
+            alert(userMsg);
         } finally {
             setLoading(false);
             setLoadingMessage('');
@@ -773,10 +803,10 @@ export default function CreateForm({ formData, setFormData }) {
                                 setPhotos={(photos) => setFormData((prev) => ({ ...prev, photos: typeof photos === 'function' ? photos(prev.photos) : photos }))}
                                 maxPhotos={9}
                             />
-                            {(formData.photos || []).length > 2 && (
+                            {(formData.photos || []).length > 4 && (
                                 <div className="mt-2.5 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2 pop-in">
                                     <Crown className="w-4 h-4 text-amber-600 shrink-0" />
-                                    <span>{(formData.photos || []).length} photos added! Cherished memory gallery (3–9 photos) unlocks for ₹29 on creation, or keep first 2 in free mode.</span>
+                                    <span>{(formData.photos || []).length} photos added! Extended memory gallery (5–9 photos) unlocks with VIP ($1 / ₹29) on creation, or keep first 4 in free mode.</span>
                                 </div>
                             )}
                         </div>

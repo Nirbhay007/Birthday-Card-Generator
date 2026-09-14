@@ -102,6 +102,12 @@ export async function POST(request) {
                 { status: 502 }
             );
         }
+        if (/currency.*not.*supported|international/i.test(String(desc))) {
+            return NextResponse.json(
+                { success: false, error: 'International card payments are currently undergoing routine verification with the bank (1 day). Please check back soon!' },
+                { status: 502 }
+            );
+        }
         return NextResponse.json({ success: false, error: 'Could not start checkout. Please try again.' }, { status: 502 });
     }
 }

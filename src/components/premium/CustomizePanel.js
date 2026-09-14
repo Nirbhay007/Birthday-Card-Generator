@@ -6,6 +6,7 @@ import { fill } from './occasions';
 import { PTHEMES } from './looks';
 import { RELATIONSHIPS, getTone, getRelationshipQuotes } from './relationships';
 import { TRACKS, PREMIUM_TRACKS } from '@/lib/music';
+import { compressAndNormalizeImage } from '@/lib/imageUtils';
 import Reveal from './Reveal';
 
 export const EMPTY_CUSTOM = {
@@ -112,24 +113,20 @@ export default function CustomizePanel({
 
     const handlePhotoUpload = async (e) => {
         setPhotoError('');
-        const file = e.target.files?.[0];
-        if (!file) return;
+        const rawFile = e.target.files?.[0];
+        if (!rawFile) return;
         e.target.value = '';
 
-        if (file.size > 5 * 1024 * 1024) {
-            setPhotoError(`Photo exceeds 5MB limit (${(file.size / (1024 * 1024)).toFixed(1)}MB). Please choose a photo under 5MB.`);
-            return;
-        }
-
-        if (!file.type.startsWith('image/')) {
-            setPhotoError('Please choose a valid image file (JPG, PNG, WebP).');
+        if (rawFile.size > 25 * 1024 * 1024) {
+            setPhotoError(`Photo exceeds 25MB limit (${(rawFile.size / (1024 * 1024)).toFixed(1)}MB). Please choose a photo under 25MB.`);
             return;
         }
 
         setUploadingPhoto(true);
         try {
+            const compressed = await compressAndNormalizeImage(rawFile);
             const fd = new FormData();
-            fd.append('file', file);
+            fd.append('file', compressed);
             const res = await fetch('/api/upload', { method: 'POST', body: fd });
             const data = await res.json();
             if (data.success) {
@@ -427,7 +424,7 @@ export default function CustomizePanel({
                             <input
                                 ref={photoInputRef}
                                 type="file"
-                                accept="image/*"
+                                accept="image/*,.heic,.heif"
                                 className="hidden"
                                 onChange={handlePhotoUpload}
                             />

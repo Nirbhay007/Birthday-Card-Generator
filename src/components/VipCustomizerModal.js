@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Crown, Sparkles, Music, Check, Play, Square, X, Loader2 } from 'lucide-react';
 import { VIP_TRACKS, playAudioPreview, stopAllAudioPreviews } from '@/lib/music';
+import { detectRegion, getVipCardPrice } from '@/lib/payments';
 import { cn } from '@/lib/utils';
 
 const VIP_THEMES = [
@@ -20,7 +21,12 @@ export default function VipCustomizerModal({ isOpen, onClose, page, onUpdated })
     const [prevPage, setPrevPage] = useState(page);
     const [saving, setSaving] = useState(false);
     const [previewTrackId, setPreviewTrackId] = useState(null);
+    const [vipPrice, setVipPrice] = useState(() => (typeof window !== 'undefined' ? getVipCardPrice(detectRegion()) : { label: '₹29' }));
     const audioControllerRef = useRef(null);
+
+    useEffect(() => {
+        setVipPrice(getVipCardPrice(detectRegion()));
+    }, []);
 
     if (page !== prevPage) {
         setPrevPage(page);
@@ -242,7 +248,7 @@ export default function VipCustomizerModal({ isOpen, onClose, page, onUpdated })
                         ) : (
                             <Check className="w-4 h-4 text-gray-950" />
                         )}
-                        <span>{saving ? 'Saving...' : !page.isVip ? 'Upgrade to VIP (₹29) to Save' : 'Apply & Save to Card'}</span>
+                        <span>{saving ? 'Saving...' : !page.isVip ? `Upgrade to VIP (${vipPrice.label}) to Save` : 'Apply & Save to Card'}</span>
                     </button>
                     <button
                         type="button"

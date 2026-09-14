@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { uploadFileToR2 } from '@/lib/r2';
+import sharp from 'sharp';
 
 // In-memory sliding-window rate limiting (20 uploads per hour per IP)
 const uploadRateLimit = new Map();
@@ -32,7 +33,14 @@ function isRateLimited(ip) {
     return false;
 }
 
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const ALLOWED_IMAGE_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'image/heic',
+    'image/heif',
+];
 const ALLOWED_AUDIO_TYPES = [
     'audio/mpeg',
     'audio/mp3',
@@ -78,13 +86,13 @@ export async function POST(request) {
 
         const isImage =
             ALLOWED_IMAGE_TYPES.includes(fileType) ||
-            /\.(jpe?g|png|webp|gif)$/i.test(fileName);
+            /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(fileName);
 
         if (!isImage && !isAudio) {
             return NextResponse.json(
                 {
                     success: false,
-                    error: 'Unsupported file format. Please upload photos (JPG, PNG, WebP) or songs (MP3, M4A, WAV, AAC, OGG).',
+                    error: 'Unsupported file format. Please upload photos (JPG, PNG, WebP, HEIC) or songs (MP3, M4A, WAV, AAC, OGG).',
                 },
                 { status: 400 }
             );
@@ -105,26 +113,47 @@ export async function POST(request) {
             );
         }
 
-        // Organize into subdirectories for clear management & cleanup
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
-        const folder = isAudio ? 'music' : 'photos';
-        const pathname = `${folder}/${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`;
-
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
-        const contentType = file.type || (isAudio ? 'audio/mpeg' : 'image/jpeg');
+
+        let uploadBuffer = buffer;
+        let finalContentType = file.type || (isAudio ? 'audio/mpeg' : 'image/jpeg');
+        let finalExt = isAudio ? (fileName.split('.').pop() || 'mp3') : 'jpg';
+
+        // Optimize and standardize images with sharp
+        if (isImage) {
+            try {
+                uploadBuffer = await sharp(buffer)
+                    .rotate() // auto-orient based on EXIF
+                    .resize({ width: 1800, height: 1800, fit: 'inside', withoutEnlargement: true })
+                    .jpeg({ quality: 84, mozjpeg: true })
+                    .toBuffer();
+                finalContentType = 'image/jpeg';
+                finalExt = 'jpg';
+            } catch (sharpError) {
+                console.warn('Sharp image optimization fallback:', sharpError);
+                // Fall back to original buffer & content type if format is not transformable
+                finalContentType = file.type || 'image/jpeg';
+                finalExt = fileName.split('.').pop() || 'jpg';
+            }
+        }
+
+        // Organize into subdirectories for clear management & cleanup
+        const safeBaseName = file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 70);
+        const folder = isAudio ? 'music' : 'photos';
+        const pathname = `${folder}/${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeBaseName}.${finalExt}`;
 
         const { url } = await uploadFileToR2({
-            buffer,
+            buffer: uploadBuffer,
             key: pathname,
-            contentType,
+            contentType: finalContentType,
         });
 
         return NextResponse.json({
             success: true,
             url,
             name: file.name,
-            size: file.size,
+            size: uploadBuffer.length,
             kind: isAudio ? 'audio' : 'photo',
         });
     } catch (error) {
