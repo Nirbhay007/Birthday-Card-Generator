@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import { uploadFileToR2 } from '@/lib/r2';
-import sharp from 'sharp';
 
-// In-memory sliding-window rate limiting (20 uploads per hour per IP)
+// In-memory sliding-window rate limiting (40 uploads per hour per IP)
 const uploadRateLimit = new Map();
 
 function isRateLimited(ip) {
     const now = Date.now();
     const windowMs = 60 * 60 * 1000; // 1 hour
-    const limit = 20; // 20 uploads per hour
+    const limit = 40; // 40 uploads per hour
 
     const timestamps = uploadRateLimit.get(ip) || [];
     const validTimestamps = timestamps.filter((t) => now - t < windowMs);
@@ -64,7 +63,7 @@ export async function POST(request) {
         // 1. IP Rate Limiting
         if (ip !== 'unknown' && isRateLimited(ip)) {
             return NextResponse.json(
-                { success: false, error: 'Upload limit reached (max 20 uploads per hour). Please try again in a little while.' },
+                { success: false, error: 'Upload limit reached (max 40 uploads per hour). Please try again in a little while.' },
                 { status: 429 }
             );
         }
@@ -92,7 +91,7 @@ export async function POST(request) {
             return NextResponse.json(
                 {
                     success: false,
-                    error: 'Unsupported file format. Please upload photos (JPG, PNG, WebP, HEIC) or songs (MP3, M4A, WAV, AAC, OGG).',
+                    error: 'Unsupported file format. Please upload photos (JPG, PNG, WebP) or songs (MP3, M4A, WAV, AAC, OGG).',
                 },
                 { status: 400 }
             );
@@ -115,45 +114,24 @@ export async function POST(request) {
 
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
-
-        let uploadBuffer = buffer;
-        let finalContentType = file.type || (isAudio ? 'audio/mpeg' : 'image/jpeg');
-        let finalExt = isAudio ? (fileName.split('.').pop() || 'mp3') : 'jpg';
-
-        // Optimize and standardize images with sharp
-        if (isImage) {
-            try {
-                uploadBuffer = await sharp(buffer)
-                    .rotate() // auto-orient based on EXIF
-                    .resize({ width: 1800, height: 1800, fit: 'inside', withoutEnlargement: true })
-                    .jpeg({ quality: 84, mozjpeg: true })
-                    .toBuffer();
-                finalContentType = 'image/jpeg';
-                finalExt = 'jpg';
-            } catch (sharpError) {
-                console.warn('Sharp image optimization fallback:', sharpError);
-                // Fall back to original buffer & content type if format is not transformable
-                finalContentType = file.type || 'image/jpeg';
-                finalExt = fileName.split('.').pop() || 'jpg';
-            }
-        }
+        const contentType = file.type || (isAudio ? 'audio/mpeg' : 'image/jpeg');
 
         // Organize into subdirectories for clear management & cleanup
-        const safeBaseName = file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 70);
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
         const folder = isAudio ? 'music' : 'photos';
-        const pathname = `${folder}/${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeBaseName}.${finalExt}`;
+        const pathname = `${folder}/${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`;
 
         const { url } = await uploadFileToR2({
-            buffer: uploadBuffer,
+            buffer,
             key: pathname,
-            contentType: finalContentType,
+            contentType,
         });
 
         return NextResponse.json({
             success: true,
             url,
             name: file.name,
-            size: uploadBuffer.length,
+            size: file.size,
             kind: isAudio ? 'audio' : 'photo',
         });
     } catch (error) {
