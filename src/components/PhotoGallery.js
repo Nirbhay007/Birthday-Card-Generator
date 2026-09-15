@@ -58,13 +58,6 @@ export default function PhotoGallery({ photos, lockedCount = 0, onUnlockVip = nu
                         />
                     </motion.button>
                 ))}
-                {lockedCount > 0 && (
-                    <div className="aspect-square rounded-2xl overflow-hidden border-2 border-dashed border-amber-300/80 bg-amber-50/60 flex flex-col items-center justify-center p-4 text-center text-amber-900 shadow-sm select-none">
-                        <span className="text-2xl mb-1.5" aria-hidden="true">👑</span>
-                        <span className="text-xs font-extrabold">+{lockedCount} more {lockedCount === 1 ? 'memory' : 'memories'}</span>
-                        <span className="text-[10.5px] text-amber-800/80 mt-1 font-medium">VIP Keepsake Gallery</span>
-                    </div>
-                )}
             </div>
 
             <AnimatePresence>

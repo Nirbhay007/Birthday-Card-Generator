@@ -803,10 +803,10 @@ export default function CreateForm({ formData, setFormData }) {
                                 setPhotos={(photos) => setFormData((prev) => ({ ...prev, photos: typeof photos === 'function' ? photos(prev.photos) : photos }))}
                                 maxPhotos={9}
                             />
-                            {(formData.photos || []).length > 4 && (
+                            {(formData.photos || []).length > 3 && (
                                 <div className="mt-2.5 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2 pop-in">
                                     <Crown className="w-4 h-4 text-amber-600 shrink-0" />
-                                    <span>{(formData.photos || []).length} photos added! Extended memory gallery (5–9 photos) unlocks with VIP ($1 / ₹29) on creation, or keep first 4 in free mode.</span>
+                                    <span>{(formData.photos || []).length} photos added! Photos 4–9 unlock with VIP ($1 / ₹29) on creation, or keep first 3 in free mode.</span>
                                 </div>
                             )}
                         </div>

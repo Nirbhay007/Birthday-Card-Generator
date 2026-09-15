@@ -140,8 +140,8 @@ export default async function BirthdayPage({ params, searchParams }) {
         : (page.music === 'off' ? 'off' : 'classic');
 
     const allPhotos = page.photos || [];
-    const visiblePhotos = isVip ? allPhotos : allPhotos.slice(0, 4);
-    const lockedPhotosCount = isVip ? 0 : Math.max(0, allPhotos.length - 4);
+    const visiblePhotos = isVip ? allPhotos : allPhotos.slice(0, 3);
+    const lockedPhotosCount = isVip ? 0 : Math.max(0, allPhotos.length - 3);
 
     const experiencePage = {
         ...page,

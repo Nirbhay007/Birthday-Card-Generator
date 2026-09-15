@@ -81,9 +81,23 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     const [showCreatorNotice, setShowCreatorNotice] = useState(true);
     const [copiedNotice, setCopiedNotice] = useState(false);
     const [vipPrice, setVipPrice] = useState(() => (typeof window !== 'undefined' ? getVipCardPrice(detectRegion()) : { label: '₹29' }));
+    // Show a hint pointing to Customize after fresh VIP activation (from ?vip=1 param)
+    const [showCustomizeHint, setShowCustomizeHint] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        try {
+            const q = new URLSearchParams(window.location.search);
+            return q.has('vip') && !!page.isVip;
+        } catch { return false; }
+    });
     useEffect(() => {
         setVipPrice(getVipCardPrice(detectRegion()));
     }, []);
+    // Auto-dismiss the customize hint after 6 seconds
+    useEffect(() => {
+        if (!showCustomizeHint) return;
+        const t = setTimeout(() => setShowCustomizeHint(false), 6000);
+        return () => clearTimeout(t);
+    }, [showCustomizeHint]);
     // Server prop covers first paint; live URL check covers client-side nav.
     const [previewMode] = useState(() => preview || (typeof window !== 'undefined' && isPreviewUrl()));
     const typedName = useTypewriter(page.recipientName || 'Friend', opened, 90);
@@ -387,7 +401,17 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                     <span className="text-[10px] font-bold bg-gray-950/90 text-purple-200 border border-purple-400/30 backdrop-blur-md px-2.5 py-0.5 rounded-full shadow-lg flex items-center gap-1">
                         <Eye className="w-2.5 h-2.5 text-purple-300" /> Creator Tools (Only You See This)
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="relative flex items-center gap-2">
+                        {/* Post-VIP customize hint tooltip */}
+                        {showCustomizeHint && page.isVip && (
+                            <div className="absolute bottom-full left-0 mb-2 z-50 pointer-events-none">
+                                <div className="relative bg-amber-400 text-gray-950 text-xs font-extrabold px-3 py-2 rounded-xl shadow-2xl whitespace-nowrap animate-bounce">
+                                    🎨 Tap here to customize your card!
+                                    {/* Arrow pointing down */}
+                                    <span className="absolute top-full left-6 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[7px] border-t-amber-400" />
+                                </div>
+                            </div>
+                        )}
                         {page.isVip ? (
                             <button
                                 type="button"
