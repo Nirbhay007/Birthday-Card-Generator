@@ -7,7 +7,7 @@ import SupportButton from '@/components/SupportButton';
 import WhatsNew from '@/components/WhatsNew';
 import CinemaShowcase from '@/components/premium/CinemaShowcase';
 import { Sparkles, Heart, Music, Image as ImageIcon, Wind, ShieldCheck, Zap, HelpCircle, ArrowRight, BookOpen, Gift, PartyPopper, Timer } from 'lucide-react';
-import { getSoftwareApplicationSchema, getFAQSchema, getHowToSchema } from '@/lib/seo';
+import { getSoftwareApplicationSchema, getFAQSchema, getHowToSchema, getVideoObjectSchema } from '@/lib/seo';
 import { WISH_CATEGORIES } from '@/lib/wishesData';
 import { getAllAgePages } from '@/lib/ageWishesData';
 
@@ -52,6 +52,7 @@ export default function Home() {
   const softwareSchema = getSoftwareApplicationSchema(baseUrl);
   const faqSchema = getFAQSchema(FAQS);
   const howToSchema = getHowToSchema(baseUrl);
+  const videoSchema = getVideoObjectSchema(baseUrl);
   const agePages = getAllAgePages();
 
   return (
@@ -68,6 +69,12 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
       />
+      {videoSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(videoSchema) }}
+        />
+      )}
 
       <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900 relative overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-[560px] pointer-events-none" aria-hidden="true">

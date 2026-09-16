@@ -2,7 +2,7 @@ import { Inter, Playfair_Display, Lato, Fredoka, Quicksand, Press_Start_2P, VT32
 import Script from "next/script";
 import "./globals.css";
 import "./themes.css";
-import { getWebSiteSchema, getOrganizationSchema } from "@/lib/seo";
+import { getWebSiteSchema, getOrganizationSchema, getWebApplicationSchema, getProductSchema } from "@/lib/seo";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -97,10 +97,21 @@ export const viewport = {
 export default function RootLayout({ children }) {
   const websiteSchema = getWebSiteSchema(baseUrl);
   const organizationSchema = getOrganizationSchema(baseUrl);
+  const webAppSchema = getWebApplicationSchema(baseUrl);
+  const productSchema = getProductSchema(baseUrl);
 
   return (
     <html lang="en">
       <head>
+        {/* Preconnect to external origins for faster resource loading */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
+        {/* Application identity */}
+        <meta name="application-name" content="BirthdayGen" />
+        <meta name="generator" content="BirthdayGen" />
+        {/* Structured data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
@@ -108,6 +119,14 @@ export default function RootLayout({ children }) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
         />
       </head>
       <body className={`${inter.variable} ${playfair.variable} ${lato.variable} ${fredoka.variable} ${quicksand.variable} ${pressStart.variable} ${vt323.variable}`}>
