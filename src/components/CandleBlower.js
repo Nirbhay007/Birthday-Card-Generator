@@ -61,7 +61,7 @@ export default function CandleBlower({ onBlow, age, recipientName }) {
             analyserRef.current = audioContextRef.current.createAnalyser();
             microphoneRef.current = audioContextRef.current.createMediaStreamSource(stream);
             microphoneRef.current.connect(analyserRef.current);
-            analyserRef.current.fftSize = 256;
+            analyserRef.current.fftSize = 128;
             setListening(true);
             setPermissionDenied(false);
             detectBlow();
@@ -118,7 +118,11 @@ export default function CandleBlower({ onBlow, age, recipientName }) {
     }, []);
 
     return (
-        <section className="flex flex-col items-center justify-center space-y-6 py-6" aria-label="Interactive virtual candle blowing section">
+        <section
+            className="flex flex-col items-center justify-center space-y-6 py-6"
+            aria-label="Interactive virtual candle blowing section"
+            style={{ contain: 'paint' }}
+        >
             {typeof age === 'number' && age >= 1 && (
                 <div className="pop-in inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/70 border border-white/60 shadow-sm text-sm font-bold text-gray-800">
                     <PartyPopper className="w-4 h-4 text-pink-600" aria-hidden="true" />
