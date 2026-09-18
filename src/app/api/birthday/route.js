@@ -16,7 +16,7 @@ export async function POST(request) {
                 createdAt: { gte: oneHourAgo },
             },
             select: { id: true },
-            take: 15,
+            take: 6, // only need to know if >= 5 exist
         });
 
         if (recentCheck.length >= 15) {

@@ -3,12 +3,19 @@ import { AGE_PAGES } from '@/lib/ageWishesData';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
+// Static dates — avoids telling Google every page is "always modified",
+// which wastes crawl budget and can suppress rankings.
+// Update these manually when you make meaningful content changes.
+const LAST_MODIFIED_CORE = new Date('2026-09-18');
+const LAST_MODIFIED_CONTENT = new Date('2026-09-18');
+const LAST_MODIFIED_PREMIUM = new Date('2026-09-10');
+
 export default async function sitemap() {
   // Core static pages
   const routes = [
     {
       url: baseUrl,
-      lastModified: new Date(),
+      lastModified: LAST_MODIFIED_CORE,
       changeFrequency: 'daily',
       priority: 1.0,
       images: [
@@ -21,13 +28,13 @@ export default async function sitemap() {
     },
     {
       url: `${baseUrl}/wishes`,
-      lastModified: new Date(),
+      lastModified: LAST_MODIFIED_CONTENT,
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
       url: `${baseUrl}/ages`,
-      lastModified: new Date(),
+      lastModified: LAST_MODIFIED_CONTENT,
       changeFrequency: 'weekly',
       priority: 0.9,
     },
@@ -37,7 +44,7 @@ export default async function sitemap() {
   // Programmatic SEO category routes
   const wishesCategoryRoutes = WISH_CATEGORIES.map((category) => ({
     url: `${baseUrl}/wishes/${category.slug}`,
-    lastModified: new Date(),
+    lastModified: LAST_MODIFIED_CONTENT,
     changeFrequency: 'weekly',
     priority: 0.85,
   }));
@@ -45,7 +52,7 @@ export default async function sitemap() {
   // Milestone-age programmatic routes
   const ageRoutes = AGE_PAGES.map((a) => ({
     url: `${baseUrl}/ages/${a.age}`,
-    lastModified: new Date(),
+    lastModified: LAST_MODIFIED_CONTENT,
     changeFrequency: 'weekly',
     priority: 0.85,
   }));
@@ -58,7 +65,7 @@ export default async function sitemap() {
   const premiumRoutes = [
     {
       url: `${baseUrl}/premium`,
-      lastModified: new Date(),
+      lastModified: LAST_MODIFIED_PREMIUM,
       changeFrequency: 'weekly',
       priority: 0.85,
       images: [
