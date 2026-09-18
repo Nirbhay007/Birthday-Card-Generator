@@ -6,20 +6,20 @@ export async function POST(request) {
         const body = await request.json();
         const { recipientName, birthdayDate, message, theme, photos, reminderEmail, remindNextYear, age, senderName, relationship, music, source } = body;
 
-        // Rate Limiting
+        // Rate Limiting — findFirst is faster than count() for threshold checks
         const ip = request.headers.get('x-forwarded-for') || 'unknown';
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
-        const recentPages = await prisma.birthdayPage.count({
+        const recentCheck = await prisma.birthdayPage.findMany({
             where: {
                 ipAddress: ip,
-                createdAt: {
-                    gte: oneHourAgo,
-                },
+                createdAt: { gte: oneHourAgo },
             },
+            select: { id: true },
+            take: 15,
         });
 
-        if (recentPages >= 15) {
+        if (recentCheck.length >= 15) {
             return NextResponse.json({ success: false, error: 'Rate limit exceeded. You can only create 5 pages per hour.' }, { status: 429 });
         }
 

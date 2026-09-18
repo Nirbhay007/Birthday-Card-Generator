@@ -6,7 +6,8 @@ import prisma from '@/lib/prisma';
  * Usage: GET /api/stats?token=YOUR_STATS_TOKEN
  * Set STATS_TOKEN in .env / Vercel env. Unset token = endpoint disabled (404).
  */
-export const dynamic = 'force-dynamic';
+// Cached at CDN for 5 minutes — stats page doesn't need real-time precision
+export const revalidate = 300;
 
 function authorized(provided, expected) {
     if (!expected || !provided) return false;
@@ -131,32 +132,39 @@ export async function GET(request) {
             console.error('Support stats unavailable (pending migration?):', supportError?.message || supportError);
         }
 
-        return NextResponse.json({
-            success: true,
-            generatedAt: new Date().toISOString(),
-            totals: {
-                pages,
-                photos,
-                avgPhotosPerPage: pages ? +(photos / pages).toFixed(2) : 0,
-                views: sums._sum.viewCount || 0,
-                loves: sums._sum.loves || 0,
-                shares: sums._sum.shares || 0,
-                reminderOptIns: reminders,
-                reminderRate: pages ? +((reminders / pages) * 100).toFixed(1) : 0,
+        return NextResponse.json(
+            {
+                success: true,
+                generatedAt: new Date().toISOString(),
+                totals: {
+                    pages,
+                    photos,
+                    avgPhotosPerPage: pages ? +(photos / pages).toFixed(2) : 0,
+                    views: sums._sum.viewCount || 0,
+                    loves: sums._sum.loves || 0,
+                    shares: sums._sum.shares || 0,
+                    reminderOptIns: reminders,
+                    reminderRate: pages ? +((reminders / pages) * 100).toFixed(1) : 0,
+                },
+                last14Days: json.perDay,
+                topThemes: byTheme.map((t) => ({ theme: t.theme, pages: t._count.theme })),
+                topRelationships: byRelationship
+                    .filter((r) => r.relationship)
+                    .map((r) => ({ relationship: r.relationship, pages: r._count.relationship })),
+                topMusic: byMusic
+                    .filter((m) => m.music)
+                    .map((m) => ({ music: m.music, pages: m._count.music })),
+                creationsBySource: bySource
+                    .filter((s) => s.source)
+                    .map((s) => ({ source: s.source, pages: s._count.source })),
+                support,
             },
-            last14Days: json.perDay,
-            topThemes: byTheme.map((t) => ({ theme: t.theme, pages: t._count.theme })),
-            topRelationships: byRelationship
-                .filter((r) => r.relationship)
-                .map((r) => ({ relationship: r.relationship, pages: r._count.relationship })),
-            topMusic: byMusic
-                .filter((m) => m.music)
-                .map((m) => ({ music: m.music, pages: m._count.music })),
-            creationsBySource: bySource
-                .filter((s) => s.source)
-                .map((s) => ({ source: s.source, pages: s._count.source })),
-            support,
-        });
+            {
+                headers: {
+                    'Cache-Control': 'private, s-maxage=300, stale-while-revalidate=60',
+                },
+            }
+        );
     } catch (error) {
         console.error('Stats error:', error?.message || error);
         return NextResponse.json({ success: false, error: 'Stats unavailable' }, { status: 500 });

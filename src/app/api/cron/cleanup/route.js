@@ -3,6 +3,9 @@ import prisma from '@/lib/prisma';
 import { deleteFilesFromR2, listR2Files, getR2KeyFromUrl } from '@/lib/r2';
 import { del } from '@vercel/blob';
 
+// Cap cron execution time — prevents runaway jobs burning function minutes
+export const maxDuration = 30;
+
 export async function GET(request) {
     // Security: Verify request is from Vercel Cron
     const authHeader = request.headers.get('authorization');
@@ -22,22 +25,32 @@ export async function GET(request) {
             where: {
                 reminderEmail: null,
                 createdAt: { lt: sevenDaysAgo },
-                photos: {
-                    some: {},
-                },
+                photos: { some: {} },
                 OR: [
                     { birthdayDate: { lt: sevenDaysAgo } },
                     { birthdayDate: null },
                 ],
             },
-            include: {
-                photos: true,
-            },
+            include: { photos: true },
         });
 
         let deletedExpiredBlobs = 0;
         const expiredPageIds = expiredPages.map((p) => p.id);
         const expiredPhotoUrls = expiredPages.flatMap((p) => p.photos.map((ph) => ph.url));
+
+        // Early exit — nothing expired today, skip expensive R2 scan
+        if (expiredPhotoUrls.length === 0) {
+            const keptReminderPages = await prisma.birthdayPage.count({
+                where: { reminderEmail: { not: null }, photos: { some: {} } },
+            });
+            return NextResponse.json({
+                success: true,
+                deletedExpiredPhotoPages: 0,
+                deletedExpiredBlobs: 0,
+                deletedOrphanedBlobs: 0,
+                keptReminderPagesWithPhotos: keptReminderPages,
+            });
+        }
 
         if (expiredPhotoUrls.length > 0) {
             const r2Keys = [];
