@@ -29,6 +29,9 @@ function throttled(ip) {
 }
 
 export async function POST(request) {
+    // TEMP: no-op to conserve Vercel function minutes — restore after Oct 10
+    return NextResponse.json({ success: true });
+
     try {
         const body = await request.json().catch(() => ({}));
         const { event, amount, path } = body || {};

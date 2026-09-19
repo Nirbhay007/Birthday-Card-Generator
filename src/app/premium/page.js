@@ -1,5 +1,8 @@
 import './premium.css';
 import PremiumPage from '@/components/premium/PremiumPage';
+
+// Cache premium page for 1 hour — no DB queries here, pure searchParams rendering
+export const revalidate = 3600;
 import { PTHEME_IDS } from '@/components/premium/looks';
 import { REL_IDS } from '@/components/premium/relationships';
 import { TRACKS, PREMIUM_TRACKS } from '@/lib/music';

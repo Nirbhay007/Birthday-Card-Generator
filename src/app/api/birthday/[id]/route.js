@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 
 const VALID_THEMES = ['fun', 'elegant', 'royal', 'neon', 'midnight', 'princess', 'retro', 'sunset', 'unicorn', 'minimal'];
@@ -63,6 +64,9 @@ export async function PATCH(request, { params }) {
             where: { id },
             data: updateData,
         });
+
+        // Bust ISR cache so VIP theme/music changes are visible immediately
+        try { revalidatePath(`/b/${id}`); } catch {}
 
         return NextResponse.json({
             success: true,

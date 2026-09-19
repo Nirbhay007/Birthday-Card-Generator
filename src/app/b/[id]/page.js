@@ -9,8 +9,10 @@ import MonetizationSlot from '@/components/MonetizationSlot';
 import BirthdayExperience from '@/components/BirthdayExperience';
 import { getBreadcrumbSchema, getGreetingCardSchema } from '@/lib/seo';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// ISR: cache each card page for 5 minutes at the CDN.
+// Card views (the bulk of traffic) cost zero function time after the first hit.
+// ?created=1 / ?preview=1 URLs are separate cache entries so they still work.
+export const revalidate = 300;
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 

@@ -20,6 +20,9 @@ function authorized(provided, expected) {
 }
 
 export async function GET(request) {
+    // TEMP: disabled to conserve Vercel function minutes — restore after Oct 10
+    return NextResponse.json({ success: false, error: 'Stats temporarily disabled' }, { status: 503 });
+
     const expected = process.env.STATS_TOKEN;
     const { searchParams } = new URL(request.url);
     if (!authorized(searchParams.get('token') || '', expected || '')) {

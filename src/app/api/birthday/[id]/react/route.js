@@ -77,8 +77,8 @@ export async function POST(request, { params }) {
         // cookie-deduped — sharing to 4 channels is 4 legitimate shares.
         const cookieName = type === 'view' ? `bgen-v-${id}` : type === 'love' ? `bgen-l-${id}` : null;
         if (cookieName && jar.get(cookieName)) {
-            const page = await prisma.birthdayPage.findUnique({ where: { id }, select: COUNTS }).catch(() => null);
-            return NextResponse.json({ success: true, duplicate: true, ...(page || { viewCount: 0, loves: 0, shares: 0 }) });
+            // Cookie already set — return instantly, skip DB read
+            return NextResponse.json({ success: true, duplicate: true });
         }
 
         const page = await prisma.birthdayPage.update({
