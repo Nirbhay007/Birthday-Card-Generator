@@ -8,37 +8,37 @@ export function isHeicFile(file) {
     if (!file) return false;
     const name = (file.name || '').toLowerCase();
     const type = (file.type || '').toLowerCase();
-    return (
-        name.endsWith('.heic') ||
-        name.endsWith('.heif') ||
-        type === 'image/heic' ||
-        type === 'image/heif'
-    );
+    const hasHeicExt = name.endsWith('.heic') || name.endsWith('.heif');
+    const hasHeicMime = type === 'image/heic' || type === 'image/heif';
+    // Many browsers report HEIC files with empty or generic MIME types
+    const hasGenericMime = !type || type === 'application/octet-stream';
+    return hasHeicMime || (hasHeicExt && hasGenericMime) || hasHeicExt;
 }
 
 /**
  * Dynamically converts a HEIC/HEIF File or Blob to a standard JPEG File in the browser.
+ * Uses 'heic-to' which has an up-to-date libheif WASM supporting modern iOS HEIC variants.
  */
 export async function convertHeicToJpeg(file) {
     if (typeof window === 'undefined') return file;
 
     try {
-        const heic2anyModule = await import('heic2any');
-        const heic2any = heic2anyModule.default || heic2anyModule;
+        const { heicTo } = await import('heic-to');
 
-        const convertedBlob = await heic2any({
+        const convertedBlob = await heicTo({
             blob: file,
-            toType: 'image/jpeg',
+            type: 'image/jpeg',
             quality: 0.86,
         });
 
-        const singleBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
         const newFileName = (file.name || 'photo.heic').replace(/\.(heic|heif)$/i, '.jpg');
 
-        return new File([singleBlob], newFileName, { type: 'image/jpeg' });
+        return new File([convertedBlob], newFileName, { type: 'image/jpeg' });
     } catch (err) {
-        console.warn('HEIC client conversion skipped or failed:', err);
-        return file;
+        console.warn('HEIC client conversion failed:', err);
+        throw new Error(
+            'Could not convert this HEIC photo. Please open the photo on your device and save/export it as JPG or PNG, then upload the converted file.'
+        );
     }
 }
 
@@ -54,7 +54,7 @@ export async function compressAndNormalizeImage(file, maxDim = 1600, quality = 0
 
     let workFile = file;
 
-    // 1. Convert HEIC to JPEG if needed
+    // 1. Convert HEIC to JPEG if needed (throws on failure so we don't upload unviewable files)
     if (isHeicFile(workFile)) {
         workFile = await convertHeicToJpeg(workFile);
     }
@@ -62,7 +62,7 @@ export async function compressAndNormalizeImage(file, maxDim = 1600, quality = 0
     // 2. If it's not an image MIME type and doesn't look like an image, return as-is
     const isImageLike =
         (workFile.type && workFile.type.startsWith('image/')) ||
-        /\.(jpe?g|png|webp|gif|bmp|heic|heif)$/i.test(workFile.name || '');
+        /\.(jpe?g|png|webp|gif|bmp|heic|heif|tiff?|avif|svg|ico)$/i.test(workFile.name || '');
 
     if (!isImageLike) {
         return workFile;

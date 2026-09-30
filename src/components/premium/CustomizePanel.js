@@ -136,7 +136,7 @@ export default function CustomizePanel({
             }
         } catch (err) {
             console.error('Photo upload error:', err);
-            setPhotoError('Network error while uploading photo. Please try again.');
+            setPhotoError(err.message || 'Failed to upload photo. Please try again.');
         } finally {
             setUploadingPhoto(false);
         }
@@ -415,7 +415,7 @@ export default function CustomizePanel({
                                             <p className="text-xs font-bold text-[#f7dc9a] group-hover:text-white transition-colors">
                                                 {uploadingPhoto ? 'Uploading photo...' : 'Tap to upload a photo of them'}
                                             </p>
-                                            <p className="text-[11px] text-[#b9aed4] mt-0.5">JPG, PNG, WebP • Max 5MB • Instant 3D tilt magic</p>
+                                            <p className="text-[11px] text-[#b9aed4] mt-0.5">JPG, PNG, WebP, HEIC & more • Max 5MB • Instant 3D tilt magic</p>
                                         </div>
                                     </div>
                                 </button>
@@ -424,7 +424,7 @@ export default function CustomizePanel({
                             <input
                                 ref={photoInputRef}
                                 type="file"
-                                accept="image/*,.heic,.heif"
+                                accept="image/*,.heic,.heif,.avif,.tiff,.tif"
                                 className="hidden"
                                 onChange={handlePhotoUpload}
                             />

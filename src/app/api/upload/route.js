@@ -39,6 +39,12 @@ const ALLOWED_IMAGE_TYPES = [
     'image/gif',
     'image/heic',
     'image/heif',
+    'image/avif',
+    'image/bmp',
+    'image/tiff',
+    'image/svg+xml',
+    'image/x-icon',
+    'image/vnd.microsoft.icon',
 ];
 const ALLOWED_AUDIO_TYPES = [
     'audio/mpeg',
@@ -85,13 +91,15 @@ export async function POST(request) {
 
         const isImage =
             ALLOWED_IMAGE_TYPES.includes(fileType) ||
-            /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(fileName);
+            /\.(jpe?g|png|webp|gif|heic|heif|avif|bmp|tiff?|svg|ico)$/i.test(fileName) ||
+            // HEIC files from iOS often arrive with empty or generic MIME types
+            ((!fileType || fileType === 'application/octet-stream') && /\.(heic|heif)$/i.test(fileName));
 
         if (!isImage && !isAudio) {
             return NextResponse.json(
                 {
                     success: false,
-                    error: 'Unsupported file format. Please upload photos (JPG, PNG, WebP) or songs (MP3, M4A, WAV, AAC, OGG).',
+                    error: 'Unsupported file format. Please upload photos (JPG, PNG, WebP, HEIC, AVIF, GIF) or songs (MP3, M4A, WAV, AAC, OGG).',
                 },
                 { status: 400 }
             );

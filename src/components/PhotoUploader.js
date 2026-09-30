@@ -49,7 +49,7 @@ export default function PhotoUploader({ photos, setPhotos, maxPhotos = 4 }) {
                 });
             } catch (err) {
                 console.error('Image compression error', err);
-                setErrorMsg(`Failed to process "${rawFile.name}". Please try another image.`);
+                setErrorMsg(err.message || `Failed to process "${rawFile.name}". Please try another image.`);
             }
         }
 
@@ -86,7 +86,7 @@ export default function PhotoUploader({ photos, setPhotos, maxPhotos = 4 }) {
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         accept: {
-            'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.heic', '.heif']
+            'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.heic', '.heif', '.gif', '.bmp', '.tiff', '.tif', '.avif', '.svg', '.ico']
         },
         disabled: processing || photos.length >= maxPhotos,
     });
@@ -124,7 +124,7 @@ export default function PhotoUploader({ photos, setPhotos, maxPhotos = 4 }) {
                         {processing ? <Loader2 className="w-7 h-7 animate-spin text-purple-600" /> : <Upload className="w-7 h-7 text-purple-500" />}
                         <p className="text-xs font-bold text-gray-700">{isDragActive ? 'Drop photos here' : 'Choose from gallery'}</p>
                         <p className="text-[11px] text-gray-400">
-                            {progress || (photos.length >= maxPhotos ? `Limit reached (${maxPhotos} photos)` : `JPG, PNG, WebP • max 5MB (up to ${maxPhotos})`)}
+                            {progress || (photos.length >= maxPhotos ? `Limit reached (${maxPhotos} photos)` : `JPG, PNG, WebP, HEIC & more • max 5MB (up to ${maxPhotos})`)}
                         </p>
                     </div>
                 </div>
@@ -146,7 +146,7 @@ export default function PhotoUploader({ photos, setPhotos, maxPhotos = 4 }) {
                 <input
                     ref={cameraInputRef}
                     type="file"
-                    accept="image/*,.heic,.heif"
+                    accept="image/*,.heic,.heif,.avif,.tiff,.tif"
                     capture="user"
                     className="hidden"
                     disabled={processing || photos.length >= maxPhotos}
