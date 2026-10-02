@@ -48,9 +48,10 @@ export async function POST(request) {
                     .findUnique({ where: { orderId }, select: { unlockToken: true, status: true, pageId: true } })
                     .catch(() => null);
                 const unlockToken = existing?.unlockToken || `unlock_${crypto.randomBytes(24).toString('hex')}`;
+                const buyerContact = [payment.contact, payment.email].filter((v) => v && v !== 'void@razorpay.com').join(' / ') || null;
                 await prisma.premiumOrder.upsert({
                     where: { orderId },
-                    update: { paymentId, status: 'paid', paidAt: new Date(), unlockToken },
+                    update: { paymentId, status: 'paid', paidAt: new Date(), unlockToken, ...(buyerContact ? { buyerContact } : {}) },
                     create: {
                         orderId,
                         paymentId,
@@ -60,6 +61,7 @@ export async function POST(request) {
                         paidAt: new Date(),
                         unlockToken,
                         ...(existing?.pageId ? { pageId: existing.pageId } : {}),
+                        ...(buyerContact ? { buyerContact } : {}),
                     },
                 });
 

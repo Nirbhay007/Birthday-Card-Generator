@@ -2,9 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Zap, Loader2, FlaskConical, Globe2, MapPin } from 'lucide-react';
-import { detectRegion, getPremiumPrice, createPremiumOrder, openRazorpayCheckout, verifyPremiumPayment } from '@/lib/payments';
+import { detectRegion, getPremiumPrice, createPremiumOrder, openRazorpayCheckout, verifyPremiumPayment, pollOrderStatus } from '@/lib/payments';
 import Reveal from './Reveal';
 import Magnetic from './Magnetic';
+
+/** localStorage key for surviving browser-kill during UPI app switch. */
+const PENDING_ORDER_KEY = 'bgen-premium-pending-v1';
 
 function track(event, extra = {}) {
     try {
@@ -36,23 +39,90 @@ export default function Paywall({ onUnlocked }) {
         track('paywall_open');
     }, []);
 
+    // ---- UPI RECOVERY ----
+    // If the browser died during a UPI app switch, the pending order is still
+    // in localStorage. Poll the server to see if the webhook already confirmed
+    // payment, and auto-unlock if so.  Runs only once on mount.
+    const recoveredRef = useRef(false);
+    useEffect(() => {
+        if (recoveredRef.current) return;
+        recoveredRef.current = true;
+        (async () => {
+            let raw;
+            try { raw = localStorage.getItem(PENDING_ORDER_KEY); } catch { return; }
+            if (!raw) return;
+            let pending;
+            try { pending = JSON.parse(raw); } catch { try { localStorage.removeItem(PENDING_ORDER_KEY); } catch {} return; }
+            const { orderId, ts } = pending || {};
+            if (!orderId || Date.now() - (ts || 0) > 10 * 60 * 1000) {
+                try { localStorage.removeItem(PENDING_ORDER_KEY); } catch {}
+                return;
+            }
+            setStatus({ phase: 'verifying', message: 'Checking your previous payment…' });
+            const result = await pollOrderStatus(orderId, { maxAttempts: 10, intervalMs: 2000 });
+            if (result?.unlockKey) {
+                try { localStorage.removeItem(PENDING_ORDER_KEY); } catch {}
+                track('premium_unlock');
+                onUnlocked?.({ testMode: false, unlockKey: result.unlockKey, receiptKept: true });
+            } else {
+                try { localStorage.removeItem(PENDING_ORDER_KEY); } catch {}
+                setStatus({ phase: 'idle', message: '' });
+            }
+        })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const fail = (message) => setStatus({ phase: 'error', message });
     const checkout = async () => {
         setStatus({ phase: 'verifying', message: 'Contacting secure checkout…' });
         try {
-            const order = await createPremiumOrder(region);
+            const snapshotUrl = typeof window !== 'undefined' ? window.location.href : '';
+            const order = await createPremiumOrder(region, { snapshotUrl });
+            // Persist order ID so we can recover if the browser dies during UPI app switch.
+            try { localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify({ orderId: order.orderId, ts: Date.now() })); } catch {}
             track('checkout_start', { amount: region === 'IN' ? 49 : 1 });
             setStatus({ phase: 'verifying', message: 'Opening secure checkout…' });
-            const resp = await openRazorpayCheckout({ order, keyId: order.keyId, region });
-            setStatus({ phase: 'verifying', message: 'Confirming your payment…' });
-            const receipt = await verifyPremiumPayment({
-                provider: 'razorpay',
-                orderId: resp.razorpay_order_id,
-                paymentId: resp.razorpay_payment_id,
-                signature: resp.razorpay_signature,
-            });
-            track('premium_unlock');
-            onUnlocked?.({ testMode: false, unlockKey: receipt.unlockKey || null, receiptKept: !!receipt.unlockKey });
+
+            // Background poll catches payments the Razorpay JS callback misses
+            // (common with UPI intent on mobile: tab killed during app switch).
+            const abort = new AbortController();
+            const poll = pollOrderStatus(order.orderId, { signal: abort.signal });
+
+            let callbackOk = false;
+            try {
+                const resp = await openRazorpayCheckout({ order, keyId: order.keyId, region });
+                callbackOk = true;
+                abort.abort();
+                setStatus({ phase: 'verifying', message: 'Confirming your payment…' });
+                const receipt = await verifyPremiumPayment({
+                    provider: 'razorpay',
+                    orderId: resp.razorpay_order_id,
+                    paymentId: resp.razorpay_payment_id,
+                    signature: resp.razorpay_signature,
+                    snapshotUrl,
+                });
+                try { localStorage.removeItem(PENDING_ORDER_KEY); } catch {}
+                track('premium_unlock');
+                onUnlocked?.({ testMode: false, unlockKey: receipt.unlockKey || null, receiptKept: !!receipt.unlockKey });
+            } catch (modalErr) {
+                if (callbackOk) { fail(modalErr?.message || 'Verification failed.'); return; }
+                // Razorpay modal dismissed — the payment may still have gone through
+                // via UPI.  Give the background poll a few more seconds to catch it.
+                setStatus({ phase: 'verifying', message: 'Checking payment status…' });
+                const pollResult = await Promise.race([
+                    poll,
+                    new Promise((r) => setTimeout(() => r(null), 15_000)),
+                ]);
+                abort.abort();
+                if (pollResult?.unlockKey) {
+                    try { localStorage.removeItem(PENDING_ORDER_KEY); } catch {}
+                    track('premium_unlock');
+                    onUnlocked?.({ testMode: false, unlockKey: pollResult.unlockKey, receiptKept: true });
+                } else {
+                    // Keep PENDING_ORDER_KEY for mount-recovery on next visit.
+                    fail('Payment window closed. If money was deducted, it will unlock automatically when you revisit this page.');
+                }
+            }
         } catch (e) {
             if (e?.code === 'TEST_MODE') {
                 setTestMode(true);

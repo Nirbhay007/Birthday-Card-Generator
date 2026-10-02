@@ -59,6 +59,7 @@ export async function POST(request) {
         const region = body?.region === 'INTL' ? 'INTL' : 'IN';
         const tier = body?.tier === 'card_vip' ? 'card_vip' : 'universe';
         const pageId = typeof body?.pageId === 'string' && body.pageId.trim() ? body.pageId.trim().slice(0, 60) : null;
+        const snapshotUrl = typeof body?.snapshotUrl === 'string' && body.snapshotUrl.trim() ? body.snapshotUrl.trim().slice(0, 2000) : null;
         const { amount, currency } = (PRICES[tier] || PRICES.universe)[region];
 
         const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
@@ -76,7 +77,7 @@ export async function POST(request) {
         // Best-effort receipt (never blocks checkout if the table is missing)
         try {
             await prisma.premiumOrder.create({
-                data: { orderId: order.id, amount, currency, status: 'created', pageId, tier },
+                data: { orderId: order.id, amount, currency, status: 'created', pageId, tier, snapshotUrl },
             });
         } catch (dbError) {
             console.error('PremiumOrder create failed (pending migration?):', dbError?.message || dbError);

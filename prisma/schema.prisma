@@ -72,6 +72,10 @@ model PremiumOrder {
   // is treated as the payer — no accounts needed. Shareable by design
   // (giver pays, recipient opens), unguessable (192-bit random + DB check).
   unlockToken String?  @unique
+  // Full URL snapshot (e.g. /premium?to=Ahmad&from=...&key=unlock_...) for support recovery.
+  snapshotUrl  String?
+  // Buyer phone/email from Razorpay — for support outreach without checking the dashboard.
+  buyerContact String?
 
   @@index([status, createdAt])
   @@index([pageId])

@@ -113,7 +113,7 @@ function loadRazorpay() {
  * @returns {Promise<{orderId, paymentId, signature}>} — POST to /api/premium/verify
  * @throws {Error} with `code === 'TEST_MODE'` when server keys are missing.
  */
-export async function createPremiumOrder(region, { tier = 'universe', pageId = null } = {}) {
+export async function createPremiumOrder(region, { tier = 'universe', pageId = null, snapshotUrl = null } = {}) {
     const r = await fetch('/api/premium/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -121,6 +121,7 @@ export async function createPremiumOrder(region, { tier = 'universe', pageId = n
             region: region === 'INTL' ? 'INTL' : 'IN',
             tier,
             pageId,
+            snapshotUrl,
         }),
     });
     const d = await r.json().catch(() => ({}));
@@ -180,4 +181,40 @@ export async function verifyPremiumPayment(payload) {
     const d = await r.json().catch(() => ({}));
     if (!d.success) throw new Error(d.error || 'Verification failed.');
     return d;
+}
+
+/**
+ * Poll /api/premium/order/status until the order is paid or we give up.
+ *
+ * Used for UPI recovery — mobile browsers frequently kill background tabs
+ * when the user switches to their UPI app to authorise payment. The Razorpay
+ * JS callback never fires, but the server-side webhook confirms capture.
+ * This poller bridges the gap.
+ *
+ * @param {string}         orderId     Razorpay order ID (e.g. order_Tj3R9Sb6D4kUHz)
+ * @param {Object}         opts
+ * @param {number}         opts.maxAttempts  Max number of polls (default 20 → ~60 s)
+ * @param {number}         opts.intervalMs   Delay between polls in ms (default 3000)
+ * @param {AbortSignal}    opts.signal       Optional AbortSignal to cancel early
+ * @returns {Promise<{paid: true, unlockKey: string, pageId?: string} | null>}
+ */
+export async function pollOrderStatus(orderId, { maxAttempts = 20, intervalMs = 3000, signal } = {}) {
+    for (let i = 0; i < maxAttempts; i++) {
+        if (signal?.aborted) return null;
+        try {
+            const r = await fetch(`/api/premium/order/status?orderId=${encodeURIComponent(orderId)}`);
+            const d = await r.json();
+            if (d.paid && d.unlockKey) return d;
+        } catch {}
+        if (i < maxAttempts - 1) {
+            await new Promise((resolve) => {
+                const t = setTimeout(resolve, intervalMs);
+                if (signal) {
+                    const onAbort = () => { clearTimeout(t); resolve(); };
+                    signal.addEventListener('abort', onAbort, { once: true });
+                }
+            });
+        }
+    }
+    return null;
 }

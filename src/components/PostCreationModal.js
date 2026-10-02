@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { Crown, Check, Copy, Sparkles, ArrowRight, X, Eye } from 'lucide-react';
-import { detectRegion, getVipCardPrice, createPremiumOrder, openRazorpayCheckout, verifyPremiumPayment } from '@/lib/payments';
+import { detectRegion, getVipCardPrice, createPremiumOrder, openRazorpayCheckout, verifyPremiumPayment, pollOrderStatus } from '@/lib/payments';
 
 export default function PostCreationModal({
     isOpen,
@@ -54,51 +54,78 @@ export default function PostCreationModal({
         setTimeout(() => setCopied(false), 2500);
     };
 
+    const celebrateVip = () => {
+        setUpgraded(true);
+        try { localStorage.setItem(`bgen_owner_${card.id}`, '1'); } catch {}
+        setStatus({ phase: 'success', message: 'VIP Activated!' });
+        try {
+            const premiumTrack = card.originalMusic || card.music || 'strings';
+            window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { track: premiumTrack } }));
+        } catch {}
+        try {
+            confetti({
+                particleCount: 200,
+                spread: 90,
+                origin: { y: 0.5 },
+                colors: ['#f2c14e', '#fb7185', '#a855f7', '#ffd700'],
+                disableForReducedMotion: true,
+            });
+        } catch {}
+    };
+
     const handleUpgrade = async () => {
         setStatus({ phase: 'loading', message: 'Connecting to checkout…' });
         try {
             const order = await createPremiumOrder(region, { tier: 'card_vip', pageId: card.id });
             setStatus({ phase: 'checkout', message: 'Opening secure checkout…' });
 
-            const resp = await openRazorpayCheckout({
-                order,
-                keyId: order.keyId,
-                buyerName: card.senderName || '',
-                region,
-            });
+            // Background poll for UPI recovery (browser may lose the Razorpay
+            // callback when the user switches to their UPI app).
+            const abort = new AbortController();
+            const poll = pollOrderStatus(order.orderId, { signal: abort.signal });
 
-            setStatus({ phase: 'verifying', message: 'Activating your VIP surprise…' });
-
-            await verifyPremiumPayment({
-                provider: 'razorpay',
-                orderId: resp.razorpay_order_id,
-                paymentId: resp.razorpay_payment_id,
-                signature: resp.razorpay_signature,
-                pageId: card.id,
-            });
-
-            setUpgraded(true);
-            try { localStorage.setItem(`bgen_owner_${card.id}`, '1'); } catch {}
-            setStatus({ phase: 'success', message: 'VIP Activated!' });
-
-            // Hot-switch audio to creator's chosen VIP soundtrack immediately
+            let callbackOk = false;
             try {
-                const premiumTrack = card.originalMusic || card.music || 'strings';
-                window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { track: premiumTrack } }));
-            } catch {}
-
-            try {
-                confetti({
-                    particleCount: 200,
-                    spread: 90,
-                    origin: { y: 0.5 },
-                    colors: ['#f2c14e', '#fb7185', '#a855f7', '#ffd700'],
-                    disableForReducedMotion: true,
+                const resp = await openRazorpayCheckout({
+                    order,
+                    keyId: order.keyId,
+                    buyerName: card.senderName || '',
+                    region,
                 });
-            } catch {}
+                callbackOk = true;
+                abort.abort();
+
+                setStatus({ phase: 'verifying', message: 'Activating your VIP surprise…' });
+
+                await verifyPremiumPayment({
+                    provider: 'razorpay',
+                    orderId: resp.razorpay_order_id,
+                    paymentId: resp.razorpay_payment_id,
+                    signature: resp.razorpay_signature,
+                    pageId: card.id,
+                });
+
+                celebrateVip();
+            } catch (modalErr) {
+                if (callbackOk) {
+                    setStatus({ phase: 'error', message: modalErr?.message || 'Verification failed.' });
+                    return;
+                }
+                // Razorpay modal dismissed — check if the background poll caught the payment.
+                setStatus({ phase: 'verifying', message: 'Checking payment status…' });
+                const pollResult = await Promise.race([
+                    poll,
+                    new Promise((r) => setTimeout(() => r(null), 15_000)),
+                ]);
+                abort.abort();
+                if (pollResult?.unlockKey) {
+                    celebrateVip();
+                } else {
+                    setStatus({ phase: 'error', message: 'Payment window closed. If money was deducted, refresh this page in a minute and your VIP upgrade will activate automatically.' });
+                }
+            }
         } catch (e) {
             if (e?.code === 'TEST_MODE') {
-                // In dev test mode, simulate activation
                 try {
                     await verifyPremiumPayment({ provider: 'test', pageId: card.id });
                     setUpgraded(true);

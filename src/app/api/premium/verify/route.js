@@ -22,7 +22,7 @@ function bad(msg, status = 400) {
 export async function POST(request) {
     try {
         const body = await request.json().catch(() => ({}));
-        const { provider, orderId, paymentId, signature, pageId } = body || {};
+        const { provider, orderId, paymentId, signature, pageId, snapshotUrl } = body || {};
 
         if (provider === 'razorpay') {
             const secret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
@@ -48,10 +48,11 @@ export async function POST(request) {
                 const existing = await prisma.premiumOrder.findUnique({ where: { orderId }, select: { unlockToken: true, pageId: true } }).catch(() => null);
                 if (!effectivePageId && existing?.pageId) effectivePageId = existing.pageId;
                 const token = existing?.unlockToken || `unlock_${crypto.randomBytes(24).toString('hex')}`;
+                const safeSnapshot = typeof snapshotUrl === 'string' && snapshotUrl.trim() ? snapshotUrl.trim().slice(0, 2000) : undefined;
                 const row = await prisma.premiumOrder.upsert({
                     where: { orderId },
-                    update: { paymentId, status: 'paid', paidAt: new Date(), unlockToken: token, ...(effectivePageId ? { pageId: effectivePageId } : {}) },
-                    create: { orderId, paymentId, amount: 0, currency: 'INR', status: 'paid', paidAt: new Date(), unlockToken: token, pageId: effectivePageId },
+                    update: { paymentId, status: 'paid', paidAt: new Date(), unlockToken: token, ...(effectivePageId ? { pageId: effectivePageId } : {}), ...(safeSnapshot ? { snapshotUrl: safeSnapshot } : {}) },
+                    create: { orderId, paymentId, amount: 0, currency: 'INR', status: 'paid', paidAt: new Date(), unlockToken: token, pageId: effectivePageId, ...(safeSnapshot ? { snapshotUrl: safeSnapshot } : {}) },
                     select: { amount: true, currency: true },
                 });
                 unlockKey = token;
