@@ -30,7 +30,13 @@ export const VIP_TRACKS = [
     { id: 'reggae', name: 'Island Reggae Birthday', desc: 'Sunny Caribbean reggae groove & upbeat rhythm', emoji: '🌴', vip: true },
 ];
 
-export const ALL_TRACKS = [...FREE_TRACKS, ...VIP_TRACKS];
+export const PRO_TRACKS = [
+    { id: 'techno', name: 'Neon Afterglow Techno', desc: 'Hypnotic four-on-the-floor pulse & late-night glow', emoji: '🌌', vip: true },
+    { id: 'chamber', name: 'Grand Chamber Waltz', desc: 'Sweeping ballroom waltz with velvet ensemble', emoji: '🎻', vip: true },
+    { id: 'marching', name: 'Golden Jubilee March', desc: 'Triumphant celebratory brass march', emoji: '🎺', vip: true },
+];
+
+export const ALL_TRACKS = [...FREE_TRACKS, ...VIP_TRACKS, ...PRO_TRACKS];
 
 // Backward-compatibility exports for /premium universe
 export const TRACKS = ALL_TRACKS;
@@ -49,6 +55,8 @@ export function getTrackSrc(id, customUrl = null) {
     if (target === 'acoustic') return '/audio/acoustic.mp3';
     if (target === 'reggae') return '/audio/reggae.mp3';
     if (target === 'techno') return '/audio/techno.mp3';
+    if (target === 'chamber') return '/audio/chamber.mp3';
+    if (target === 'marching') return '/audio/marching.mp3';
     return null;
 }
 

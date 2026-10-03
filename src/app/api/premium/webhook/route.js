@@ -45,7 +45,7 @@ export async function POST(request) {
             const paymentId = payment.id;
             if (orderId && paymentId) {
                 const existing = await prisma.premiumOrder
-                    .findUnique({ where: { orderId }, select: { unlockToken: true, status: true, pageId: true } })
+                    .findUnique({ where: { orderId }, select: { unlockToken: true, status: true, pageId: true, tier: true } })
                     .catch(() => null);
                 const unlockToken = existing?.unlockToken || `unlock_${crypto.randomBytes(24).toString('hex')}`;
                 const buyerContact = [payment.contact, payment.email].filter((v) => v && v !== 'void@razorpay.com').join(' / ') || null;
@@ -69,7 +69,7 @@ export async function POST(request) {
                 if (typeof targetPageId === 'string' && targetPageId.trim()) {
                     await prisma.birthdayPage.update({
                         where: { id: targetPageId.trim() },
-                        data: { isVip: true },
+                        data: { isVip: true, isVipPro: true },
                     }).catch((e) => console.error('Failed to mark page as VIP via webhook:', e?.message || e));
                     try { revalidatePath(`/b/${targetPageId.trim()}`); } catch {}
                 }

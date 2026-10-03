@@ -41,7 +41,6 @@ const CANDLE_COLORS = [
 export default function CandleBlower({ onBlow, age, recipientName }) {
     const [listening, setListening] = useState(false);
     const [permissionDenied, setPermissionDenied] = useState(false);
-    const [volume, setVolume] = useState(0);
     const [candlesBlown, setCandlesBlown] = useState(false);
 
     const audioContextRef = useRef(null);
@@ -50,6 +49,8 @@ export default function CandleBlower({ onBlow, age, recipientName }) {
     const streamRef = useRef(null);
     const animationFrameRef = useRef(null);
     const blownRef = useRef(false);
+    // Volume bar updates directly via DOM — avoids re-rendering the whole cake every frame.
+    const volumeBarRef = useRef(null);
 
     const candleCount = getCandleCount(age);
 
@@ -90,7 +91,9 @@ export default function CandleBlower({ onBlow, age, recipientName }) {
         let sum = 0;
         for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
         const average = sum / bufferLength;
-        setVolume(average);
+        if (volumeBarRef.current) {
+            volumeBarRef.current.style.width = `${Math.min(average * 2.2, 100)}%`;
+        }
         if (average > 35 && !blownRef.current) {
             handleBlowOut();
         } else {
@@ -110,7 +113,7 @@ export default function CandleBlower({ onBlow, age, recipientName }) {
     const handleReplay = () => {
         blownRef.current = false;
         setCandlesBlown(false);
-        setVolume(0);
+        if (volumeBarRef.current) volumeBarRef.current.style.width = '0%';
     };
 
     useEffect(() => {
@@ -209,8 +212,9 @@ export default function CandleBlower({ onBlow, age, recipientName }) {
                                 </div>
                                 <div className="w-52 h-3 bg-gray-200 rounded-full overflow-hidden mx-auto border border-gray-300" aria-label="Microphone volume indicator">
                                     <div
+                                        ref={volumeBarRef}
                                         className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-75"
-                                        style={{ width: `${Math.min(volume * 2.2, 100)}%` }}
+                                        style={{ width: '0%' }}
                                     />
                                 </div>
                                 <button onClick={stopListening} className="text-xs text-gray-500 underline hover:text-gray-700">Stop listening</button>

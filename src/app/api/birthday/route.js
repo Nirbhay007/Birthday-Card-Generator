@@ -39,7 +39,7 @@ export async function POST(request) {
         const validRelationship = typeof relationship === 'string' && relationship.trim().length > 0
             ? relationship.trim().slice(0, 30)
             : null;
-        const MUSIC_CHOICES = ['classic', 'rock', 'musicbox', 'party', 'off', 'beats', 'strings', 'piano', 'waltz', 'lullaby', 'fanfare', 'retro', 'acoustic', 'reggae', 'techno', 'neon', 'sunset', 'starlight'];
+        const MUSIC_CHOICES = ['classic', 'rock', 'musicbox', 'party', 'off', 'beats', 'strings', 'piano', 'waltz', 'lullaby', 'fanfare', 'retro', 'acoustic', 'reggae', 'techno', 'neon', 'sunset', 'starlight', 'chamber', 'marching'];
         const validMusic = MUSIC_CHOICES.includes(music) ? music : 'classic';
         const validSource = typeof source === 'string' && /^(wishes|ages)\/[a-z0-9-]+$/.test(source)
             ? source.slice(0, 60)
@@ -73,7 +73,7 @@ export async function POST(request) {
                 music: validMusic,
                 source: validSource,
                 photos: {
-                    create: photos?.slice(0, 9).map((url, index) => ({
+                    create: photos?.slice(0, 12).map((url, index) => ({
                         url,
                         order: index,
                     })) || [],

@@ -127,23 +127,31 @@ export default async function BirthdayPage({ params, searchParams }) {
     const greetingCardSchema = getGreetingCardSchema(baseUrl, page);
 
     const isVip = !!page.isVip;
+    // Pro visuals ship with the standard ₹29 VIP — column kept for future tiers.
+    const isVipPro = isVip || !!page.isVipPro;
     const FREE_THEMES = ['fun', 'elegant'];
     const FREE_TRACKS = ['classic', 'off'];
+    const PRO_THEMES = ['holo', 'aurora'];
+    const PRO_TRACKS = ['techno', 'chamber', 'marching'];
 
     // In VIP mode, activate the creator's chosen theme and music track.
     // In Free mode, display clean free defaults while preserving their selected VIP
     // theme and soundtrack in the database ready for instant activation upon VIP upgrade!
-    const activeTheme = isVip
+    // Pro-only themes/sounds fall back gracefully when the card is not Pro.
+    const activeThemeRaw = isVip || isVipPro
         ? (page.theme || 'royal')
         : (FREE_THEMES.includes(page.theme) ? page.theme : 'fun');
+    const activeTheme = (!isVipPro && PRO_THEMES.includes(activeThemeRaw)) ? 'royal' : activeThemeRaw;
 
-    const activeMusic = isVip
+    const activeMusicRaw = isVip || isVipPro
         ? (page.music || 'classic')
         : (page.music === 'off' ? 'off' : 'classic');
+    const activeMusic = (!isVipPro && PRO_TRACKS.includes(activeMusicRaw)) ? 'strings' : activeMusicRaw;
 
     const allPhotos = page.photos || [];
-    const visiblePhotos = isVip ? allPhotos : allPhotos.slice(0, 3);
-    const lockedPhotosCount = isVip ? 0 : Math.max(0, allPhotos.length - 3);
+    const photoCap = isVipPro ? 12 : isVip ? 9 : 3;
+    const visiblePhotos = (isVip || isVipPro) ? allPhotos.slice(0, photoCap) : allPhotos.slice(0, 3);
+    const lockedPhotosCount = (isVip || isVipPro) ? Math.max(0, allPhotos.length - photoCap) : Math.max(0, allPhotos.length - 3);
 
     const experiencePage = {
         ...page,
@@ -151,7 +159,8 @@ export default async function BirthdayPage({ params, searchParams }) {
         music: activeMusic,
         originalTheme: page.theme,
         originalMusic: page.music,
-        isVip,
+        isVip: isVip || isVipPro,
+        isVipPro,
         lockedPhotosCount,
     };
 

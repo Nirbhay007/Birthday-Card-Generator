@@ -11,7 +11,7 @@ import {
     User, Palette, Camera, Heart, Laugh, Scissors, Music, Crown, Play, Square,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { FREE_TRACKS, VIP_TRACKS, ALL_TRACKS, getTrackName, playAudioPreview, stopAllAudioPreviews } from '@/lib/music';
+import { FREE_TRACKS, VIP_TRACKS, PRO_TRACKS, ALL_TRACKS, getTrackName, playAudioPreview, stopAllAudioPreviews } from '@/lib/music';
 
 const DRAFT_KEY = 'birthdaygen-draft-v1';
 
@@ -26,11 +26,15 @@ const THEMES = [
     { id: 'princess', name: 'Fairy Princess', color: '#ec4899', bg: '#fff2f6', textColor: '#701a3c', vip: true },
     { id: 'retro', name: 'Retro Arcade', color: '#39ff14', bg: '#12131c', textColor: '#ffffff', vip: true },
     { id: 'sunset', name: 'Sunset Luxe', color: '#ff9052', bg: '#1f0b24', textColor: '#fff5eb', vip: true },
+    // VIP Themes continued — cinematic finishes
+    { id: 'holo', name: 'Holographic Dream', color: '#7dd3fc', bg: '#0b1026', textColor: '#e0f2fe', vip: true },
+    { id: 'aurora', name: 'Arctic Aurora', color: '#059669', bg: '#f2f8ff', textColor: '#0c4a3e', vip: true },
 ];
 
 const FORM_TRACKS = [
     ...FREE_TRACKS,
     ...VIP_TRACKS,
+    ...PRO_TRACKS,
 ];
 
 const RELATIONSHIPS = [
@@ -796,17 +800,17 @@ export default function CreateForm({ formData, setFormData }) {
                     <div className="space-y-5 pop-in">
                         <div>
                             <span className="block text-sm font-semibold text-gray-800 mb-1">
-                                Add favorite photos <span className="text-gray-500 text-xs font-normal">(up to 9 photos)</span>
+                                Add favorite photos <span className="text-gray-500 text-xs font-normal">(up to 12 photos)</span>
                             </span>
                             <PhotoUploader
                                 photos={formData.photos}
                                 setPhotos={(photos) => setFormData((prev) => ({ ...prev, photos: typeof photos === 'function' ? photos(prev.photos) : photos }))}
-                                maxPhotos={9}
+                                maxPhotos={12}
                             />
                             {(formData.photos || []).length > 3 && (
                                 <div className="mt-2.5 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2 pop-in">
                                     <Crown className="w-4 h-4 text-amber-600 shrink-0" />
-                                    <span>{(formData.photos || []).length} photos added! Photos 4–9 unlock with VIP ($1 / ₹29) on creation, or keep first 3 in free mode.</span>
+                                    <span>{(formData.photos || []).length} photos added! Photos 4–12 unlock with VIP ($1 / ₹29) on creation, or keep first 3 in free mode.</span>
                                 </div>
                             )}
                         </div>

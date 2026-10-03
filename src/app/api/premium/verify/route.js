@@ -45,7 +45,7 @@ export async function POST(request) {
             let unlockKey = null;
             let effectivePageId = pageId || null;
             try {
-                const existing = await prisma.premiumOrder.findUnique({ where: { orderId }, select: { unlockToken: true, pageId: true } }).catch(() => null);
+                const existing = await prisma.premiumOrder.findUnique({ where: { orderId }, select: { unlockToken: true, pageId: true, tier: true } }).catch(() => null);
                 if (!effectivePageId && existing?.pageId) effectivePageId = existing.pageId;
                 const token = existing?.unlockToken || `unlock_${crypto.randomBytes(24).toString('hex')}`;
                 const safeSnapshot = typeof snapshotUrl === 'string' && snapshotUrl.trim() ? snapshotUrl.trim().slice(0, 2000) : undefined;
@@ -63,7 +63,7 @@ export async function POST(request) {
                 if (effectivePageId) {
                     await prisma.birthdayPage.update({
                         where: { id: effectivePageId },
-                        data: { isVip: true },
+                        data: { isVip: true, isVipPro: true },
                     }).catch((e) => console.error('Failed to mark page as VIP:', e?.message || e));
                     try { revalidatePath(`/b/${effectivePageId}`); } catch {}
                 }
@@ -121,7 +121,7 @@ export async function POST(request) {
                 try {
                     await prisma.birthdayPage.update({
                         where: { id: testPageId },
-                        data: { isVip: true },
+                        data: { isVip: true, isVipPro: true },
                     });
                     try { revalidatePath(`/b/${testPageId}`); } catch {}
                 } catch {}

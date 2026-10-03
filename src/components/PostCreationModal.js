@@ -14,7 +14,6 @@ export default function PostCreationModal({
     const [region] = useState(() => (typeof window !== 'undefined' ? detectRegion() : 'IN'));
     const [status, setStatus] = useState({ phase: 'idle', message: '' });
     const [upgraded, setUpgraded] = useState(false);
-    const isVip = upgraded || !!card?.isVip;
 
     useEffect(() => {
         if (!isOpen || !card) return;
@@ -35,6 +34,7 @@ export default function PostCreationModal({
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://birthday.nirbhay.online';
     const cardUrl = `${baseUrl}/b/${card.id}`;
     const price = getVipCardPrice(region);
+    const isVip = upgraded || !!card?.isVip || !!card?.isVipPro;
 
     const shareText = `Hey ${card.recipientName || 'there'}! 🎂 I made something special for your birthday. Open this on your phone: ${cardUrl} ✨`;
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
@@ -302,26 +302,22 @@ export default function PostCreationModal({
                                 👑 Make it Unforgettable with VIP
                             </h3>
                             <p className="text-xs text-purple-200/80 mb-3 leading-relaxed">
-                                Turn this card into a royal keepsake for {card.recipientName} with exclusive VIP perks:
+                                Turn this card into a cinematic keepsake for {card.recipientName}:
                             </p>
 
                             <ul className="space-y-1.5 text-xs text-purple-100/90 mb-4">
-                                <li className="flex items-center gap-2">
-                                    <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 flex items-center justify-center text-[10px]">✓</span>
-                                    <span><strong>Golden VIP Crown & Luminous Aura</strong> on {card.recipientName}&apos;s card</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 flex items-center justify-center text-[10px]">✓</span>
-                                    <span><strong>Luminous VIP Theme Atmosphere</strong> (Royal Gold, Cyber Neon, Galaxy, etc.)</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 flex items-center justify-center text-[10px]">✓</span>
-                                    <span><strong>VIP Soundtracks</strong> (Starlight Music Box, Royal Strings, Cyber Synth)</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 flex items-center justify-center text-[10px]">✓</span>
-                                    <span><strong>Cherished memory gallery</strong> (up to 9 photos)</span>
-                                </li>
+                                {[
+                                    '👑 Golden VIP Crown & Luminous Aura',
+                                    '🎨 8 VIP themes incl. Holographic Dream & Aurora',
+                                    '🎵 11 VIP soundtracks incl. Techno, Chamber Waltz & Jubilee March',
+                                    '🌌 Live aurora starfield canvas behind the card',
+                                    '📸 Memory gallery up to 12 photos + rotating conic gift ring',
+                                ].map((node, i) => (
+                                    <li key={i} className="flex items-center gap-2">
+                                        <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 flex items-center justify-center text-[10px]">✓</span>
+                                        <span>{node}</span>
+                                    </li>
+                                ))}
                             </ul>
 
                             {status.phase === 'error' && (

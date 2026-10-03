@@ -5,6 +5,7 @@ import confetti from 'canvas-confetti';
 import { Gift, Heart, Sparkles, Crown, Palette, Eye, Copy, Check, X } from 'lucide-react';
 import CandleBlower from '@/components/CandleBlower';
 import CelebrationBackground from '@/components/CelebrationBackground';
+import ProAtmosphere from '@/components/ProAtmosphere';
 import VipCustomizerModal from '@/components/VipCustomizerModal';
 import PostCreationModal from '@/components/PostCreationModal';
 import { BIRTHDAY_OPENED_EVENT } from '@/lib/music';
@@ -89,9 +90,6 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
             return q.has('vip') && !!page.isVip;
         } catch { return false; }
     });
-    useEffect(() => {
-        setVipPrice(getVipCardPrice(detectRegion()));
-    }, []);
     // Auto-dismiss the customize hint after 6 seconds
     useEffect(() => {
         if (!showCustomizeHint) return;
@@ -114,7 +112,9 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     };
 
     useEffect(() => {
-        const onOpenVip = () => setVipModalOpen(true);
+        const onOpenVip = () => {
+            setVipModalOpen(true);
+        };
         window.addEventListener('vip:open', onOpenVip);
 
         const onPopState = () => {
@@ -166,10 +166,12 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
         setOpened(true);
         // Synchronous dispatch inside the tap gesture so audio is allowed to start
         try { window.dispatchEvent(new CustomEvent(BIRTHDAY_OPENED_EVENT)); } catch { }
-        confetti({ particleCount: 180, spread: 80, origin: { y: 0.6 }, disableForReducedMotion: true });
+        const proColors = ['#f5c518', '#7dd3fc', '#a78bfa', '#f472b6', '#ffffff'];
+        const common = page.isVipPro ? { colors: proColors } : {};
+        confetti({ particleCount: 180, spread: 80, origin: { y: 0.6 }, disableForReducedMotion: true, ...common });
         setTimeout(() => {
-            confetti({ particleCount: 90, angle: 60, spread: 60, origin: { x: 0, y: 0.7 }, disableForReducedMotion: true });
-            confetti({ particleCount: 90, angle: 120, spread: 60, origin: { x: 1, y: 0.7 }, disableForReducedMotion: true });
+            confetti({ particleCount: 90, angle: 60, spread: 60, origin: { x: 0, y: 0.7 }, disableForReducedMotion: true, ...common });
+            confetti({ particleCount: 90, angle: 120, spread: 60, origin: { x: 1, y: 0.7 }, disableForReducedMotion: true, ...common });
         }, 300);
     };
 
@@ -205,6 +207,9 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     return (
         <div className="relative">
             <CelebrationBackground theme={page.theme} density={opened ? 'normal' : 'light'} />
+            {page.isVipPro && (
+                <ProAtmosphere variant={page.theme === 'aurora' ? 'aurora' : 'holo'} />
+            )}
 
             {/* Creator guidance banner: strictly visible to creator holding ownership */}
             {isOwner && showCreatorNotice && (
@@ -292,7 +297,11 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
             {!opened && (
                 <div className="relative z-10 min-h-[62vh] flex flex-col items-center justify-center text-center px-6 py-14">
                     <div className="pop-in max-w-md w-full theme-card rounded-3xl p-8 sm:p-10">
-                        {page.isVip ? (
+                        {page.isVipPro ? (
+                            <p className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.2em] text-gray-950 bg-gradient-to-r from-sky-300 via-amber-200 to-pink-300 px-3.5 py-1 rounded-full mb-3 border border-amber-300 shadow-md">
+                                💎 VIP Birthday Surprise
+                            </p>
+                        ) : page.isVip ? (
                             <p className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.2em] text-amber-950 bg-gradient-to-r from-amber-300 via-amber-200 to-amber-300 px-3.5 py-1 rounded-full mb-3 border border-amber-400 shadow-md">
                                 👑 VIP Birthday Surprise
                             </p>
@@ -310,7 +319,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                             onClick={handleOpen}
                             className={cn(
                                 "gift-wiggle mx-auto w-28 h-28 rounded-3xl theme-gift-box flex items-center justify-center text-white hover:scale-105 transition-all focus:outline-none focus:ring-4 cursor-pointer",
-                                page.isVip ? "vip-pulse-ring ring-4 ring-amber-300/80" : "focus:ring-purple-300"
+                                page.isVipPro ? "pro-conic-ring ring-4 ring-sky-300/70" : page.isVip ? "vip-pulse-ring ring-4 ring-amber-300/80" : "focus:ring-purple-300"
                             )}
                             aria-label={`Open birthday surprise for ${page.recipientName}`}
                         >
@@ -325,7 +334,11 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
             {opened && (
                 <div className="relative z-10">
                     <header className="text-center mb-8 space-y-4 pop-in">
-                        {page.isVip ? (
+                        {page.isVipPro ? (
+                            <p className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest bg-gradient-to-r from-sky-300 via-amber-200 to-pink-300 text-gray-950 border border-amber-300 rounded-full px-4 py-1.5 shadow-md">
+                                <span>💎</span> VIP Birthday Surprise
+                            </p>
+                        ) : page.isVip ? (
                             <p className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest bg-gradient-to-r from-amber-300 via-amber-200 to-amber-300 text-amber-950 border border-amber-400 rounded-full px-4 py-1.5 shadow-md">
                                 <span>👑</span> VIP Birthday Surprise
                             </p>
@@ -338,7 +351,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
                             Happy Birthday
                         </h1>
-                        <h2 className="text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 animated-gradient-text min-h-[1.2em]">
+                        <h2 className={`text-4xl md:text-6xl font-extrabold min-h-[1.2em] ${page.isVipPro ? 'pro-shimmer-text' : 'text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 animated-gradient-text'}`}>
                             {typedName}<span className="animate-pulse">|</span>
                         </h2>
                         {page.message && (

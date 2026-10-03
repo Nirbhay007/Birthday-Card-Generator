@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Crown, Sparkles, Music, Check, Play, Square, X, Loader2 } from 'lucide-react';
-import { VIP_TRACKS, playAudioPreview, stopAllAudioPreviews } from '@/lib/music';
+import { VIP_TRACKS, PRO_TRACKS, playAudioPreview, stopAllAudioPreviews } from '@/lib/music';
 import { detectRegion, getVipCardPrice } from '@/lib/payments';
 import { cn } from '@/lib/utils';
 
@@ -13,6 +13,8 @@ const VIP_THEMES = [
     { id: 'princess', name: 'Fairy Princess', desc: 'Iridescent diamond pink', color: '#ec4899', bg: '#fff2f6', textColor: '#701a3c' },
     { id: 'retro', name: 'Retro Arcade', desc: '80s phosphor CRT neon green', color: '#39ff14', bg: '#12131c', textColor: '#ffffff' },
     { id: 'sunset', name: 'Sunset Luxe', desc: 'Warm coral, gold & dusk violet', color: '#ff9052', bg: '#1f0b24', textColor: '#fff5eb' },
+    { id: 'holo', name: 'Holographic Dream', desc: 'Holographic conic light field', color: '#7dd3fc', bg: '#0b1026', textColor: '#e0f2fe' },
+    { id: 'aurora', name: 'Arctic Aurora', desc: 'Luminous ice sky & emerald lights', color: '#059669', bg: '#f2f8ff', textColor: '#0c4a3e' },
 ];
 
 export default function VipCustomizerModal({ isOpen, onClose, page, onUpdated }) {
@@ -23,10 +25,6 @@ export default function VipCustomizerModal({ isOpen, onClose, page, onUpdated })
     const [previewTrackId, setPreviewTrackId] = useState(null);
     const [vipPrice, setVipPrice] = useState(() => (typeof window !== 'undefined' ? getVipCardPrice(detectRegion()) : { label: '₹29' }));
     const audioControllerRef = useRef(null);
-
-    useEffect(() => {
-        setVipPrice(getVipCardPrice(detectRegion()));
-    }, []);
 
     if (page !== prevPage) {
         setPrevPage(page);
@@ -143,16 +141,24 @@ export default function VipCustomizerModal({ isOpen, onClose, page, onUpdated })
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                         {VIP_THEMES.map((th) => {
                             const isSelected = selectedTheme === th.id;
+                            const locked = false;
                             return (
                                 <button
                                     key={th.id}
                                     type="button"
-                                    onClick={() => setSelectedTheme(th.id)}
+                                    onClick={() => {
+                                        if (locked) {
+                                            window.dispatchEvent(new CustomEvent('vip:open'));
+                                            return;
+                                        }
+                                        setSelectedTheme(th.id);
+                                    }}
                                     className={cn(
                                         'p-3 rounded-2xl border-2 text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[82px]',
                                         isSelected
                                             ? 'border-amber-400 ring-2 ring-amber-300/60 shadow-lg scale-[1.02]'
-                                            : 'border-white/10 hover:border-white/30'
+                                            : 'border-white/10 hover:border-white/30',
+                                        locked && 'opacity-70'
                                     )}
                                     style={{ backgroundColor: th.bg }}
                                 >
@@ -162,7 +168,7 @@ export default function VipCustomizerModal({ isOpen, onClose, page, onUpdated })
                                                 className="w-5 h-5 rounded-full border-2 border-white/60 shadow-xs flex items-center justify-center text-[8px]"
                                                 style={{ backgroundColor: th.color }}
                                             >
-                                                👑
+                                                {'👑'}
                                             </div>
                                             {isSelected && <Check className="w-4 h-4 text-amber-400 font-black" />}
                                         </div>
@@ -191,24 +197,34 @@ export default function VipCustomizerModal({ isOpen, onClose, page, onUpdated })
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {VIP_TRACKS.map((trk) => {
+                        {[...VIP_TRACKS, ...PRO_TRACKS].map((trk) => {
                             const isSelected = selectedMusic === trk.id;
                             const isPlayingThis = previewTrackId === trk.id;
+                            const locked = false;
                             return (
                                 <div
                                     key={trk.id}
-                                    onClick={() => setSelectedMusic(trk.id)}
+                                    onClick={() => {
+                                        if (locked) {
+                                            window.dispatchEvent(new CustomEvent('vip:open'));
+                                            return;
+                                        }
+                                        setSelectedMusic(trk.id);
+                                    }}
                                     className={cn(
                                         'p-2.5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between gap-2',
                                         isSelected
                                             ? 'border-amber-400 bg-amber-500/15 ring-2 ring-amber-300/40 shadow-sm'
-                                            : 'border-white/10 hover:border-white/20 bg-white/5'
+                                            : 'border-white/10 hover:border-white/20 bg-white/5',
+                                        locked && 'opacity-70'
                                     )}
                                 >
                                     <div className="flex items-center gap-2 min-w-0">
                                         <span className="text-xl shrink-0" aria-hidden="true">{trk.emoji}</span>
                                         <div className="min-w-0">
-                                            <p className="text-xs font-bold text-white truncate">{trk.name}</p>
+                                            <p className="text-xs font-bold text-white truncate">
+                                                {trk.name}
+                                            </p>
                                             <p className="text-[10px] text-purple-200/70 truncate">{trk.desc}</p>
                                         </div>
                                     </div>

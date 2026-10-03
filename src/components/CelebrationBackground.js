@@ -49,6 +49,18 @@ const THEME_PARTICLES = {
         starColor: 'rgba(212, 175, 55, 0.75)',
         starGlow: '0 0 6px 1px rgba(212, 175, 55, 0.5)',
     },
+    holo: {
+        emojis: ['💎', '✨', '🔮', '🌠', '🎀'],
+        starCount: 16,
+        starColor: 'rgba(125, 211, 252, 0.95)',
+        starGlow: '0 0 10px 2px rgba(167, 139, 250, 0.8)',
+    },
+    aurora: {
+        emojis: ['🌌', '✨', '🍀', '💫', '🌠'],
+        starCount: 14,
+        starColor: 'rgba(5, 150, 105, 0.85)',
+        starGlow: '0 0 8px 2px rgba(16, 185, 129, 0.5)',
+    },
 };
 
 export default function CelebrationBackground({ theme = 'elegant', density = 'normal' }) {
@@ -80,13 +92,34 @@ export default function CelebrationBackground({ theme = 'elegant', density = 'no
         }));
     }, [config]);
 
+    // Reduce particle field on small screens / disable on reduced motion — lag fix.
+    const [motionOk, setMotionOk] = React.useState(true);
+    const [compact, setCompact] = React.useState(false);
+    React.useEffect(() => {
+        try {
+            const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+            const small = window.matchMedia('(max-width: 480px)');
+            const update = () => { setMotionOk(!reduced.matches); setCompact(small.matches); };
+            update();
+            reduced.addEventListener('change', update);
+            small.addEventListener('change', update);
+            return () => {
+                reduced.removeEventListener('change', update);
+                small.removeEventListener('change', update);
+            };
+        } catch { }
+    }, []);
+
+    const balloonList = motionOk ? (compact ? balloons.slice(0, 5) : balloons) : [];
+    const starList = motionOk ? (compact ? stars.slice(0, 8) : stars) : [];
+
     return (
         <div
             className="pointer-events-none absolute inset-0 overflow-hidden"
             aria-hidden="true"
             style={{ contain: 'strict' }}
         >
-            {stars.map((s) => (
+            {starList.map((s) => (
                 <span
                     key={`star-${s.id}`}
                     className="twinkle-star absolute rounded-full"
@@ -101,7 +134,7 @@ export default function CelebrationBackground({ theme = 'elegant', density = 'no
                     }}
                 />
             ))}
-            {balloons.map((b) => (
+            {balloonList.map((b) => (
                 <span
                     key={`balloon-${b.id}`}
                     className="absolute select-none"
@@ -111,7 +144,6 @@ export default function CelebrationBackground({ theme = 'elegant', density = 'no
                         fontSize: b.size,
                         animation: `balloon-drift ${b.duration}s linear ${b.delay}s infinite`,
                         opacity: 0,
-                        willChange: 'transform, opacity',
                     }}
                 >
                     {b.emoji}
