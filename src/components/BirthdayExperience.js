@@ -360,7 +360,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                             </blockquote>
                         )}
                         {page.senderName && (
-                            <p className="text-sm font-semibold opacity-80">— With all my love, {page.senderName} 💜</p>
+                            <p className="text-sm font-semibold opacity-80">With all my love, {page.senderName} 💜</p>
                         )}
                         {viewCount > 0 && (
                             <p className="inline-flex items-center gap-1 text-[11px] font-bold bg-white/40 border border-white/30 rounded-full px-3 py-1 opacity-80">

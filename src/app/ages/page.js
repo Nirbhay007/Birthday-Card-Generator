@@ -10,8 +10,8 @@ import { getBreadcrumbSchema } from '@/lib/seo';
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
 export const metadata = {
-  title: 'Birthday Wishes by Age: 16th, 18th, 21st, 30th, 50th & More | BirthdayGen',
-  description: 'Find the perfect birthday wish for every milestone age — sweet 16, 18th, 21st, 30th, 40th, 50th, 60th. Copy a message or send an interactive card with candles!',
+  title: 'Birthday Wishes by Age: 1st, 16th, 18th, 21st, 30th, 50th, 80th & More | BirthdayGen',
+  description: 'Find the perfect birthday wish for every milestone age: 1st, 2nd, 5th, 13th, 15th, 16th, 18th, 21st, 25th, 30th, 40th, 50th, 60th, 70th, 80th. Copy a message or send an interactive card with candles!',
   alternates: {
     canonical: '/ages',
   },
@@ -67,7 +67,7 @@ export default function AgesIndexPage() {
             Birthday Wishes for Every <span className="text-purple-600">Milestone Age</span>
           </h1>
           <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Sweet 16, legal 18, wild 21, thriving 30, golden 50 — every milestone deserves words that fit the moment. Pick an age, steal a wish, send a surprise.
+            Sweet 16, legal 18, wild 21, thriving 30, golden 50. Every milestone deserves words that fit the moment. Pick an age, steal a wish, send a surprise.
           </p>
         </header>
 
@@ -99,7 +99,7 @@ export default function AgesIndexPage() {
             <div className="max-w-xl">
               <h2 className="text-3xl font-extrabold mb-3">Turning Their Milestone Into a Moment</h2>
               <p className="text-purple-100 leading-relaxed text-sm sm:text-base">
-                A milestone age deserves more than a text. Build an interactive page with their age on the candles, favourite photos, and music — free in 30 seconds.
+                A milestone age deserves more than a text. Build an interactive page with their age on the candles, favourite photos, and music. Free in 30 seconds.
               </p>
             </div>
             <Link

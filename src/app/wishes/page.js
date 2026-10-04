@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Sparkles, Heart, Laugh, Users, Award, MessageCircle, ArrowRight, CheckCircle, Gift, HeartHandshake, Star, Flower2, Gamepad2, Crown, Gem, Flame, Smile, Rocket, Rainbow, Cake, Coffee, Briefcase, GraduationCap, Clock } from 'lucide-react';
+import { Sparkles, Heart, Laugh, Users, Award, MessageCircle, ArrowRight, CheckCircle, Gift, HeartHandshake, Star, Flower2, Gamepad2, Crown, Gem, Flame, Smile, Rocket, Rainbow, Cake, Coffee, Briefcase, GraduationCap, Clock, Languages, Camera, Quote } from 'lucide-react';
 import SupportButton from '@/components/SupportButton';
 import WhatsNew from '@/components/WhatsNew';
 import { getAllCategories } from '@/lib/wishesData';
@@ -50,7 +50,7 @@ const FEATURED_WISHES = [
 
 export const metadata = {
   title: 'Birthday Wishes, Quotes & Greetings Library | BirthdayGen',
-  description: 'Explore 100+ curated birthday wishes for best friends, lovers, family, and milestones. Copy quotes or instantly generate an interactive birthday card with virtual candles!',
+  description: 'Explore 250+ curated birthday wishes for best friends, lovers, family, regional languages, and milestones. Copy quotes or instantly generate an interactive birthday card with virtual candles!',
   alternates: {
     canonical: '/wishes',
   },
@@ -90,6 +90,23 @@ const CATEGORY_ICONS = {
   'coworker': Briefcase,
   'teacher': GraduationCap,
   'belated': Clock,
+  'hindi': Languages,
+  'marathi': Languages,
+  'tamil': Languages,
+  'telugu': Languages,
+  'bengali': Languages,
+  'punjabi': Languages,
+  'uncle': Users,
+  'aunt': Heart,
+  'cousin': Sparkles,
+  'nephew': Rocket,
+  'niece': Rainbow,
+  'boss': Briefcase,
+  'friend': Smile,
+  'crush': Flame,
+  'captions': Camera,
+  'whatsapp-status': MessageCircle,
+  'quotes': Quote,
 };
 
 export default function WishesIndexPage() {
@@ -140,7 +157,7 @@ export default function WishesIndexPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <Sparkles className="w-6 h-6 text-purple-600" /> Popular Wishes — Ready in 1 Click
+                  <Sparkles className="w-6 h-6 text-purple-600" /> Popular Wishes: Ready in 1 Click
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
                   Pick any wish below and click <span className="font-semibold text-purple-700">&quot;Use In Card&quot;</span> to immediately build an interactive 3D birthday experience.
@@ -223,7 +240,7 @@ export default function WishesIndexPage() {
           <section className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 sm:p-10 border border-amber-200 shadow-sm mb-16 text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">🎂 Celebrating a Milestone Age?</h2>
             <p className="text-gray-600 text-sm sm:text-base mb-6 max-w-xl mx-auto">
-              Sweet 16, 18th, 21st, 30th, 40th, 50th, 60th — wishes written for the exact age, ready to turn into a candle-blowing surprise.
+              Sweet 16, 18th, 21st, 30th, 40th, 50th, 60th. Wishes written for the exact age, ready to turn into a candle-blowing surprise.
             </p>
             <Link
               href="/ages"

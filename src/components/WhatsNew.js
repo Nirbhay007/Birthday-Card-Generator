@@ -70,7 +70,7 @@ export default function WhatsNew() {
                         <h2 className="text-xl font-extrabold text-gray-900 mb-1 flex items-center gap-2">
                             <PartyPopper className="w-5 h-5 text-purple-600" /> What&apos;s New
                         </h2>
-                        <p className="text-sm text-gray-600 mb-5">Fresh out of the oven — free as always.</p>
+                        <p className="text-sm text-gray-600 mb-5">Fresh out of the oven, free as always.</p>
 
                         <div className="space-y-5">
                             {CHANGELOG.map((entry) => (

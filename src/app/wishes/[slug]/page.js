@@ -8,6 +8,7 @@ import WishCard from './WishCard';
 import MonetizationSlot from '@/components/MonetizationSlot';
 import SupportButton from '@/components/SupportButton';
 import WhatsNew from '@/components/WhatsNew';
+import PremiumComparisonBanner from '@/components/PremiumComparisonBanner';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
@@ -175,6 +176,12 @@ export default async function CategoryWishesPage({ params }) {
               ))}
             </div>
           </section>
+
+          {/* High-Converting Premium Comparison Banner */}
+          <PremiumComparisonBanner
+            relationship={category.navTitle}
+            title={`Turn These ${category.navTitle} Wishes Into A Cinematic Surprise`}
+          />
 
           {/* Expert Tips Section for E-E-A-T & Long-Tail Ranking */}
           {category.tips && (

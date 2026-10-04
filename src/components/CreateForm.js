@@ -72,7 +72,7 @@ function applyTone(message, tone, name) {
         if (!base) return `${name ? `${name}, you` : 'You'} mean more to me than words can say. Today is all about celebrating your kindness, your laughter, and everything that makes you you. I hope this year wraps you in as much love as you give away every day. 💜`;
         let out = base;
         if (!/love|dear|special|grateful|thank/i.test(out)) {
-            out = `${name ? `${name}, ` : ''}from the bottom of my heart — ${out.charAt(0).toLowerCase() + out.slice(1)}`;
+            out = `${name ? `${name}, ` : ''}from the bottom of my heart, ${out.charAt(0).toLowerCase() + out.slice(1)}`;
         }
         if (!/💜|❤️|😘|🤗/.test(out)) out += ' 💜';
         return out;
@@ -273,7 +273,7 @@ export default function CreateForm({ formData, setFormData }) {
     const goNext = () => {
         if (step === 1) {
             if (!formData.recipientName.trim()) {
-                setNameError('Please add their name — it makes the whole surprise personal ✨');
+                setNameError('Please add their name. It makes the whole surprise personal ✨');
                 return;
             }
             if (formData.birthdayDate) {
@@ -321,7 +321,7 @@ export default function CreateForm({ formData, setFormData }) {
         armedSubmit.current = false;
         if (!formData.recipientName.trim()) {
             setStep(1);
-            setNameError('Please add their name — it makes the whole surprise personal ✨');
+            setNameError('Please add their name. It makes the whole surprise personal ✨');
             return;
         }
         if (formData.birthdayDate) {
@@ -427,7 +427,7 @@ export default function CreateForm({ formData, setFormData }) {
                     <h2 className="text-3xl font-extrabold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                         Create a Birthday Page
                     </h2>
-                    <p className="text-gray-600 text-sm">Three quick steps — your draft saves automatically.</p>
+                    <p className="text-gray-600 text-sm">Three quick steps. Your draft saves automatically.</p>
                 </div>
 
                 {/* Stepper */}
@@ -503,7 +503,7 @@ export default function CreateForm({ formData, setFormData }) {
 
                         <div>
                             <label htmlFor="relationship" className="block text-sm font-semibold text-gray-800 mb-1">
-                                Who are they to you? <span className="text-gray-400 text-xs font-normal">(Optional — personalizes the page)</span>
+                                Who are they to you? <span className="text-gray-400 text-xs font-normal">(Optional, personalizes the page)</span>
                             </label>
                             <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Relationship">
                                 {RELATIONSHIPS.map((r) => (
@@ -633,7 +633,7 @@ export default function CreateForm({ formData, setFormData }) {
                                     Choose visual theme
                                 </span>
                                 <span className="text-[11px] font-bold text-amber-900 bg-amber-100/90 border border-amber-300 px-2 py-0.5 rounded-full shadow-2xs">
-                                    2 Free · 6 VIP Themes 👑
+                                    2 Free · 8 VIP Themes 👑
                                 </span>
                             </div>
                             {suggestedTheme && suggestedTheme !== formData.theme && (
@@ -642,7 +642,7 @@ export default function CreateForm({ formData, setFormData }) {
                                     onClick={() => set({ theme: suggestedTheme })}
                                     className="mb-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-full transition-colors cursor-pointer"
                                 >
-                                    ✨ Recommended for {formData.relationship || 'them'}: {(THEMES.find((t) => t.id === suggestedTheme) || {}).name} — tap to apply
+                                    ✨ Recommended for {formData.relationship || 'them'}: {(THEMES.find((t) => t.id === suggestedTheme) || {}).name}. Tap to apply
                                 </button>
                             )}
                             <div role="radiogroup" aria-labelledby="theme-label" className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
@@ -710,7 +710,7 @@ export default function CreateForm({ formData, setFormData }) {
                                     <Music className="w-4 h-4 text-purple-600" /> Birthday soundtrack
                                 </span>
                                 <span className="text-[11px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full">
-                                    1 Free Tune · 6 VIP Soundtracks 👑
+                                    1 Free Tune · 11 VIP Soundtracks 👑
                                 </span>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5" role="radiogroup" aria-label="Music choice">
@@ -810,7 +810,7 @@ export default function CreateForm({ formData, setFormData }) {
                             {(formData.photos || []).length > 3 && (
                                 <div className="mt-2.5 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2 pop-in">
                                     <Crown className="w-4 h-4 text-amber-600 shrink-0" />
-                                    <span>{(formData.photos || []).length} photos added! Photos 4–12 unlock with VIP ($1 / ₹29) on creation, or keep first 3 in free mode.</span>
+                                    <span>{(formData.photos || []).length} photos added! Photos 4 to 12 unlock with VIP ($1 / ₹29) on creation, or keep first 3 in free mode.</span>
                                 </div>
                             )}
                         </div>
@@ -828,7 +828,7 @@ export default function CreateForm({ formData, setFormData }) {
                                 </span>
                             </label>
                             <p className="text-[11px] text-gray-500 pl-6">
-                                Photos stay active 7 days after the birthday — tick below to keep them for next year 💜
+                                Photos stay active 7 days after the birthday. Tick below to keep them for next year 💜
                             </p>
                             {formData.remindNextYear && (
                                 <input

@@ -9,6 +9,7 @@ import { getAllCategories } from '@/lib/wishesData';
 import { getBreadcrumbSchema, getItemListSchema, getCollectionSchema, getFAQSchema } from '@/lib/seo';
 import WishCard from '@/app/wishes/[slug]/WishCard';
 import MonetizationSlot from '@/components/MonetizationSlot';
+import PremiumComparisonBanner from '@/components/PremiumComparisonBanner';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
@@ -160,6 +161,12 @@ export default async function AgeWishesPage({ params }) {
               ))}
             </div>
           </section>
+
+          {/* High-Converting Premium Comparison Banner */}
+          <PremiumComparisonBanner
+            relationship="friend"
+            title={`Turn Turning ${page.age} Into A Cinematic Celebration`}
+          />
 
           {page.tips && (
             <section className="bg-white rounded-3xl p-8 border border-purple-100 shadow-sm mb-16">

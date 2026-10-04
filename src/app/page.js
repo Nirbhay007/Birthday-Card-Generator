@@ -16,7 +16,7 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.on
 const FAQS = [
   {
     question: "What is BirthdayGen?",
-    answer: "BirthdayGen is a free birthday website maker. It lets you generate an interactive, personalized birthday website — gift reveal, custom messages, photo galleries, music and mic-powered virtual candle blowing — shareable on WhatsApp in one tap. No signup needed."
+    answer: "BirthdayGen is a free birthday website maker. It lets you generate an interactive, personalized birthday website with a gift reveal, custom messages, photo galleries, music and mic-powered virtual candle blowing. Shareable on WhatsApp in one tap with no signup needed."
   },
   {
     question: "How does the virtual candle blowing work?",
@@ -28,7 +28,7 @@ const FAQS = [
   },
   {
     question: "How long does a created birthday page stay active?",
-    answer: "Every generated birthday page stays active for 30 days — plenty of time to celebrate and share it anywhere. Want it kept longer? Tick the free annual reminder while creating, and we'll keep your page alive for next year's birthday too."
+    answer: "Every generated birthday page stays active for 30 days, plenty of time to celebrate and share it anywhere. Want it kept longer? Tick the free annual reminder while creating, and we'll keep your page alive for next year's birthday too."
   },
   {
     question: "Can I customize the design themes and add photos?",
@@ -39,8 +39,8 @@ const FAQS = [
     answer: "Yes. Every BirthdayGen birthday website is free: pick a theme, add the name, message and photos, choose music, and share the link. Premium cinematic universes with sealed letters and extra acts start at ₹49."
   },
   {
-    question: "Birthday website or birthday card — which is better?",
-    answer: "A card is read once; a birthday website is an experience. Your link opens a gift reveal, blowable candles, a photo gallery and your message — replayable for years. If you only need words, start from our free birthday wishes collection."
+    question: "Birthday website or birthday card: which is better?",
+    answer: "A card is read once; a birthday website is an experience. Your link opens a gift reveal, blowable candles, a photo gallery and your message, replayable for years. If you only need words, start from our free birthday wishes collection."
   },
   {
     question: "Are user photos and data private?",
@@ -113,12 +113,12 @@ export default function Home() {
               They tap a gift 🎁 → candles flicker → they blow → happy tears 🥹
             </p>
             <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Design a free interactive birthday website in seconds — their name, your message,
+              Design a free interactive birthday website in seconds with their name, your message,
               favorite photos, music and real mic-powered candle blowing, shareable on WhatsApp in one tap.
             </p>
             <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a href="#create" className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
-                <Gift className="w-5 h-5" /> Create a surprise — it&apos;s free
+                <Gift className="w-5 h-5" /> Create a free surprise
               </a>
               <Link href="/wishes" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-white border border-purple-200 text-purple-700 font-bold shadow-sm hover:bg-purple-50 transition-all">
                 <BookOpen className="w-4 h-4" /> Steal a perfect message
@@ -155,7 +155,7 @@ export default function Home() {
           {/* Theme showcase */}
           <section className="max-w-6xl mx-auto mb-16">
             <div className="text-center mb-8">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Pick a vibe — all 8 themes free</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Pick a vibe: all 8 themes free</h2>
               <p className="text-gray-600 mt-2 text-sm sm:text-base">Every theme has its own colors, fonts and party background. Midnight sparkles, Royal shines, Unicorn plays.</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -180,20 +180,20 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Premium Keepsake Showcase — Dynamic 3D interactive hero memory */}
+          {/* Premium Keepsake Showcase: Dynamic 3D interactive hero memory */}
           <CinemaShowcase />
 
           {/* Birthday website vs card */}
           <section className="max-w-6xl mx-auto mb-16">
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">More Than a Card: A Whole Birthday Website</h2>
-              <p className="text-gray-600 mt-2 text-sm sm:text-base max-w-2xl mx-auto">A card says happy birthday. A birthday website gives them a place to celebrate — pages to open, candles to blow, memories to replay.</p>
+              <p className="text-gray-600 mt-2 text-sm sm:text-base max-w-2xl mx-auto">A card says happy birthday. A birthday website gives them a place to celebrate: pages to open, candles to blow, memories to replay.</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm text-left">
                 <p className="text-2xl mb-2" aria-hidden="true">🎁</p>
                 <p className="font-bold text-sm text-gray-900">Pages, not pictures</p>
-                <p className="text-xs text-gray-500 mt-1">A gift-box reveal page, a candle-blowing page and a photo memory gallery — one shareable birthday website link.</p>
+                <p className="text-xs text-gray-500 mt-1">A gift-box reveal page, a candle-blowing page and a photo memory gallery in one shareable birthday website link.</p>
               </div>
               <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm text-left">
                 <p className="text-2xl mb-2" aria-hidden="true">📱</p>
@@ -203,7 +203,7 @@ export default function Home() {
               <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm text-left">
                 <p className="text-2xl mb-2" aria-hidden="true">🎂</p>
                 <p className="font-bold text-sm text-gray-900">For every age</p>
-                <p className="text-xs text-gray-500 mt-1">From a kid&apos;s first to milestone birthdays — browse <Link href="/ages" className="text-purple-600 font-semibold hover:underline">wishes by age</Link> and build the website around them.</p>
+                <p className="text-xs text-gray-500 mt-1">From a kid&apos;s first to milestone birthdays, browse <Link href="/ages" className="text-purple-600 font-semibold hover:underline">wishes by age</Link> and build the website around them.</p>
               </div>
             </div>
           </section>
@@ -211,7 +211,7 @@ export default function Home() {
           {/* Milestone-age strip (internal linking to /ages programmatic hub) */}
           <section className="max-w-6xl mx-auto mb-16 text-center">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Wishes by Milestone Age</h2>
-            <p className="text-gray-600 text-sm sm:text-base mb-6">Sweet 16 to golden 50th — words written for the exact moment.</p>
+            <p className="text-gray-600 text-sm sm:text-base mb-6">Sweet 16 to golden 50th. Words written for the exact moment.</p>
             <div className="flex flex-wrap justify-center gap-2.5">
               {agePages.map((a) => (
                 <Link
@@ -239,7 +239,7 @@ export default function Home() {
               What is BirthdayGen? (Quick Summary)
             </h2>
             <p className="text-gray-700 leading-relaxed">
-              <strong>BirthdayGen</strong> is a free, web-based birthday website generator that turns standard greetings into interactive celebrations. Unlike traditional static e-cards, BirthdayGen websites offer <strong>real-time microphone virtual candle blowing</strong>, custom memory photo carousels, responsive theme switching, and background birthday song audio playback—accessible instantly on mobile and desktop without app downloads.
+              <strong>BirthdayGen</strong> is a free, web-based birthday website generator that turns standard greetings into interactive celebrations. Unlike traditional static e-cards, BirthdayGen websites offer <strong>real-time microphone virtual candle blowing</strong>, custom memory photo carousels, responsive theme switching, and background birthday song audio playback, accessible instantly on mobile and desktop without app downloads.
             </p>
           </section>
 
@@ -334,7 +334,7 @@ export default function Home() {
                     <td className="p-4 font-semibold">Cost & Delivery</td>
                     <td className="p-4 text-green-600 font-bold">100% Free / Instant</td>
                     <td className="p-4 text-gray-600">Free or Subscription</td>
-                    <td className="p-4 text-gray-600">$5–$10 + Shipping</td>
+                    <td className="p-4 text-gray-600">$5 to $10 + Shipping</td>
                   </tr>
                 </tbody>
               </table>
@@ -397,7 +397,7 @@ export default function Home() {
               <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Anniversary coming up too?</h2>
               <p className="text-gray-600 leading-relaxed text-sm sm:text-base">
                 Birthdays aren&apos;t the only milestone. Build a cinematic anniversary invitation with
-                couple photos, romantic music, galleries, and venue maps — free, same 30-second magic.
+                couple photos, romantic music, galleries, and venue maps. Free with the same 30-second magic.
               </p>
             </div>
             <a

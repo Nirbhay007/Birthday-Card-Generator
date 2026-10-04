@@ -53,7 +53,7 @@ export default function PremiumLocker({ to = 'them', priceLabel = '₹49', giftM
 
                         <p className="prm-lead text-sm sm:text-base mb-3">
                             You remembered. That already says something. But this is the part where
-                            you show them <em>exactly how much</em> they mean to you — in words they
+                            you show them <em>exactly how much</em> they mean to you, in words they
                             will screenshot and keep.
                         </p>
 
@@ -73,7 +73,7 @@ export default function PremiumLocker({ to = 'them', priceLabel = '₹49', giftM
                                 {
                                     icon: Heart,
                                     title: 'Promises they will hold onto',
-                                    desc: 'Not vague words — real commitments they can point to someday.',
+                                    desc: 'Not vague words. Real commitments they can point to someday.',
                                 },
                                 {
                                     icon: Music,
@@ -137,7 +137,7 @@ export default function PremiumLocker({ to = 'them', priceLabel = '₹49', giftM
                         </p>
                         <p className="mt-1 text-xs font-bold text-[#7ee2a8]">$1 worldwide · less than a coffee</p>
                         <p className="mt-3 text-[11px] text-[#6d6486]">
-                            Your free birthday card is already sent — this is an optional keepsake upgrade.
+                            Your free birthday card is already sent. This is an optional keepsake upgrade.
                         </p>
                     </div>
                 </Reveal>

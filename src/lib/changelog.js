@@ -12,7 +12,7 @@ export const CHANGELOG = [
     title: 'Support the project + lots of polish 🎂',
     items: [
       'New: chip in via UPI to keep BirthdayGen free forever (footer + creator page)',
-      'New: milestone-age wish hubs — sweet 16 to golden 50th (/ages)',
+      'New: milestone-age wish hubs for sweet 16 to golden 50th (/ages)',
       'New: real view counts and persistent Send-love hearts on every surprise',
       'Improved: faster photo uploads with auto-shrink + camera capture',
       'Improved: music now starts the moment the gift is opened',

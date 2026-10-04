@@ -22,7 +22,7 @@ export const metadata = {
     default: "BirthdayGen | Free Birthday Website Maker",
     template: "%s | BirthdayGen",
   },
-  description: "Make a free personalized birthday website in seconds — interactive cards with photos, music, messages and mic-powered candle blowing. No signup, WhatsApp-ready.",
+  description: "Make a free personalized birthday website in seconds: interactive cards with photos, music, messages and mic-powered candle blowing. No signup, WhatsApp-ready.",
   keywords: [
     "birthday website maker",
     "free birthday website",
@@ -35,6 +35,28 @@ export const metadata = {
     "digital birthday wish maker",
     "interactive birthday card free",
     "birthday photo gallery card",
+    "happy birthday",
+    "birthday wishes",
+    "birthday card maker",
+    "birthday card online free",
+    "birthday surprise online",
+    "birthday wishes for friend",
+    "birthday wishes in hindi",
+    "birthday captions for instagram",
+    "birthday quotes",
+    "birthday status whatsapp",
+    "personalized birthday surprise",
+    "virtual birthday party",
+    "cinematic birthday experience",
+    "birthday wishes for husband",
+    "birthday wishes for wife",
+    "birthday wishes for mom",
+    "birthday wishes for dad",
+    "birthday wishes for best friend",
+    "funny birthday wishes",
+    "anniversary wishes",
+    "birthday card with candles",
+    "free birthday card maker online",
   ],
   authors: [{ name: "BirthdayGen Team", url: baseUrl }],
   creator: "BirthdayGen",
@@ -51,10 +73,15 @@ export const metadata = {
   },
   alternates: {
     canonical: "/",
+    languages: {
+      'en-IN': '/',
+      'en-US': '/',
+      'x-default': '/',
+    },
   },
   openGraph: {
     title: "BirthdayGen | Free Birthday Website Maker",
-    description: "Design a beautiful, personalized birthday website with custom message, music, photos, and virtual candles — free, no signup.",
+    description: "Design a beautiful, personalized birthday website with custom message, music, photos, and virtual candles. Free, no signup.",
     url: baseUrl,
     siteName: "BirthdayGen",
     locale: "en_US",
@@ -71,7 +98,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "BirthdayGen | Free Birthday Website Maker",
-    description: "Make someone's birthday unforgettable with a personalized birthday website — cards, photos, music and candle blowing.",
+    description: "Make someone's birthday unforgettable with a personalized birthday website featuring cards, photos, music and candle blowing.",
     creator: "@birthdaygen",
     images: ["/api/og?name=Friend&theme=fun"],
   },
@@ -108,6 +135,10 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
+        {/* hreflang for Indian audience */}
+        <link rel="alternate" hrefLang="en-IN" href={baseUrl} />
+        <link rel="alternate" hrefLang="en" href={baseUrl} />
+        <link rel="alternate" hrefLang="x-default" href={baseUrl} />
         {/* Application identity */}
         <meta name="application-name" content="BirthdayGen" />
         <meta name="generator" content="BirthdayGen" />

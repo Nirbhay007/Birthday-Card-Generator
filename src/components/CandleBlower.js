@@ -231,7 +231,7 @@ export default function CandleBlower({ onBlow, age, recipientName }) {
                                 </button>
                                 {permissionDenied && (
                                     <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-                                        Mic blocked — allow microphone access, or use the button below. Your audio never leaves your device.
+                                        Mic blocked. Allow microphone access, or use the button below. Your audio never leaves your device.
                                     </p>
                                 )}
                             </div>

@@ -118,7 +118,7 @@ export function getWebApplicationSchema(siteUrl) {
     applicationCategory: 'UtilitiesApplication',
     operatingSystem: 'All',
     browserRequirements: 'Requires JavaScript. Works on Chrome, Firefox, Safari, Edge.',
-    description: 'Free browser-based birthday website maker. Create an interactive birthday page with photos, candle blowing, music and custom messages — shareable on WhatsApp instantly.',
+    description: 'Free browser-based birthday website maker. Create an interactive birthday page with photos, candle blowing, music and custom messages, shareable on WhatsApp instantly.',
     datePublished: SITE_DATE_PUBLISHED,
     dateModified: SITE_DATE_MODIFIED,
     offers: {
@@ -139,7 +139,7 @@ export function getProductSchema(siteUrl) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: 'BirthdayGen Premium — Cinematic Birthday Universe',
+    name: 'BirthdayGen Premium: Cinematic Birthday Universe',
     description: 'Multi-act cinematic birthday and anniversary experience with sealed letters, photo acts, and immersive storytelling. Starting at ₹49.',
     url: `${siteUrl}/premium`,
     brand: {
@@ -302,9 +302,9 @@ export function getVideoObjectSchema(siteUrl) {
   return {
     '@context': 'https://schema.org',
     '@type': 'VideoObject',
-    name: 'BirthdayGen Demo — Create a Free Personalized Birthday Website',
+    name: 'BirthdayGen Demo: Create a Free Personalized Birthday Website',
     description:
-      'Watch how BirthdayGen lets you build an interactive birthday website in under 30 seconds — gift reveal, mic-powered candle blowing, photo gallery, custom music and instant WhatsApp sharing.',
+      'Watch how BirthdayGen lets you build an interactive birthday website in under 30 seconds: gift reveal, mic-powered candle blowing, photo gallery, custom music and instant WhatsApp sharing.',
     thumbnailUrl: thumbnails,
     contentUrl,
     embedUrl,

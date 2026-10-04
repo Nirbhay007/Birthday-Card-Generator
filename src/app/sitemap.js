@@ -7,7 +7,7 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.on
 // which wastes crawl budget and can suppress rankings.
 // Update these manually when you make meaningful content changes.
 const LAST_MODIFIED_CORE = new Date('2026-09-18');
-const LAST_MODIFIED_CONTENT = new Date('2026-09-18');
+const LAST_MODIFIED_CONTENT = new Date('2026-10-05');
 const LAST_MODIFIED_PREMIUM = new Date('2026-09-10');
 
 export default async function sitemap() {
@@ -38,7 +38,12 @@ export default async function sitemap() {
       changeFrequency: 'weekly',
       priority: 0.9,
     },
-    // /anniversary page.js not yet created — add back once live
+    {
+      url: `${baseUrl}/anniversary`,
+      lastModified: LAST_MODIFIED_CONTENT,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
   ];
 
   // Programmatic SEO category routes

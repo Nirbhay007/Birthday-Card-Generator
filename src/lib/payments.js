@@ -143,7 +143,7 @@ export async function openRazorpayCheckout({ order, keyId, buyerName = '', buyer
             amount: order.amount,
             currency: order.currency,
             name: 'BirthdayGen Premium',
-            description: 'Premium Birthday Universe — lifetime access',
+            description: 'Premium Birthday Universe: lifetime access',
             prefill: { name: buyerName, email: buyerEmail },
             theme: { color: '#7c3aed', backdrop_color: 'rgba(7,4,18,0.8)' },
             retry: { enabled: true, max_count: 1 },

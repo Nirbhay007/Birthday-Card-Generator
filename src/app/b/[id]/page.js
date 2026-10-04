@@ -195,7 +195,7 @@ export default async function BirthdayPage({ params, searchParams }) {
                 <div className="container mx-auto px-4 py-6 max-w-4xl relative z-10">
                     {preview && (
                         <p className="mb-4 text-center text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200 rounded-full px-4 py-2">
-                            👀 Preview mode — views & reactions are paused. <Link href={`/b/${id}`} className="underline">Exit preview</Link>
+                            👀 Preview mode: views & reactions are paused. <Link href={`/b/${id}`} className="underline">Exit preview</Link>
                         </p>
                     )}
                     <BirthdayExperience

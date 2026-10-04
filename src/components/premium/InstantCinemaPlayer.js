@@ -522,7 +522,7 @@ export default function InstantCinemaPlayer({
                         </div>
 
                         <div className="prm-cin-item prm-serif text-2xl sm:text-4xl font-extrabold text-white leading-tight">
-                            &ldquo;You don’t just exist in my world — <br />
+                            &ldquo;You don’t just exist in my world, <br />
                             <span className="prm-gold-text">you make it a brighter place.</span>&rdquo;
                         </div>
 
