@@ -18,13 +18,7 @@ export default async function sitemap() {
       lastModified: LAST_MODIFIED_CORE,
       changeFrequency: 'daily',
       priority: 1.0,
-      images: [
-        {
-          url: `${baseUrl}/api/og?name=Friend&theme=fun`,
-          title: 'BirthdayGen - Free Birthday Website Maker',
-          caption: 'Create a free personalized birthday website with candles, photos and music',
-        },
-      ],
+      images: [`${baseUrl}/api/og?name=Friend&amp;theme=fun`],
     },
     {
       url: `${baseUrl}/wishes`,
@@ -73,13 +67,7 @@ export default async function sitemap() {
       lastModified: LAST_MODIFIED_PREMIUM,
       changeFrequency: 'weekly',
       priority: 0.85,
-      images: [
-        {
-          url: `${baseUrl}/api/og?name=Premium&theme=royal`,
-          title: 'BirthdayGen Premium - Cinematic Birthday Experiences',
-          caption: 'Premium cinematic birthday universes starting at ₹49',
-        },
-      ],
+      images: [`${baseUrl}/api/og?name=Premium&amp;theme=royal`],
     },
   ];
 
