@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { sendEmailAlert } from '@/lib/alerts';
 
 export async function POST(request) {
     try {
@@ -84,6 +85,11 @@ export async function POST(request) {
         return NextResponse.json({ success: true, id: page.id });
     } catch (error) {
         console.error('Create page error:', error);
+        sendEmailAlert({
+            title: 'CRITICAL: Birthday Card Creation Failed',
+            message: `Card creation failed in /api/birthday: ${error?.message || 'Database or server error'}.`,
+            level: 'critical',
+        }).catch(console.error);
         return NextResponse.json({ success: false, error: 'Failed to create page' }, { status: 500 });
     }
 }

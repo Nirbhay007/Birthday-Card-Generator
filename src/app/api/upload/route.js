@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { uploadFileToR2 } from '@/lib/r2';
 import { put } from '@vercel/blob';
+import { sendEmailAlert } from '@/lib/alerts';
 
 // In-memory sliding-window rate limiting (40 uploads per hour per IP)
 const uploadRateLimit = new Map();
@@ -142,6 +143,12 @@ export async function POST(request) {
             url = r2Url;
         } catch (r2Error) {
             console.warn('[Upload] Primary R2 upload failed, attempting Vercel Blob fallback:', r2Error?.message || r2Error);
+            sendEmailAlert({
+                title: 'R2 Upload Failed (Fallback Engaged)',
+                message: `Cloudflare R2 failed (${r2Error?.name || 'Error'}: ${r2Error?.message || 'AccessDenied'}). Switched to Vercel Blob fallback automatically.`,
+                level: 'warning',
+            }).catch(console.error);
+
             if (process.env.BLOB_READ_WRITE_TOKEN) {
                 const blob = await put(pathname, buffer, {
                     access: 'public',
@@ -164,6 +171,11 @@ export async function POST(request) {
         });
     } catch (error) {
         console.error('Upload error:', error);
+        sendEmailAlert({
+            title: 'CRITICAL: Media Upload Failed Completely',
+            message: `User file upload failed: ${error?.message || 'Unknown error'}. Card creation blocked!`,
+            level: 'critical',
+        }).catch(console.error);
         return NextResponse.json(
             { success: false, error: 'Upload failed. Please check your connection and try again.' },
             { status: 500 }
