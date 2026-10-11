@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { uploadFileToR2 } from '@/lib/r2';
+import { put } from '@vercel/blob';
 
 // In-memory sliding-window rate limiting (40 uploads per hour per IP)
 const uploadRateLimit = new Map();
@@ -129,11 +130,29 @@ export async function POST(request) {
         const folder = isAudio ? 'music' : 'photos';
         const pathname = `${folder}/${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`;
 
-        const { url } = await uploadFileToR2({
-            buffer,
-            key: pathname,
-            contentType,
-        });
+        let url;
+        let storageProvider = 'r2';
+
+        try {
+            const { url: r2Url } = await uploadFileToR2({
+                buffer,
+                key: pathname,
+                contentType,
+            });
+            url = r2Url;
+        } catch (r2Error) {
+            console.warn('[Upload] Primary R2 upload failed, attempting Vercel Blob fallback:', r2Error?.message || r2Error);
+            if (process.env.BLOB_READ_WRITE_TOKEN) {
+                const blob = await put(pathname, buffer, {
+                    access: 'public',
+                    contentType,
+                });
+                url = blob.url;
+                storageProvider = 'vercel-blob';
+            } else {
+                throw r2Error;
+            }
+        }
 
         return NextResponse.json({
             success: true,
@@ -141,6 +160,7 @@ export async function POST(request) {
             name: file.name,
             size: file.size,
             kind: isAudio ? 'audio' : 'photo',
+            provider: storageProvider,
         });
     } catch (error) {
         console.error('Upload error:', error);
