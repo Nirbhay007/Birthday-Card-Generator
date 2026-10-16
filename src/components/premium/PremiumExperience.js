@@ -17,6 +17,8 @@ import Marquee from './Marquee';
 import Magnetic from './Magnetic';
 import StarlightMemoryPortrait from './StarlightMemoryPortrait';
 import InstantCinemaPlayer from './InstantCinemaPlayer';
+import MemoryAlbum from './MemoryAlbum';
+import KeepsakeCard from './KeepsakeCard';
 import { OCCASIONS, fill } from './occasions';
 import { TONES } from './relationships';
 
@@ -69,8 +71,11 @@ export default function PremiumExperience({
     unlocked = false,
     giftMode = false,
     photoUrl = null,
+    photos = null,
+    photoCaptions = null,
     mode = 'cinema',
     ptheme = 'midnight',
+    rel = null,
     customDedication = null,
     cinemaOpen = null,
     onCinemaToggle = null,
@@ -80,6 +85,11 @@ export default function PremiumExperience({
     const D = deck || OCCASIONS.birthday;
     const T = tone || TONES.romantic;
     const ctx = { to, from };
+    // One theme id drives every canvas surface (cinema, album, keepsake).
+    const cinemaTheme =
+        ptheme === 'ocean' ? 'cyan' : ptheme === 'rose' ? 'rose' : ptheme === 'aurora' ? 'aurora' : ptheme === 'sunset' ? 'sunset' : 'gold';
+    const albumPhotos = (photos || []).filter((p) => typeof p === 'string' && p).slice(0, 12);
+    const albumCaptions = (photoCaptions || []).slice(0, 12);
     const ageBit = age ? fill(D.letterCloseAge, ctx).replaceAll('{age}', String(age)) : '';
     // Giver's own words win over templates whenever present.
     const customReasons = (custom?.reasons || [])
@@ -102,6 +112,10 @@ export default function PremiumExperience({
     const setCinemaPlayerOpen = onCinemaToggle || setLocalCinemaPlayerOpen;
     const [hearts, setHearts] = useState([]);
     const [loves, setLoves] = useState(0);
+    // True while the paywall's mobile sticky CTA (Paywall.js) is on screen.
+    // The floating Watch Cinema pill yields that corner so the money button
+    // never has another CTA painted over it.
+    const [stickyCtaVisible, setStickyCtaVisible] = useState(false);
     // Preloader veil: SSR shows it; reduced-motion visitors skip it on first
     // paint (hydration covered by suppressHydrationWarning on the gate).
     const [veil, setVeil] = useState(() => {
@@ -126,6 +140,13 @@ export default function PremiumExperience({
             setTimeout(() => setCinemaPlayerOpen(true), 350);
         }
     };
+
+    // The paywall broadcasts its sticky CTA visibility (mobile only).
+    useEffect(() => {
+        const onSticky = (e) => setStickyCtaVisible(!!e?.detail?.visible);
+        window.addEventListener('bgen:paywall_sticky', onSticky);
+        return () => window.removeEventListener('bgen:paywall_sticky', onSticky);
+    }, []);
 
     // Wax-seal breaking ritual: squash → shatter → universe opens.
     const sealRitual = () => {
@@ -388,7 +409,7 @@ export default function PremiumExperience({
                                 <div className="mt-10 mb-6 flex justify-center">
                                     <StarlightMemoryPortrait
                                         to={to}
-                                        rel={''}
+                                        rel={rel || ''}
                                         photoUrl={photoUrl}
                                         locked={!isEffectiveUnlocked}
                                         customDedication={customDedication}
@@ -452,6 +473,11 @@ export default function PremiumExperience({
                         </div>
                     )}
 
+                    {/* ── SEALED PHOTO ALBUM TEASER (locked state) ──── */}
+                    {!isEffectiveUnlocked && (
+                        <MemoryAlbum to={to} photos={albumPhotos} unlocked={false} onUnlock={onUnlockRequest} theme={cinemaTheme} />
+                    )}
+
                     {/* ── UNLOCKED KEEPSAKE CHAPTERS ────────────────── */}
                     {isEffectiveUnlocked && (
                         <>
@@ -491,6 +517,20 @@ export default function PremiumExperience({
                                     </Reveal>
                                 </div>
                             </section>
+
+                            {/* Chapter · The Memory Album (photos) */}
+                            {albumPhotos.length > 0 && (
+                                <>
+                                    <div className="prm-divider max-w-3xl mx-auto" aria-hidden="true" />
+                                    <MemoryAlbum
+                                        to={to}
+                                        photos={albumPhotos}
+                                        captions={albumCaptions}
+                                        unlocked
+                                        theme={cinemaTheme}
+                                    />
+                                </>
+                            )}
 
                             {mode === 'keepsake' && (
                                 <>
@@ -607,10 +647,40 @@ export default function PremiumExperience({
                                     </Reveal>
                                 </div>
                             </section>
+
+                            {/* Chapter · The Keepsake Image (shareable) */}
+                            <section id="prm-keepsake" className="prm-act relative px-5 sm:px-8 pb-24 sm:pb-32 pt-2 text-center overflow-hidden">
+                                <div className="max-w-md mx-auto">
+                                    <div className="prm-divider mb-14" aria-hidden="true" />
+                                    <Reveal><p className="prm-eyebrow mb-5">✦ One More Thing To Keep ✦</p></Reveal>
+                                    <Reveal>
+                                        <h3 className="prm-serif prm-h-act mb-3">
+                                            A keepsake for <span className="prm-gold-text">{to}</span>
+                                        </h3>
+                                    </Reveal>
+                                    <Reveal delay={140}>
+                                        <p className="prm-lead text-sm mb-8">
+                                            A 1080 × 1350 image made from this exact surprise, sized to be set
+                                            as {to}’s wallpaper or sent back in the chat.
+                                        </p>
+                                    </Reveal>
+                                    <Reveal delay={220}>
+                                        <KeepsakeCard
+                                            to={to}
+                                            from={from}
+                                            photoUrl={photoUrl || (photos && photos.length ? photos[0] : null)}
+                                            dedication={customDedication || ''}
+                                            occasionLabel={D.heroKicker}
+                                            theme={cinemaTheme}
+                                            unlocked
+                                        />
+                                    </Reveal>
+                                </div>
+                            </section>
                         </>
                     )}
                     {unsealed && !cinemaPlayerOpen && mode === 'cinema' && (
-                        <div className="fixed bottom-6 right-6 z-40">
+                        <div className={`fixed bottom-28 right-4 z-40 ${stickyCtaVisible ? 'hidden sm:block' : ''}`}>
                             <button
                                 type="button"
                                 onClick={() => setCinemaPlayerOpen(true)}
@@ -631,9 +701,17 @@ export default function PremiumExperience({
                     quote={customDedication}
                     letter={letterText}
                     age={age}
-                    theme={ptheme === 'ocean' ? 'cyan' : ptheme === 'rose' ? 'rose' : ptheme === 'aurora' ? 'aurora' : 'gold'}
+                    theme={cinemaTheme}
                     unlocked={isEffectiveUnlocked}
                     giftMode={giftMode}
+                    onSaveKeepsake={
+                        isEffectiveUnlocked
+                            ? () => {
+                                  setCinemaPlayerOpen(false);
+                                  setTimeout(() => scrollToId('prm-keepsake'), 320);
+                              }
+                            : null
+                    }
                     onUnlock={() => {
                         setCinemaPlayerOpen(false);
                         const paywallEl = document.getElementById('prm-paywall') || document.getElementById('prm-locker');

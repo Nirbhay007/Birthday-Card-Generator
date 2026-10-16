@@ -19,7 +19,7 @@ import { TRACKS, PREMIUM_TRACKS, getTrackSrc } from '@/lib/music';
 const DEVICE_KEY = 'bgen-premium-unlocked-v1'; // legacy session receipt
 const KEYS_KEY = 'bgen-premium-keys-v1'; // remembered magic-link keys
 const SNAP_KEY = 'bgen-premium-studio-v1'; // last paid universe (no key inside)
-const SNAP_PARAMS = ['occasion', 'to', 'from', 'age', 'msg', 'rs', 'vs', 'theme', 'music', 'musicUrl', 'musicName', 'for', 'mode', 'photo'];
+const SNAP_PARAMS = ['occasion', 'to', 'from', 'age', 'msg', 'rs', 'vs', 'theme', 'music', 'musicUrl', 'musicName', 'for', 'mode', 'photo', 'pics'];
 
 function readStoredKeys() {
     try {
@@ -42,7 +42,7 @@ function celebrate() {
  * Personalize: /premium?occasion=anniversary&to=Priya&from=Rahul&age=2&msg=...
  * Paid access: /premium?...&key=unlock_… (magic link, no accounts needed).
  */
-export default function PremiumPage({ to, from, message, age, occasion, unlockKey, customReasons, customVows, initialPTheme, initialMusic, initialMusicUrl, initialMusicName, initialRel, initialPhotoUrl, giftPreview, initialMode, fromBuilder = false }) {
+export default function PremiumPage({ to, from, message, age, occasion, unlockKey, customReasons, customVows, initialPTheme, initialMusic, initialMusicUrl, initialMusicName, initialRel, initialPhotoUrl, initialPics, giftPreview, initialMode, fromBuilder = false }) {
     const deck = getOccasion(occasion);
     const [forceGift, setForceGift] = useState(false);
     // Gift mode = the recipient's eyes only: pure universe, zero studio
@@ -70,6 +70,10 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
         } catch {}
         return null;
     });
+    // Memory album: up to 12 photos, each a keepsake card in the unlocked album.
+    const [photos, setPhotos] = useState(() =>
+        Array.isArray(initialPics) ? initialPics.filter((p) => typeof p === 'string' && p).slice(0, 12) : []
+    );
     const [instantQuote, setInstantQuote] = useState(() => message || '');
     const tone = getTone(rel);
     // Studio identity: editable on-page (URL params only prefill). Recipients
@@ -145,10 +149,11 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
             if (rel) p.set('for', rel);
             if (mode) p.set('mode', mode);
             if (photoUrl) p.set('photo', photoUrl);
+            if (photos.length) p.set('pics', JSON.stringify(photos.slice(0, 12)));
             if (key) p.set('key', key);
             return p;
         },
-        [deck.id, effTo, effFrom, effAge, message, custom, editorActive, customReasons, customVows, ptheme, music, musicUrl, musicName, rel, mode, photoUrl]
+        [deck.id, effTo, effFrom, effAge, message, custom, editorActive, customReasons, customVows, ptheme, music, musicUrl, musicName, rel, mode, photoUrl, photos]
     );
 
     const buildMagicLink = useCallback(
@@ -521,8 +526,10 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                 unlocked={unlocked || giftMode}
                 giftMode={giftMode}
                 photoUrl={photoUrl}
+                photos={photos}
                 mode={mode}
                 ptheme={ptheme}
+                rel={rel}
                 customDedication={instantQuote || message}
                 cinemaOpen={cinemaPlayerOpen}
                 onCinemaToggle={setCinemaPlayerOpen}
@@ -565,6 +572,8 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                     onModeChange={setMode}
                     photoUrl={photoUrl}
                     onPhotoChange={setPhotoUrl}
+                    photos={photos}
+                    onPhotosChange={setPhotos}
                     instantQuote={instantQuote}
                     onInstantQuoteChange={setInstantQuote}
                     onWatchCinema={() => setCinemaPlayerOpen(true)}

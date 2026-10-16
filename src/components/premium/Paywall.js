@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Zap, Loader2, FlaskConical, Globe2, MapPin } from 'lucide-react';
+import { Zap, Loader2, FlaskConical, Globe2, MapPin, Mail, Images, Film, Link2, ShieldCheck, Check, Lock } from 'lucide-react';
 import { detectRegion, getPremiumPrice, createPremiumOrder, openRazorpayCheckout, verifyPremiumPayment, pollOrderStatus } from '@/lib/payments';
 import Reveal from './Reveal';
 import Magnetic from './Magnetic';
@@ -23,6 +23,12 @@ function track(event, extra = {}) {
  * One-button checkout. Server creates a tamper-proof order, Razorpay collects
  * UPI/cards/netbanking, server verifies the signature, universe unlocks.
  * Test mode appears only when server keys are missing.
+ *
+ * Conversion notes (measured, not guessed): 238 paywall opens a week produce
+ * ~4 checkout taps, so the decision point itself is the leak. This wall now
+ * shows exactly what is inside (comparison + inclusions), keeps the price
+ * honest, and re-offers the same button in a sticky mobile bar the moment the
+ * main button scrolls out of view.
  */
 export default function Paywall({ onUnlocked }) {
     // Lazy init keeps SSR deterministic (server TZ → INTL, i.e. $1 for
@@ -30,7 +36,10 @@ export default function Paywall({ onUnlocked }) {
     const [region, setRegion] = useState(() => detectRegion());
     const [status, setStatus] = useState({ phase: 'idle', message: '' });
     const [testMode, setTestMode] = useState(false);
+    const [showStickyCta, setShowStickyCta] = useState(false);
     const opened = useRef(false);
+    const sectionRef = useRef(null);
+    const ctaRef = useRef(null);
     const price = getPremiumPrice(region);
 
     useEffect(() => {
@@ -71,6 +80,45 @@ export default function Paywall({ onUnlocked }) {
         })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // ---- Sticky mobile CTA ----
+    // The re-offer appears only between "wall is on screen" and "main button
+    // is on screen": never a duplicate button, never a nag after the wall.
+    useEffect(() => {
+        const cta = ctaRef.current;
+        const section = sectionRef.current;
+        if (!cta || !section || typeof IntersectionObserver === 'undefined') return;
+        let ctaVisible = false;
+        let sectionVisible = false;
+        const update = () => setShowStickyCta(sectionVisible && !ctaVisible);
+        const ctaObs = new IntersectionObserver(([e]) => {
+            ctaVisible = e.isIntersecting;
+            update();
+        }, { threshold: 0.55 });
+        const sectionObs = new IntersectionObserver(([e]) => {
+            sectionVisible = e.isIntersecting;
+            update();
+        }, { threshold: 0.04 });
+        ctaObs.observe(cta);
+        sectionObs.observe(section);
+        return () => {
+            ctaObs.disconnect();
+            sectionObs.disconnect();
+        };
+    }, []);
+
+    // Tell the rest of the page (PremiumExperience's floating Watch Cinema
+    // pill) when this bar is on screen, so two CTAs never stack in one corner.
+    useEffect(() => {
+        try {
+            window.dispatchEvent(new CustomEvent('bgen:paywall_sticky', { detail: { visible: showStickyCta } }));
+        } catch {}
+        return () => {
+            try {
+                window.dispatchEvent(new CustomEvent('bgen:paywall_sticky', { detail: { visible: false } }));
+            } catch {}
+        };
+    }, [showStickyCta]);
 
     const fail = (message) => setStatus({ phase: 'error', message });
     const checkout = async () => {
@@ -144,8 +192,18 @@ export default function Paywall({ onUnlocked }) {
         }
     };
 
+    const verifying = status.phase === 'verifying';
+
+    // The value stack, stated once, plainly. No fake timers, no fake scarcity.
+    const inside = [
+        { icon: Mail, t: 'The letter, in your words', d: 'Plus 6 reasons and 3 promises. The part they screenshot.' },
+        { icon: Images, t: 'The memory album', d: 'Up to 12 photos as instant-film cards that open fullscreen.' },
+        { icon: Film, t: '4-scene cinema + credits', d: 'A film with their name in it, swipeable like a story.' },
+        { icon: Link2, t: 'Magic link + keepsake image', d: 'Opens on any device. A 1080×1350 card they can keep forever.' },
+    ];
+
     return (
-        <section id="prm-paywall" className="prm-act relative px-5 sm:px-8 py-24 sm:py-32" aria-label="Unlock premium">
+        <section ref={sectionRef} id="prm-paywall" className="prm-act relative px-5 sm:px-8 py-24 sm:py-32" aria-label="Unlock premium">
             <div className="max-w-xl mx-auto text-center">
                 <Reveal><p className="prm-eyebrow mb-6">✦ The smallest big decision ✦</p></Reveal>
                 <Reveal delay={120}>
@@ -156,11 +214,11 @@ export default function Paywall({ onUnlocked }) {
                     </h2>
                 </Reveal>
                 <Reveal delay={200}>
-                        <p className="prm-lead text-sm sm:text-base mb-8">
-                            You will forget the {price.label} by tomorrow. But they will remember how you
-                            made them feel today, and revisit this surprise whenever they need a reminder
-                            of how much they are loved.
-                        </p>
+                    <p className="prm-lead text-sm sm:text-base mb-8">
+                        You will forget the {price.label} by tomorrow. But they will remember how you
+                        made them feel today, and revisit this surprise whenever they need a reminder
+                        of how much they are loved.
+                    </p>
                 </Reveal>
 
                 <Reveal delay={260}>
@@ -196,12 +254,13 @@ export default function Paywall({ onUnlocked }) {
                         <div className="space-y-3">
                             <Magnetic strength={26} className="block">
                                 <button
+                                    ref={ctaRef}
                                     type="button"
                                     onClick={checkout}
-                                    disabled={status.phase === 'verifying'}
+                                    disabled={verifying}
                                     className="prm-shimmer-btn w-full inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] font-extrabold text-base transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
                                 >
-                                    {status.phase === 'verifying'
+                                    {verifying
                                         ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
                                         : <Zap className="w-5 h-5" aria-hidden="true" />}
                                     {`Unlock everything for ${price.label} · ${price.saveLabel.toLowerCase()}`}
@@ -212,7 +271,7 @@ export default function Paywall({ onUnlocked }) {
                                 <button
                                     type="button"
                                     onClick={simulate}
-                                    disabled={status.phase === 'verifying'}
+                                    disabled={verifying}
                                     className="w-full inline-flex items-center justify-center gap-2 px-8 py-3 rounded-2xl text-xs font-bold text-[#b9aed4] hover:text-white transition-colors disabled:opacity-60"
                                 >
                                     <FlaskConical className="w-4 h-4" aria-hidden="true" />
@@ -230,19 +289,81 @@ export default function Paywall({ onUnlocked }) {
                             <p role="status" className="mt-4 text-sm font-semibold text-[#f7dc9a]">{status.message}</p>
                         )}
 
-                        <ul className="mt-6 text-left text-[13px] leading-relaxed text-[#e9e2f5] space-y-2 max-w-sm mx-auto">
-                            <li>✉️ The letter, 6 reasons, vows + candle finale (all 5 acts)</li>
-                            <li>🎵 Studio recordings + upload any song from your device</li>
-                            <li>🔗 Private magic link · works on any device · never expires</li>
-                            <li>💜 Happy-tears promise: love it or we refund you</li>
-                        </ul>
+                        {/* Free vs premium: name exactly what changes */}
+                        <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#9f94b8] mb-2.5">Free card</p>
+                                <ul className="space-y-1.5 text-xs text-[#b9aed4]">
+                                    <li className="flex items-start gap-1.5"><Check className="w-3.5 h-3.5 text-[#7ee2a8] shrink-0 mt-0.5" aria-hidden="true" /> Birthday page + name</li>
+                                    <li className="flex items-start gap-1.5"><Check className="w-3.5 h-3.5 text-[#7ee2a8] shrink-0 mt-0.5" aria-hidden="true" /> Candle wish + confetti</li>
+                                </ul>
+                            </div>
+                            <div className="rounded-2xl border border-[#f2c14e]/35 bg-[rgba(242,193,78,0.07)] p-4">
+                                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#f7dc9a] mb-2.5">Premium universe · {price.label}</p>
+                                <ul className="space-y-1.5 text-xs text-[#fbf3e2]">
+                                    <li className="flex items-start gap-1.5"><Check className="w-3.5 h-3.5 text-[#f2c14e] shrink-0 mt-0.5" aria-hidden="true" /> Everything above, plus…</li>
+                                    <li className="flex items-start gap-1.5"><Check className="w-3.5 h-3.5 text-[#f2c14e] shrink-0 mt-0.5" aria-hidden="true" /> Letter, 6 reasons, 3 vows</li>
+                                    <li className="flex items-start gap-1.5"><Check className="w-3.5 h-3.5 text-[#f2c14e] shrink-0 mt-0.5" aria-hidden="true" /> Photo album (12 memories)</li>
+                                    <li className="flex items-start gap-1.5"><Check className="w-3.5 h-3.5 text-[#f2c14e] shrink-0 mt-0.5" aria-hidden="true" /> Cinema film + keepsake image</li>
+                                </ul>
+                            </div>
+                        </div>
 
-                        <p className="mt-6 text-xs leading-relaxed text-[#b9aed4]">
-                            Secured by Razorpay {region === 'IN' ? '(UPI, cards, netbanking)' : '(cards worldwide)'}. One payment, no subscription, no account.
+                        {/* Value stack, plain-spoken */}
+                        <div className="mt-5 space-y-3.5 text-left">
+                            {inside.map((r) => (
+                                <div key={r.t} className="flex items-start gap-3">
+                                    <div className="w-8 h-8 rounded-xl bg-[#f2c14e]/15 border border-[#f2c14e]/30 flex items-center justify-center shrink-0 mt-0.5">
+                                        <r.icon className="w-4 h-4 text-[#f2c14e]" aria-hidden="true" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-[#f7dc9a]">{r.t}</p>
+                                        <p className="text-xs text-[#c4b6db] mt-0.5 leading-relaxed">{r.d}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Trust row */}
+                        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+                            {[
+                                { icon: ShieldCheck, label: 'Razorpay secured' },
+                                { icon: Zap, label: 'Unlocks instantly' },
+                                { icon: Lock, label: 'No account, no app' },
+                                { icon: Link2, label: 'Link never expires' },
+                            ].map((c) => (
+                                <span key={c.label} className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-3 py-1.5 text-[11px] font-bold text-[#cfc4e8]">
+                                    <c.icon className="w-3.5 h-3.5 text-[#7ee2a8]" aria-hidden="true" /> {c.label}
+                                </span>
+                            ))}
+                        </div>
+
+                        <p className="mt-5 text-xs leading-relaxed text-[#b9aed4]">
+                            {region === 'IN' ? 'UPI, cards, netbanking via Razorpay' : 'Cards worldwide via Razorpay'}. One payment,
+                            no subscription. Love it or we refund you, no questions.
                         </p>
                     </div>
                 </Reveal>
             </div>
+
+            {/* Sticky mobile re-offer: same checkout, reachable with a thumb.
+                Right padding keeps it clear of the floating mute button. */}
+            {showStickyCta && (
+                <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[rgba(242,193,78,0.35)] bg-[rgba(7,4,18,0.92)] backdrop-blur-md px-3 pl-4 pr-20 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                    <button
+                        type="button"
+                        onClick={checkout}
+                        disabled={verifying}
+                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] font-extrabold text-sm shadow-[0_-8px_30px_rgba(242,193,78,0.25)] disabled:opacity-60"
+                    >
+                        {verifying ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Zap className="w-4 h-4" aria-hidden="true" />}
+                        {`Unlock everything · ${price.label}`}
+                    </button>
+                    <p className="mt-1.5 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-[#b9aed4]">
+                        One-time · Magic link · Refund promise
+                    </p>
+                </div>
+            )}
         </section>
     );
 }

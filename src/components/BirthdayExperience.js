@@ -8,6 +8,7 @@ import CelebrationBackground from '@/components/CelebrationBackground';
 import ProAtmosphere from '@/components/ProAtmosphere';
 import VipCustomizerModal from '@/components/VipCustomizerModal';
 import PostCreationModal from '@/components/PostCreationModal';
+import KeepsakeCard from '@/components/premium/KeepsakeCard';
 import { BIRTHDAY_OPENED_EVENT } from '@/lib/music';
 import { detectRegion, getVipCardPrice } from '@/lib/payments';
 import { cn } from '@/lib/utils';
@@ -377,6 +378,26 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                         <section className="mb-14 space-y-5" aria-label="Photo Memories">
                             <h3 className="text-2xl font-bold text-center opacity-90">Cherished Memories 📸</h3>
                             {gallery}
+                        </section>
+                    )}
+
+                    {/* VIP keepsake: the export that makes the ₹29 feel earned */}
+                    {(page.isVip || page.isVipPro) && (
+                        <section className="mb-14" aria-label="VIP keepsake card">
+                            <h3 className="text-2xl font-bold text-center opacity-90 mb-2">VIP Keepsake 🖼️</h3>
+                            <p className="text-center text-sm opacity-75 mb-6 max-w-md mx-auto">
+                                A film-style image of this exact moment. Save it as {page.recipientName}&apos;s
+                                wallpaper, or send it back with your thank-you.
+                            </p>
+                            <KeepsakeCard
+                                to={page.recipientName || 'You'}
+                                from={page.senderName || 'Someone who loves you'}
+                                photoUrl={photos?.[0]?.url || (typeof photos?.[0] === 'string' ? photos[0] : null)}
+                                dedication={page.message || ''}
+                                occasionLabel="A Birthday Surprise"
+                                theme={page.theme === 'aurora' ? 'aurora' : /rose|pink|love/.test(String(page.theme || '')) ? 'rose' : 'gold'}
+                                unlocked
+                            />
                         </section>
                     )}
 

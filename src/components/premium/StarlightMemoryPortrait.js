@@ -4,6 +4,7 @@ import React, { useRef } from 'react';
 import gsap from 'gsap';
 import { Sparkles, Heart } from 'lucide-react';
 import { getHumanDedication } from './CinemaTeaserCard';
+import { getRelationship } from './relationships';
 
 export default function StarlightMemoryPortrait({
     to = 'Someone Special',
@@ -15,6 +16,7 @@ export default function StarlightMemoryPortrait({
 }) {
     const frameRef = useRef(null);
     const dedication = customDedication || getHumanDedication(rel);
+    const relLabel = rel ? getRelationship(rel)?.label || String(rel) : '';
 
     const handlePointerMove = (e) => {
         const frame = frameRef.current;
@@ -103,7 +105,7 @@ export default function StarlightMemoryPortrait({
                         &ldquo;{dedication}&rdquo;
                     </p>
                     <p className="text-[10px] text-[#9f94b8] mt-1.5 font-semibold uppercase tracking-wider">
-                        For {to} {rel ? `(${rel})` : ''}
+                        For {to} {relLabel ? `(${relLabel})` : ''}
                     </p>
                 </div>
             </div>

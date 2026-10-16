@@ -59,6 +59,8 @@ export default function CustomizePanel({
     onModeChange,
     photoUrl = null,
     onPhotoChange,
+    photos = [],
+    onPhotosChange,
     instantQuote = '',
     onInstantQuoteChange,
     onWatchCinema = null,
@@ -68,8 +70,11 @@ export default function CustomizePanel({
     const [musicError, setMusicError] = useState('');
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [photoError, setPhotoError] = useState('');
+    const [uploadingAlbum, setUploadingAlbum] = useState(false);
+    const [albumError, setAlbumError] = useState('');
     const musicInputRef = useRef(null);
     const photoInputRef = useRef(null);
+    const albumInputRef = useRef(null);
     const tone = getTone(rel);
     const quickQuotes = getRelationshipQuotes(rel);
 
@@ -140,6 +145,59 @@ export default function CustomizePanel({
         } finally {
             setUploadingPhoto(false);
         }
+    };
+
+    const handleAlbumUpload = async (e) => {
+        setAlbumError('');
+        const files = Array.from(e.target.files || []);
+        e.target.value = '';
+        if (!files.length) return;
+
+        const existing = photos || [];
+        const room = 12 - existing.length;
+        if (room <= 0) {
+            setAlbumError('The album already has 12 photos. Remove one to add another.');
+            return;
+        }
+        const oversized = files.filter((f) => f.size > 25 * 1024 * 1024);
+        const batch = files.filter((f) => f.size <= 25 * 1024 * 1024).slice(0, room);
+        if (!batch.length) {
+            setAlbumError('Those photos are over 25MB each. Please choose smaller images.');
+            return;
+        }
+        if (oversized.length) setAlbumError(`${oversized.length} photo(s) skipped for being over 25MB.`);
+
+        setUploadingAlbum(true);
+        try {
+            const uploaded = [];
+            for (const raw of batch) {
+                try {
+                    const compressed = await compressAndNormalizeImage(raw);
+                    const fd = new FormData();
+                    fd.append('file', compressed);
+                    const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                    const data = await res.json();
+                    if (data.success && data.url) uploaded.push(data.url);
+                } catch {
+                    // One bad photo never sinks the batch.
+                }
+            }
+            if (uploaded.length) {
+                onPhotosChange?.([...existing, ...uploaded].slice(0, 12));
+            } else if (!oversized.length) {
+                setAlbumError('Could not upload those photos. Please try again.');
+            }
+        } catch (err) {
+            console.error('Album upload error:', err);
+            setAlbumError('Network error while uploading photos. Please try again.');
+        } finally {
+            setUploadingAlbum(false);
+        }
+    };
+
+    const removeAlbumPhoto = (index) => {
+        setAlbumError('');
+        onPhotosChange?.((photos || []).filter((_, j) => j !== index));
     };
 
     const applyQuote = (q) => {
@@ -436,6 +494,104 @@ export default function CustomizePanel({
                                         {photoError}
                                     </span>
                                     <button type="button" onClick={() => setPhotoError('')} className="text-red-400 hover:text-white p-1">
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </Reveal>
+
+                    {/* Step 3b — Memory Album (multi-photo premium chapter) */}
+                    <Reveal>
+                        <div className={stepCls}>
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <p className="font-extrabold text-[#f7dc9a] inline-flex items-center gap-1.5">
+                                        <ImageIcon className="w-4 h-4 text-[#f2c14e]" /> 3b. Memory album
+                                    </p>
+                                    <p className="text-xs text-[#b9aed4] mt-0.5">
+                                        Add up to 12 photos of {toName || 'them'}. They become instant-film cards
+                                        {' '}{toName || 'they'} can flip through fullscreen, one by one.
+                                    </p>
+                                </div>
+                                {(photos?.length || 0) > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => albumInputRef.current?.click()}
+                                        disabled={uploadingAlbum}
+                                        className="shrink-0 pt-1 text-[11px] font-bold text-[#f7dc9a] hover:text-white underline decoration-dotted underline-offset-4 cursor-pointer disabled:opacity-50"
+                                    >
+                                        + Add photos
+                                    </button>
+                                )}
+                            </div>
+
+                            {(photos?.length || 0) > 0 ? (
+                                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                                    {(photos || []).map((src, i) => (
+                                        <div key={`${src}-${i}`} className="group relative aspect-square overflow-hidden rounded-xl border border-white/15 bg-black/40">
+                                            <img src={src} alt={`Album photo ${i + 1}`} loading="lazy" className="h-full w-full object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeAlbumPhoto(i)}
+                                                className="absolute top-1 right-1 grid h-6 w-6 place-items-center rounded-full bg-black/70 text-white/80 hover:text-white hover:bg-red-500/80 transition-colors cursor-pointer"
+                                                aria-label={`Remove album photo ${i + 1}`}
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {(photos?.length || 0) < 12 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => albumInputRef.current?.click()}
+                                            disabled={uploadingAlbum}
+                                            className="aspect-square rounded-xl border border-dashed border-[#f2c14e]/40 hover:border-[#f2c14e] bg-[rgba(242,193,78,0.04)] hover:bg-[rgba(242,193,78,0.08)] flex items-center justify-center text-[#f2c14e] transition-all cursor-pointer disabled:opacity-50"
+                                            aria-label="Add more album photos"
+                                        >
+                                            {uploadingAlbum ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => albumInputRef.current?.click()}
+                                    disabled={uploadingAlbum}
+                                    className="w-full rounded-2xl border border-dashed border-white/20 hover:border-[#f2c14e]/60 bg-white/[0.02] hover:bg-[rgba(242,193,78,0.06)] p-4 text-center transition-all cursor-pointer group"
+                                >
+                                    <div className="flex flex-col items-center gap-1.5">
+                                        {uploadingAlbum ? (
+                                            <Loader2 className="w-5 h-5 animate-spin text-[#f2c14e]" />
+                                        ) : (
+                                            <ImageIcon className="w-5 h-5 text-[#f2c14e]" />
+                                        )}
+                                        <p className="text-xs font-bold text-[#f7dc9a] group-hover:text-white transition-colors">
+                                            {uploadingAlbum ? 'Uploading album…' : 'Add photos to the memory album (optional)'}
+                                        </p>
+                                        <p className="text-[11px] text-[#b9aed4]">
+                                            Up to 12 photos · blurred &amp; sealed until unlock · opens fullscreen for them
+                                        </p>
+                                    </div>
+                                </button>
+                            )}
+
+                            <input
+                                ref={albumInputRef}
+                                type="file"
+                                accept="image/*,.heic,.heif,.avif,.tiff,.tif"
+                                multiple
+                                className="hidden"
+                                onChange={handleAlbumUpload}
+                            />
+
+                            {albumError && (
+                                <div role="alert" className="flex items-center justify-between gap-2 rounded-xl bg-red-500/10 border border-red-500/30 px-3.5 py-2.5 text-xs text-red-200">
+                                    <span className="flex items-center gap-1.5">
+                                        <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                                        {albumError}
+                                    </span>
+                                    <button type="button" onClick={() => setAlbumError('')} className="text-red-400 hover:text-white p-1" aria-label="Dismiss album error">
                                         <X className="w-3.5 h-3.5" />
                                     </button>
                                 </div>

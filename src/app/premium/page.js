@@ -119,6 +119,20 @@ export default async function PremiumRoute({ searchParams }) {
     const initialRel = REL_IDS.includes(rawRel) ? rawRel : '';
     const rawPhoto = clean(pick('photo') || pick('photoUrl'), '', 600);
     const initialPhotoUrl = rawPhoto && (/^https?:\/\//.test(rawPhoto) || rawPhoto.startsWith('/')) ? rawPhoto : null;
+    // Memory album photos (JSON array travelling in magic links, validated).
+    const parsePics = (v) => {
+        try {
+            const a = JSON.parse(String(v || ''));
+            if (!Array.isArray(a)) return [];
+            return a
+                .filter((p) => typeof p === 'string' && (/^https?:\/\//.test(p) || p.startsWith('/')))
+                .slice(0, 12)
+                .map((p) => p.slice(0, 600));
+        } catch {
+            return [];
+        }
+    };
+    const initialPics = parsePics(pick('pics'));
     const giftPreview = ['1', 'true', 'yes'].includes(String(pick('gift') || '').toLowerCase());
     const fromBuilder = ['1', 'true', 'yes'].includes(String(pick('fromBuilder') || '').toLowerCase());
     const rawMode = String(pick('mode') || '').toLowerCase();
@@ -134,7 +148,7 @@ export default async function PremiumRoute({ searchParams }) {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
-            <PremiumPage to={to} from={from} message={message} age={age} occasion={occasion} unlockKey={unlockKey} customReasons={customReasons} customVows={customVows} initialPTheme={initialPTheme} initialMusic={initialMusic} initialMusicUrl={initialMusicUrl} initialMusicName={initialMusicName} initialRel={initialRel} initialPhotoUrl={initialPhotoUrl} giftPreview={giftPreview} initialMode={initialMode} fromBuilder={fromBuilder} />
+            <PremiumPage to={to} from={from} message={message} age={age} occasion={occasion} unlockKey={unlockKey} customReasons={customReasons} customVows={customVows} initialPTheme={initialPTheme} initialMusic={initialMusic} initialMusicUrl={initialMusicUrl} initialMusicName={initialMusicName} initialRel={initialRel} initialPhotoUrl={initialPhotoUrl} initialPics={initialPics} giftPreview={giftPreview} initialMode={initialMode} fromBuilder={fromBuilder} />
         </>
     );
 }

@@ -15,6 +15,11 @@ import {
     ScrollText,
     X,
     Lock,
+    Maximize2,
+    Minimize2,
+    Volume2,
+    VolumeX,
+    Download,
 } from 'lucide-react';
 import CinemaCanvas from './CinemaCanvas';
 import CandleBlower from '@/components/CandleBlower';
@@ -35,6 +40,7 @@ export default function InstantCinemaPlayer({
     unlocked = false,
     giftMode = false,
     onUnlock = null,
+    onSaveKeepsake = null,
     onCloseToScroll = null,
     onClose = null,
 }) {
@@ -47,27 +53,32 @@ export default function InstantCinemaPlayer({
     const [heartBurst, setHeartBurst] = useState(0);
     const [loveCount, setLoveCount] = useState(0);
     const [candleBlown, setCandleBlown] = useState(false);
+    const [ended, setEnded] = useState(false);
+    const [muted, setMuted] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
     const sceneContainerRef = useRef(null);
+    const theaterRef = useRef(null);
+    const creditsRef = useRef(null);
     const timerRef = useRef(null);
     const sceneStartRef = useRef(0);
     const elapsedBeforePauseRef = useRef(0);
+    const candleEndTimerRef = useRef(null);
+    const swipeRef = useRef({ x: 0, y: 0, t: 0 });
+    const wasPlayingRef = useRef(false);
+
+    // Refs mirroring state so event listeners (visibility, keys) never go stale.
+    const isPlayingRef = useRef(isPlaying);
+    isPlayingRef.current = isPlaying;
+    const endedRef = useRef(ended);
+    endedRef.current = ended;
+    const paywallSceneRef = useRef(showPaywallScene);
+    paywallSceneRef.current = showPaywallScene;
 
     const handleDismiss = useCallback(() => {
         if (onClose) onClose();
         else if (onCloseToScroll) onCloseToScroll();
     }, [onClose, onCloseToScroll]);
-
-    // Escape key listener to close cinema player
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.key === 'Escape') {
-                handleDismiss();
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [handleDismiss]);
 
     // Heartfelt fallback quote if none provided
     const displayQuote =
@@ -81,29 +92,66 @@ export default function InstantCinemaPlayer({
         } catch {}
     }, []);
 
-    // Scene transition helper
-    const goToScene = useCallback((sceneIndex) => {
-        if (isTeaser && sceneIndex >= 2) {
-            setShowPaywallScene(true);
-            setIsPlaying(false);
-            return;
-        }
-        setShowPaywallScene(false);
-        const target = Math.max(0, Math.min(3, sceneIndex));
-        setCurrentScene(target);
-        elapsedBeforePauseRef.current = 0;
+    // Keep the film honest when the tab goes to the background: pause, and
+    // resume only if it was actually playing (never resurrect a manual pause).
+    const pausePlayback = useCallback(() => {
+        if (!isPlayingRef.current) return;
+        elapsedBeforePauseRef.current += Date.now() - sceneStartRef.current;
+        setIsPlaying(false);
+    }, []);
+
+    const resumePlayback = useCallback(() => {
+        if (isPlayingRef.current || endedRef.current || paywallSceneRef.current) return;
         sceneStartRef.current = Date.now();
-        setProgress((prev) => {
-            const next = [...prev];
-            for (let i = 0; i < 4; i++) {
-                if (i < target) next[i] = 100;
-                else if (i === target) next[i] = 0;
-                else next[i] = 0;
+        setIsPlaying(true);
+    }, []);
+
+    useEffect(() => {
+        const onVis = () => {
+            if (document.hidden) {
+                if (isPlayingRef.current && !paywallSceneRef.current) {
+                    wasPlayingRef.current = true;
+                    pausePlayback();
+                }
+            } else if (wasPlayingRef.current) {
+                wasPlayingRef.current = false;
+                resumePlayback();
             }
-            return next;
-        });
-        setHeartBurst((h) => h + 1);
-    }, [isTeaser]);
+        };
+        document.addEventListener('visibilitychange', onVis);
+        return () => document.removeEventListener('visibilitychange', onVis);
+    }, [pausePlayback, resumePlayback]);
+
+    // Scene transition helper
+    const goToScene = useCallback(
+        (sceneIndex) => {
+            if (isTeaser && sceneIndex >= 2) {
+                setShowPaywallScene(true);
+                setIsPlaying(false);
+                return;
+            }
+            if (candleEndTimerRef.current) {
+                clearTimeout(candleEndTimerRef.current);
+                candleEndTimerRef.current = null;
+            }
+            setEnded(false);
+            setShowPaywallScene(false);
+            const target = Math.max(0, Math.min(3, sceneIndex));
+            setCurrentScene(target);
+            elapsedBeforePauseRef.current = 0;
+            sceneStartRef.current = Date.now();
+            setProgress((prev) => {
+                const next = [...prev];
+                for (let i = 0; i < 4; i++) {
+                    if (i < target) next[i] = 100;
+                    else next[i] = 0;
+                }
+                return next;
+            });
+            setHeartBurst((h) => h + 1);
+        },
+        [isTeaser]
+    );
 
     // Next / Prev
     const nextScene = useCallback(() => {
@@ -115,6 +163,8 @@ export default function InstantCinemaPlayer({
         if (currentScene < 3) {
             goToScene(currentScene + 1);
         } else {
+            // Roll credits instead of a dead stop: the film formally ends.
+            setEnded(true);
             setIsPlaying(false);
         }
     }, [currentScene, goToScene, isTeaser]);
@@ -132,7 +182,7 @@ export default function InstantCinemaPlayer({
 
     // Timeline progress ticker
     useEffect(() => {
-        if (!isPlaying || showPaywallScene || (currentScene === 3 && candleBlown)) {
+        if (!isPlaying || showPaywallScene || ended || (currentScene === 3 && candleBlown)) {
             if (timerRef.current) cancelAnimationFrame(timerRef.current);
             return;
         }
@@ -162,6 +212,7 @@ export default function InstantCinemaPlayer({
                 } else if (currentScene < 3) {
                     nextScene();
                 } else {
+                    setEnded(true);
                     setIsPlaying(false);
                 }
             } else {
@@ -175,9 +226,9 @@ export default function InstantCinemaPlayer({
         return () => {
             if (timerRef.current) cancelAnimationFrame(timerRef.current);
         };
-    }, [isPlaying, currentScene, nextScene, candleBlown, isTeaser, showPaywallScene]);
+    }, [isPlaying, currentScene, nextScene, candleBlown, isTeaser, showPaywallScene, ended]);
 
-    // Play / Pause toggle
+    // Play / Pause toggle (also restarts a finished film)
     const togglePlay = () => {
         if (showPaywallScene) {
             setShowPaywallScene(false);
@@ -185,16 +236,108 @@ export default function InstantCinemaPlayer({
             setIsPlaying(true);
             return;
         }
-        if (isPlaying) {
-            elapsedBeforePauseRef.current += Date.now() - sceneStartRef.current;
-            setIsPlaying(false);
-        } else {
-            if (currentScene === 3 && progress[3] >= 100) {
-                goToScene(0);
-            }
-            sceneStartRef.current = Date.now();
+        if (ended) {
+            goToScene(0);
             setIsPlaying(true);
+            return;
         }
+        if (isPlaying) pausePlayback();
+        else resumePlayback();
+    };
+
+    // ---- Fullscreen (progressive: hidden on browsers that cannot do it) ----
+    const canFullscreen = (() => {
+        try {
+            const el = typeof document !== 'undefined' ? document.createElement('div') : null;
+            return !!(el && (el.requestFullscreen || el.webkitRequestFullscreen));
+        } catch {
+            return false;
+        }
+    })();
+
+    const toggleFullscreen = useCallback(() => {
+        const el = theaterRef.current;
+        if (!el) return;
+        try {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+            } else {
+                (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el);
+            }
+        } catch {}
+    }, []);
+
+    useEffect(() => {
+        const onFsChange = () => setIsFullscreen(!!(document.fullscreenElement || document.webkitFullscreenElement));
+        document.addEventListener('fullscreenchange', onFsChange);
+        document.addEventListener('webkitfullscreenchange', onFsChange);
+        return () => {
+            document.removeEventListener('fullscreenchange', onFsChange);
+            document.removeEventListener('webkitfullscreenchange', onFsChange);
+        };
+    }, []);
+
+    // ---- Mute: the AudioPlayer owns the actual sound; we ask it to toggle.
+    const toggleMute = useCallback(() => {
+        try {
+            window.dispatchEvent(new CustomEvent('bgen:audio_toggle'));
+        } catch {}
+        setMuted((m) => !m);
+    }, []);
+
+    // ---- Keyboard: ← → scenes, Space play/pause, Esc close, F fullscreen, M mute
+    useEffect(() => {
+        const onKeyDown = (e) => {
+            const t = e.target;
+            if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+            switch (e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    prevScene();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    nextScene();
+                    break;
+                case ' ':
+                case 'Spacebar':
+                    e.preventDefault();
+                    togglePlay();
+                    break;
+                case 'Escape':
+                    handleDismiss();
+                    break;
+                case 'f':
+                case 'F':
+                    toggleFullscreen();
+                    break;
+                case 'm':
+                case 'M':
+                    toggleMute();
+                    break;
+                default:
+                    break;
+            }
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [prevScene, nextScene, togglePlay, handleDismiss, toggleFullscreen, toggleMute]);
+
+    // ---- Swipe: vertical gestures stay with scrolling, horizontal flips scenes
+    const onTouchStartSwipe = (e) => {
+        const t = e.touches[0];
+        if (!t) return;
+        swipeRef.current = { x: t.clientX, y: t.clientY, t: Date.now() };
+    };
+    const onTouchEndSwipe = (e) => {
+        const t = e.changedTouches?.[0];
+        if (!t) return;
+        const dx = t.clientX - swipeRef.current.x;
+        const dy = t.clientY - swipeRef.current.y;
+        if (Date.now() - swipeRef.current.t > 700) return;
+        if (Math.abs(dx) < 64 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+        if (dx < 0) nextScene();
+        else prevScene();
     };
 
     // GSAP Scene Transitions
@@ -249,6 +392,20 @@ export default function InstantCinemaPlayer({
         { scope: sceneContainerRef, dependencies: [currentScene] }
     );
 
+    // Credits roll: staged rise as the film ends.
+    useGSAP(
+        () => {
+            if (!ended || !creditsRef.current) return;
+            const items = creditsRef.current.querySelectorAll('.prm-credit-item');
+            gsap.fromTo(
+                items,
+                { opacity: 0, y: 34 },
+                { opacity: 1, y: 0, duration: 1, stagger: 0.28, ease: 'power3.out', delay: 0.2 }
+            );
+        },
+        { scope: creditsRef, dependencies: [ended] }
+    );
+
     // Candle blow handler
     const handleCandleBlown = () => {
         setCandleBlown(true);
@@ -259,6 +416,7 @@ export default function InstantCinemaPlayer({
                 spread: 90,
                 origin: { y: 0.6 },
                 colors: ['#f2c14e', '#fb7185', '#38bdf8', '#a855f7', '#ffffff'],
+                disableForReducedMotion: true,
             });
             setTimeout(() => {
                 confetti({
@@ -266,15 +424,25 @@ export default function InstantCinemaPlayer({
                     angle: 60,
                     spread: 70,
                     origin: { x: 0.1, y: 0.7 },
+                    disableForReducedMotion: true,
                 });
                 confetti({
                     particleCount: 100,
                     angle: 120,
                     spread: 70,
                     origin: { x: 0.9, y: 0.7 },
+                    disableForReducedMotion: true,
                 });
             }, 300);
         } catch {}
+        // Let the wish land, then roll credits while the confetti is still gold.
+        if (!isTeaser) {
+            if (candleEndTimerRef.current) clearTimeout(candleEndTimerRef.current);
+            candleEndTimerRef.current = setTimeout(() => {
+                setEnded(true);
+                setIsPlaying(false);
+            }, 3200);
+        }
     };
 
     const handleShowerLove = () => {
@@ -286,14 +454,24 @@ export default function InstantCinemaPlayer({
                 spread: 60,
                 origin: { y: 0.8 },
                 colors: ['#fb7185', '#f43f5e', '#fda4af'],
+                disableForReducedMotion: true,
             });
         } catch {}
     };
 
     return (
-        <div className="prm-cin-theater fixed inset-0 z-50 flex flex-col justify-between bg-[#04020a] text-white overflow-hidden select-none">
+        <div
+            ref={theaterRef}
+            className="prm-cin-theater fixed inset-0 z-50 flex flex-col justify-between bg-[#04020a] text-white overflow-hidden select-none"
+            onTouchStart={onTouchStartSwipe}
+            onTouchEnd={onTouchEndSwipe}
+        >
             {/* Interactive Canvas UI Layer */}
             <CinemaCanvas heartBurstTrigger={heartBurst} theme={theme} />
+
+            {/* Film grain + vignette: the difference between "webpage" and "projection" */}
+            <div className="prm-cin-grain" aria-hidden="true" />
+            <div className="prm-cin-vignette" aria-hidden="true" />
 
             {/* Cinematic Light Leak */}
             <div
@@ -340,16 +518,40 @@ export default function InstantCinemaPlayer({
                                 ? showPaywallScene
                                     ? '✦ Preview Finished · Locked ✦'
                                     : `15s Teaser Preview · Scene ${currentScene + 1}/2`
-                                : `Cinema Tribute · Scene ${currentScene + 1}/4`}
+                                : ended
+                                  ? '✦ The End ✦'
+                                  : `Cinema Tribute · Scene ${currentScene + 1}/4`}
                         </span>
                         <span className="hidden sm:inline text-white/50 font-medium">
                             {showPaywallScene
                                 ? 'Unlock for Full Tribute'
-                                : ['Overture', 'The Memory', 'Heartstrings', 'Grand Wish'][currentScene]}
+                                : ended
+                                  ? 'Credits'
+                                  : ['Overture', 'The Memory', 'Heartstrings', 'Grand Wish'][currentScene]}
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            type="button"
+                            onClick={toggleMute}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white/90 hover:text-white transition-colors border border-white/15 cursor-pointer"
+                            aria-label={muted ? 'Unmute background music (M)' : 'Mute background music (M)'}
+                            title={muted ? 'Unmute music (M)' : 'Mute music (M)'}
+                        >
+                            {muted ? <VolumeX className="w-4 h-4 text-white/60" /> : <Volume2 className="w-4 h-4 text-[#f2c14e]" />}
+                        </button>
+                        {canFullscreen && (
+                            <button
+                                type="button"
+                                onClick={toggleFullscreen}
+                                className="hidden sm:inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white/90 hover:text-white transition-colors border border-white/15 cursor-pointer"
+                                aria-label={isFullscreen ? 'Exit fullscreen (F)' : 'Enter fullscreen (F)'}
+                                title={isFullscreen ? 'Exit fullscreen (F)' : 'Fullscreen (F)'}
+                            >
+                                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                            </button>
+                        )}
                         {onCloseToScroll && (
                             <button
                                 type="button"
@@ -379,6 +581,60 @@ export default function InstantCinemaPlayer({
                 ref={sceneContainerRef}
                 className="relative z-20 flex-1 min-h-0 overflow-y-auto no-scrollbar flex flex-col items-center justify-start sm:justify-center px-4 sm:px-8 py-4 text-center max-w-4xl mx-auto w-full"
             >
+                {/* ═══════════════════════════════════════════════════════════
+                    CREDITS ROLL (FILM COMPLETE)
+                ═══════════════════════════════════════════════════════════ */}
+                {ended && !showPaywallScene && (
+                    <div ref={creditsRef} className="flex flex-col items-center justify-center space-y-5 max-w-lg mx-auto w-full px-4 text-center my-auto">
+                        <p className="prm-credit-item prm-serif text-4xl sm:text-6xl font-extrabold prm-gold-text tracking-wide drop-shadow-[0_0_35px_rgba(242,193,78,0.45)]">
+                            The End
+                        </p>
+                        <div className="prm-credit-item space-y-1 text-white/80 text-sm sm:text-base">
+                            <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold">Starring</p>
+                            <p className="prm-serif text-xl sm:text-2xl text-[#f7dc9a] font-bold">{to}</p>
+                        </div>
+                        <div className="prm-credit-item space-y-1 text-white/80 text-sm sm:text-base">
+                            <p className="text-[10px] uppercase tracking-[0.3em] text-white/40 font-bold">Written &amp; directed with love by</p>
+                            <p className="prm-serif text-lg sm:text-xl text-white font-bold">{from}</p>
+                        </div>
+                        <p className="prm-credit-item text-[11px] uppercase tracking-[0.25em] text-white/40 font-bold">
+                            ✦ A BirthdayGen Original · {new Date().getFullYear()} ✦
+                        </p>
+
+                        <div className="prm-credit-item flex flex-wrap items-center justify-center gap-3 pt-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    goToScene(0);
+                                    setIsPlaying(true);
+                                }}
+                                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] font-extrabold text-sm shadow-[0_12px_35px_rgba(242,193,78,0.4)] hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+                            >
+                                <RotateCcw className="w-4 h-4" /> Replay the film
+                            </button>
+                            {onSaveKeepsake && (
+                                <button
+                                    type="button"
+                                    onClick={onSaveKeepsake}
+                                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-sm border border-white/15 backdrop-blur-md transition-all cursor-pointer"
+                                >
+                                    <Download className="w-4 h-4 text-[#f2c14e]" /> Save the keepsake
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={handleDismiss}
+                                className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/5 hover:bg-white/15 text-white/70 hover:text-white font-bold text-sm border border-white/10 transition-all cursor-pointer"
+                            >
+                                Close
+                            </button>
+                        </div>
+                        <p className="prm-credit-item text-[11px] text-white/35 tracking-wider">
+                            Tip: swipe left, or use ← → arrows to move through the film.
+                        </p>
+                    </div>
+                )}
+
                 {/* ═══════════════════════════════════════════════════════════
                     TEASER PAYWALL CURTAIN (LOCKED PREVIEW SCENE)
                 ═══════════════════════════════════════════════════════════ */}
@@ -435,7 +691,7 @@ export default function InstantCinemaPlayer({
                 {/* ═══════════════════════════════════════════════════════════
                     SCENE 1: THE OVERTURE & DEDICATION
                 ═══════════════════════════════════════════════════════════ */}
-                {!showPaywallScene && currentScene === 0 && (
+                {!showPaywallScene && !ended && currentScene === 0 && (
                     <div className="flex flex-col items-center justify-center space-y-6 max-w-xl my-auto">
                         <div className="prm-cin-item inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs uppercase tracking-[0.3em] text-[#f7dc9a]">
                             <Sparkles className="w-3.5 h-3.5 text-[#f2c14e]" /> A Cinematic Gift
@@ -470,7 +726,7 @@ export default function InstantCinemaPlayer({
                 {/* ═══════════════════════════════════════════════════════════
                     SCENE 2: THE STARLIGHT MEMORY (KEN BURNS 3D PORTRAIT)
                 ═══════════════════════════════════════════════════════════ */}
-                {!showPaywallScene && currentScene === 1 && (
+                {!showPaywallScene && !ended && currentScene === 1 && (
                     <div className="flex flex-col items-center justify-center space-y-5 max-w-xl my-auto">
                         <div className="prm-cin-item text-xs font-bold uppercase tracking-[0.25em] text-[#f7dc9a]">
                             ✦ The Eternal Memory ✦
@@ -515,7 +771,7 @@ export default function InstantCinemaPlayer({
                 {/* ═══════════════════════════════════════════════════════════
                     SCENE 3: HEARTSTRINGS (KINETIC POETRY & PERSONAL LETTER)
                 ═══════════════════════════════════════════════════════════ */}
-                {!showPaywallScene && currentScene === 2 && (
+                {!showPaywallScene && !ended && currentScene === 2 && (
                     <div className="flex flex-col items-center justify-center space-y-6 max-w-xl my-auto">
                         <div className="prm-cin-item text-xs font-bold uppercase tracking-[0.25em] text-[#f7dc9a]">
                             ✦ Words From The Heart ✦
@@ -546,7 +802,7 @@ export default function InstantCinemaPlayer({
                 {/* ═══════════════════════════════════════════════════════════
                     SCENE 4: GRAND WISH FINALE & CANDLE BLOWOUT
                 ═══════════════════════════════════════════════════════════ */}
-                {!showPaywallScene && currentScene === 3 && (
+                {!showPaywallScene && !ended && currentScene === 3 && (
                     <div className="flex flex-col items-center justify-center space-y-5 max-w-xl w-full my-auto">
                         <div className="prm-cin-item text-xs font-bold uppercase tracking-[0.25em] text-[#f7dc9a]">
                             ✦ The Grand Wish ✦
@@ -596,7 +852,7 @@ export default function InstantCinemaPlayer({
                     <button
                         type="button"
                         onClick={prevScene}
-                        disabled={currentScene === 0 && !showPaywallScene}
+                        disabled={currentScene === 0 && !showPaywallScene && !ended}
                         className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:pointer-events-none transition-colors text-white"
                         aria-label="Previous Scene"
                     >
@@ -608,9 +864,9 @@ export default function InstantCinemaPlayer({
                         type="button"
                         onClick={togglePlay}
                         className="p-3.5 rounded-full bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] font-bold shadow-[0_8px_25px_rgba(242,193,78,0.4)] hover:scale-110 active:scale-95 transition-transform"
-                        aria-label={showPaywallScene ? 'Replay Preview' : isPlaying ? 'Pause Cinema' : 'Play Cinema'}
+                        aria-label={showPaywallScene || ended ? 'Replay film' : isPlaying ? 'Pause Cinema' : 'Play Cinema'}
                     >
-                        {showPaywallScene ? (
+                        {showPaywallScene || ended ? (
                             <RotateCcw className="w-5 h-5 text-[#241031]" />
                         ) : isPlaying ? (
                             <Pause className="w-5 h-5 fill-current" />
@@ -623,7 +879,7 @@ export default function InstantCinemaPlayer({
                     <button
                         type="button"
                         onClick={nextScene}
-                        disabled={currentScene === 3 || showPaywallScene}
+                        disabled={(currentScene === 3 && !isTeaser) || showPaywallScene || ended}
                         className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:pointer-events-none transition-colors text-white"
                         aria-label="Next Scene"
                     >
@@ -633,7 +889,8 @@ export default function InstantCinemaPlayer({
 
                 {/* Subtitle prompt */}
                 <p className="text-center text-[11px] text-white/40 tracking-wider mt-2 font-medium">
-                    ✦ Tap anywhere on the canvas to send starlight hearts ✦
+                    ✦ Tap anywhere to send starlight hearts ✦
+                    <span className="hidden sm:inline"> · Space play/pause · ← → scenes · F fullscreen · M mute</span>
                 </p>
             </footer>
         </div>

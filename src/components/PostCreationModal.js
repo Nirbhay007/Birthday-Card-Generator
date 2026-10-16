@@ -14,6 +14,13 @@ export default function PostCreationModal({
     const [region] = useState(() => (typeof window !== 'undefined' ? detectRegion() : 'IN'));
     const [status, setStatus] = useState({ phase: 'idle', message: '' });
     const [upgraded, setUpgraded] = useState(false);
+    // Origin resolves after mount so team/server share links and the first
+    // client render agree (no hydration mismatch on dev or preview hosts).
+    const [origin, setOrigin] = useState(null);
+
+    useEffect(() => {
+        try { setOrigin(window.location.origin); } catch {}
+    }, []);
 
     useEffect(() => {
         if (!isOpen || !card) return;
@@ -31,7 +38,7 @@ export default function PostCreationModal({
 
     if (!isOpen || !card) return null;
 
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://birthday.nirbhay.online';
+    const baseUrl = origin || 'https://birthday.nirbhay.online';
     const cardUrl = `${baseUrl}/b/${card.id}`;
     const price = getVipCardPrice(region);
     const isVip = upgraded || !!card?.isVip || !!card?.isVipPro;
@@ -302,16 +309,42 @@ export default function PostCreationModal({
                                 👑 Make it Unforgettable with VIP
                             </h3>
                             <p className="text-xs text-purple-200/80 mb-3 leading-relaxed">
-                                Turn this card into a cinematic keepsake for {card.recipientName}:
+                                Same surprise, turned cinematic. See it:
                             </p>
+
+                            {/* Free vs VIP: show the gap, don't describe it */}
+                            <div className="grid grid-cols-2 gap-3 mb-4" aria-hidden="true">
+                                <div className="text-center">
+                                    <div className="vipmock vipmock-free mx-auto">
+                                        <div className="vipmock-inner">
+                                            <span className="vipmock-initial">
+                                                {(card.recipientName || '♥').trim().charAt(0).toUpperCase() || '♥'}
+                                            </span>
+                                            <span className="vipmock-chip">Free</span>
+                                        </div>
+                                    </div>
+                                    <p className="vipmock-label">Today’s card</p>
+                                </div>
+                                <div className="text-center">
+                                    <div className="vipmock vipmock-vip mx-auto">
+                                        <div className="vipmock-aurora" />
+                                        <div className="vipmock-inner">
+                                            <span className="vipmock-initial vipmock-initial-vip">
+                                                {(card.recipientName || '♥').trim().charAt(0).toUpperCase() || '♥'}
+                                            </span>
+                                            <span className="vipmock-crown">👑</span>
+                                            <span className="vipmock-chip vipmock-chip-vip">VIP</span>
+                                        </div>
+                                    </div>
+                                    <p className="vipmock-label vipmock-label-vip">With VIP · {price.label}</p>
+                                </div>
+                            </div>
 
                             <ul className="space-y-1.5 text-xs text-purple-100/90 mb-4">
                                 {[
-                                    '👑 Golden VIP Crown & Luminous Aura',
-                                    '🎨 8 VIP themes incl. Holographic Dream & Aurora',
-                                    '🎵 11 VIP soundtracks incl. Techno, Chamber Waltz & Jubilee March',
-                                    '🌌 Live aurora starfield canvas behind the card',
-                                    '📸 Memory gallery up to 12 photos + rotating conic gift ring',
+                                    '👑 Golden crown & luminous aura around the card',
+                                    '🎨 8 VIP themes + live aurora starfield canvas',
+                                    '🎵 11 VIP soundtracks · 📸 gallery up to 12 photos',
                                 ].map((node, i) => (
                                     <li key={i} className="flex items-center gap-2">
                                         <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 flex items-center justify-center text-[10px]">✓</span>
@@ -319,6 +352,10 @@ export default function PostCreationModal({
                                     </li>
                                 ))}
                             </ul>
+
+                            <p className="text-[11px] text-purple-200/70 mb-3 leading-relaxed">
+                                Everything you have already made stays exactly as it is. VIP only adds shine.
+                            </p>
 
                             {status.phase === 'error' && (
                                 <p className="text-xs text-rose-400 mb-3 font-medium">{status.message}</p>

@@ -21,6 +21,16 @@ export default function AudioPlayer({ track = 'classic', src = null, autoPlay = 
     const cancelLoopRef = useRef(null);
     const wantSound = useRef(activeTrack !== 'off' && autoPlay);
     const trackRef = useRef(activeTrack);
+    const audioToggleRef = useRef(null);
+
+    // External mute requests (cinema player's mute key/button).
+    useEffect(() => {
+        const onExternalToggle = () => {
+            try { audioToggleRef.current?.(); } catch {}
+        };
+        window.addEventListener('bgen:audio_toggle', onExternalToggle);
+        return () => window.removeEventListener('bgen:audio_toggle', onExternalToggle);
+    }, []);
 
     useEffect(() => {
         trackRef.current = activeTrack;
@@ -194,6 +204,8 @@ export default function AudioPlayer({ track = 'classic', src = null, autoPlay = 
             startPlayback();
         }
     };
+    // Cinema (or any overlay) can ask for a mute toggle without owning the audio.
+    audioToggleRef.current = togglePlay;
 
     return (
         <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-1.5">
