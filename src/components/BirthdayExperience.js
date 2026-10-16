@@ -212,6 +212,15 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                 <ProAtmosphere variant={page.theme === 'aurora' ? 'aurora' : 'holo'} />
             )}
 
+            {/* Preview mode banner — detected client-side from ?preview=1 so the
+                page itself stays statically cacheable (ISR). */}
+            {previewMode && (
+                <p className="mb-4 text-center text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200 rounded-full px-4 py-2">
+                    👀 Preview mode: views & reactions are paused.{' '}
+                    <a href={`/b/${page.id}`} className="underline">Exit preview</a>
+                </p>
+            )}
+
             {/* Creator guidance banner: strictly visible to creator holding ownership */}
             {isOwner && showCreatorNotice && (
                 <div

@@ -11,8 +11,16 @@ import { getBreadcrumbSchema, getGreetingCardSchema } from '@/lib/seo';
 
 // ISR: cache each card page for 5 minutes at the CDN.
 // Card views (the bulk of traffic) cost zero function time after the first hit.
-// ?created=1 / ?preview=1 URLs are separate cache entries so they still work.
+// URL flags (?created=1 / ?preview=1 / ?viewer=1) are handled client-side in
+// <BirthdayExperience />, so they share this cache entry without breaking.
 export const revalidate = 300;
+// Classic on-demand ISR opt-in for dynamic segments: prebuild nothing, but
+// render-and-cache each /b/[id] the first time it is requested.
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+    return [];
+}
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
@@ -34,22 +42,14 @@ const getBirthdayPage = cache(async (id) => {
 });
 
 /**
- * Preview mode (for the site owner to peek at any page without counting):
- * append ?preview=1 to the URL, e.g. /b/abc123?preview=1
- * While previewing, no view/love/share counters are incremented
- * (enforced client-side + in the react API), and shared/copied links are
- * stripped of the flag so recipients count normally.
+ * A note on URL flags (?preview=1, ?created=1, ?viewer=1):
+ * these are handled entirely inside <BirthdayExperience /> (client component)
+ * by reading window.location. The page itself never touches searchParams, so
+ * Next.js can statically render each /b/[id] page and cache it at the CDN
+ * (see `revalidate` above). Previously this file read searchParams, which
+ * silently opted every card view into dynamic rendering — every recipient
+ * open hit the server function + database even though the page is ISR.
  */
-function isPreviewMode(searchParams) {
-    if (!searchParams) return false;
-    const raw = searchParams.preview;
-    const val = Array.isArray(raw) ? raw[0] : raw;
-    // Bare ?preview (val === '') counts as preview on.
-    // Explicit ?preview=0 / false / no / off opts back out.
-    if (val === undefined || val === null) return false;
-    const v = String(val).toLowerCase();
-    return v === '' || v === '1' || v === 'true' || v === 'yes' || v === 'on';
-}
 
 export async function generateMetadata({ params }) {
     const { id } = await params;
@@ -57,7 +57,7 @@ export async function generateMetadata({ params }) {
 
     if (!page) {
         return {
-            title: 'Birthday Page Not Found | BirthdayGen',
+            title: 'Birthday Page Not Found',
             description: 'The requested personalized birthday card could not be found.',
         };
     }
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }) {
     const description = `A special birthday surprise for ${page.recipientName} - open on your phone to blow out the candles! ✨`;
 
     return {
-        title: `${title} | BirthdayGen`,
+        title,
         description,
         alternates: {
             canonical: `/b/${id}`,
@@ -105,14 +105,8 @@ export async function generateMetadata({ params }) {
     };
 }
 
-export default async function BirthdayPage({ params, searchParams }) {
+export default async function BirthdayPage({ params }) {
     const { id } = await params;
-    // In Next 15+, searchParams is a Promise — await it when thenable.
-    const resolvedSearch = searchParams && typeof searchParams.then === 'function'
-        ? await searchParams
-        : (searchParams || {});
-    const preview = isPreviewMode(resolvedSearch);
-    const autoOpen = resolvedSearch.created === '1' || resolvedSearch.created === 'true' || resolvedSearch.new === '1';
     const page = await getBirthdayPage(id);
 
     if (!page) {
@@ -193,15 +187,8 @@ export default async function BirthdayPage({ params, searchParams }) {
                 </nav>
 
                 <div className="container mx-auto px-4 py-6 max-w-4xl relative z-10">
-                    {preview && (
-                        <p className="mb-4 text-center text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200 rounded-full px-4 py-2">
-                            👀 Preview mode: views & reactions are paused. <Link href={`/b/${id}`} className="underline">Exit preview</Link>
-                        </p>
-                    )}
                     <BirthdayExperience
                         page={experiencePage}
-                        preview={preview}
-                        autoOpen={autoOpen}
                         photos={visiblePhotos}
                         gallery={<PhotoGallery photos={visiblePhotos} lockedCount={lockedPhotosCount} />}
                         audioSlot={activeMusic !== 'off' ? <AudioPlayer track={activeMusic} /> : null}

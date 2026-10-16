@@ -24,7 +24,7 @@ export async function generateMetadata({ params }) {
 
   if (!category) {
     return {
-      title: 'Birthday Wishes Category Not Found | BirthdayGen',
+      title: 'Birthday Wishes Category Not Found',
       description: 'The requested birthday wishes category could not be found.',
     };
   }

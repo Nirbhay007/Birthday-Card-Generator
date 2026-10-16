@@ -49,7 +49,7 @@ const FEATURED_WISHES = [
 ];
 
 export const metadata = {
-  title: 'Birthday Wishes, Quotes & Greetings Library | BirthdayGen',
+  title: 'Birthday Wishes, Quotes & Greetings Library',
   description: 'Explore 250+ curated birthday wishes for best friends, lovers, family, regional languages, and milestones. Copy quotes or instantly generate an interactive birthday card with virtual candles!',
   alternates: {
     canonical: '/wishes',

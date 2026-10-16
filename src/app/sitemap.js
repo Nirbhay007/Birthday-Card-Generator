@@ -6,8 +6,8 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.on
 // Static dates — avoids telling Google every page is "always modified",
 // which wastes crawl budget and can suppress rankings.
 // Update these manually when you make meaningful content changes.
-const LAST_MODIFIED_CORE = new Date('2026-09-18');
-const LAST_MODIFIED_CONTENT = new Date('2026-10-05');
+const LAST_MODIFIED_CORE = new Date('2026-10-16');
+const LAST_MODIFIED_CONTENT = new Date('2026-10-16');
 const LAST_MODIFIED_PREMIUM = new Date('2026-09-10');
 
 export default async function sitemap() {

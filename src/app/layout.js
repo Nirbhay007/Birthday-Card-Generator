@@ -73,9 +73,12 @@ export const metadata = {
   },
   alternates: {
     canonical: "/",
+    // Self-referential hreflang only on the homepage. Subpages set their own
+    // canonicals; emitting root hreflang globally would point every page's
+    // alternates at "/" which conflicts with their canonicals.
     languages: {
       'en-IN': '/',
-      'en-US': '/',
+      'en': '/',
       'x-default': '/',
     },
   },
@@ -135,10 +138,6 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
-        {/* hreflang for Indian audience */}
-        <link rel="alternate" hrefLang="en-IN" href={baseUrl} />
-        <link rel="alternate" hrefLang="en" href={baseUrl} />
-        <link rel="alternate" hrefLang="x-default" href={baseUrl} />
         {/* Application identity */}
         <meta name="application-name" content="BirthdayGen" />
         <meta name="generator" content="BirthdayGen" />

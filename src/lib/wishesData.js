@@ -9,7 +9,7 @@ export const WISH_CATEGORIES = [
     title: 'Heartfelt & Fun Birthday Wishes for Best Friend',
     navTitle: 'Best Friend',
     shortDescription: 'Meaningful, unforgettable, and cheerful birthday wishes designed to celebrate your closest friend.',
-    metaTitle: 'Best Birthday Wishes for Best Friend (2026) | BirthdayGen',
+    metaTitle: 'Best Birthday Wishes for Best Friend (2026)',
     metaDescription: 'Find the perfect birthday wishes for your best friend. From deep heartfelt messages to fun and emotional quotes, customize and send with interactive candles!',
     intro: 'Best friends are the family we choose for ourselves. Whether you have shared years of unforgettable memories, late-night talks, or inside jokes, a best friend deserves a birthday greeting that truly reflects how much they mean to you. Explore our curated collection of birthday wishes for your best friend below, and turn any wish into a personalized interactive digital card in seconds.',
     tips: [
@@ -66,7 +66,7 @@ export const WISH_CATEGORIES = [
     title: 'Hilarious & Funny Birthday Wishes That Will Make Them Laugh',
     navTitle: 'Funny & Humor',
     shortDescription: 'Witty, sarcastic, and lighthearted birthday messages guaranteed to bring a giant smile.',
-    metaTitle: 'Funny Birthday Wishes & Hilarious Messages | BirthdayGen',
+    metaTitle: 'Funny Birthday Wishes & Hilarious Messages',
     metaDescription: 'Browse the funniest birthday wishes, witty jokes, and sarcastic greetings. Copy your favorite or generate a hilarious interactive candle-blowing card instantly!',
     intro: 'Why settle for a boring "Happy Birthday" when you can roast them with love? A good laugh is the best gift you can give. Whether they are dreading getting older or just appreciate clever humor, these funny birthday greetings strike the ideal balance between playful teasing and genuine celebration.',
     tips: [
@@ -123,7 +123,7 @@ export const WISH_CATEGORIES = [
     title: 'Romantic & Sweet Birthday Wishes for Your Partner',
     navTitle: 'Romantic & Partner',
     shortDescription: 'Deep, affectionate, and romantic birthday love letters for your boyfriend, girlfriend, or spouse.',
-    metaTitle: 'Romantic Birthday Wishes for Boyfriend, Girlfriend & Spouse | BirthdayGen',
+    metaTitle: 'Romantic Birthday Wishes for Boyfriend, Girlfriend & Spouse',
     metaDescription: 'Discover romantic birthday wishes that melt hearts. Craft an intimate digital birthday love card with romantic music, favorite couple photos, and candles.',
     intro: 'Your partner’s birthday is an opportunity to express the depth of your admiration, gratitude, and devotion. From gentle affirmations to passionate declarations, these romantic birthday wishes celebrate the love you share and the future you are building hand in hand.',
     tips: [
@@ -175,7 +175,7 @@ export const WISH_CATEGORIES = [
     title: 'Warm & Heartfelt Birthday Wishes for Family (Mom, Dad, Siblings)',
     navTitle: 'Family & Parents',
     shortDescription: 'Appreciative, loving birthday greetings for parents, brothers, sisters, and grandparents.',
-    metaTitle: 'Birthday Wishes for Family: Mom, Dad, Sister & Brother | BirthdayGen',
+    metaTitle: 'Birthday Wishes for Family: Mom, Dad, Sister & Brother',
     metaDescription: 'Express your gratitude with heartfelt birthday wishes for family members. Design a warm digital birthday greeting with family photos and memories.',
     intro: 'Family provides our earliest foundation and our most enduring memories. Whether thanking a parent for their sacrifices, cherishing a sister\'s wisdom, or celebrating a brother\'s accomplishments, these family birthday wishes help you convey authentic gratitude and timeless love.',
     tips: [
@@ -223,7 +223,7 @@ export const WISH_CATEGORIES = [
     title: 'Milestone Birthday Wishes (18th, 21st, 30th, 50th Celebrations)',
     navTitle: 'Milestones (18th, 21st, 50th)',
     shortDescription: 'Commemorate historic life chapters with inspiring milestone birthday messages.',
-    metaTitle: 'Milestone Birthday Wishes (18th, 21st, 30th, 40th, 50th) | BirthdayGen',
+    metaTitle: 'Milestone Birthday Wishes (18th, 21st, 30th, 40th, 50th)',
     metaDescription: 'Celebrate monumental birthdays with inspiring milestone greetings. Perfect for turning 18, 21, 30, 40, or 50. Generate an interactive milestone card today!',
     intro: 'Milestone birthdays mark the transition into exciting new chapters of life. Whether stepping into adulthood at 18, reaching legal freedom at 21, embracing maturity at 30, or celebrating half a century of wisdom at 50, these milestone wishes capture the grandeur and significance of the occasion.',
     tips: [
@@ -275,7 +275,7 @@ export const WISH_CATEGORIES = [
     title: 'Short, Sweet & Aesthetic Birthday Wishes for Cards & WhatsApp',
     navTitle: 'Short & Sweet',
     shortDescription: 'Crisp, modern, and aesthetic one-line greetings perfect for cards, SMS, and captions.',
-    metaTitle: 'Short & Sweet Birthday Wishes | One-Liner Birthday Greetings | BirthdayGen',
+    metaTitle: 'Short & Sweet Birthday Wishes | One-Liner Birthday Greetings',
     metaDescription: 'Looking for aesthetic and short birthday greetings? Browse crisp one-liners, Instagram caption wishes, and instant cards ready to share on WhatsApp.',
     intro: 'Sometimes simplicity speaks louder than paragraphs. When you need a quick, meaningful, or aesthetic message for an Instagram caption, WhatsApp status, or greeting card tag, these short and sweet birthday wishes deliver maximum punch in just a few words.',
     tips: [
@@ -322,7 +322,7 @@ export const WISH_CATEGORIES = [
     title: 'Touching Birthday Wishes for Mom From Daughter & Son',
     navTitle: 'Mom',
     shortDescription: 'Tender, grateful birthday messages that tell your mother how much her love means to you.',
-    metaTitle: 'Heartfelt Birthday Wishes for Mom (2026) | BirthdayGen',
+    metaTitle: 'Heartfelt Birthday Wishes for Mom (2026)',
     metaDescription: 'Find touching birthday wishes for your mom from daughter or son. Turn any message into an interactive card with photos, music and blowable candles!',
     intro: 'Nobody deserves a beautiful birthday surprise more than Mom. Whether you live next door or across the world, these heartfelt birthday wishes for mothers help you say the thank-you that everyday life rarely makes room for, and with BirthdayGen you can deliver it as an interactive page with her favourite photos.',
     tips: [
@@ -379,7 +379,7 @@ export const WISH_CATEGORIES = [
     title: 'Respectful & Warm Birthday Wishes for Dad',
     navTitle: 'Dad',
     shortDescription: 'Strong, sincere birthday greetings honouring your father\'s guidance, humour, and quiet love.',
-    metaTitle: 'Best Birthday Wishes for Dad (2026) | BirthdayGen',
+    metaTitle: 'Best Birthday Wishes for Dad (2026)',
     metaDescription: 'Honour your father with warm birthday wishes for dad, from respectful to funny. Pair any wish with photos and make him an interactive birthday card!',
     intro: 'Dads often love quietly, through fixed things, funded dreams, and bad jokes told with total confidence. These birthday wishes for fathers put words to that steady love, whether your dad is sentimental, stoic, or the family comedian.',
     tips: [
@@ -542,7 +542,7 @@ export const WISH_CATEGORIES = [
     title: 'Loving Birthday Wishes for Husband',
     navTitle: 'Husband',
     shortDescription: 'Romantic and appreciative birthday messages celebrating the man you chose, every day.',
-    metaTitle: 'Romantic Birthday Wishes for Husband (2026) | BirthdayGen',
+    metaTitle: 'Romantic Birthday Wishes for Husband (2026)',
     metaDescription: 'Melt his heart with loving birthday wishes for your husband. Add couple photos and send a romantic interactive card with candles!',
     intro: 'He is your teammate in bills and dreams alike. These birthday wishes for husbands blend romance with real-life appreciation, for the husband who fixes things, forgets dates, but never forgets you.',
     tips: [
@@ -595,7 +595,7 @@ export const WISH_CATEGORIES = [
     title: 'Beautiful Birthday Wishes for Wife',
     navTitle: 'Wife',
     shortDescription: 'Tender birthday love notes that remind her she is cherished, admired, and adored.',
-    metaTitle: 'Beautiful Birthday Wishes for Wife (2026) | BirthdayGen',
+    metaTitle: 'Beautiful Birthday Wishes for Wife (2026)',
     metaDescription: 'Sweep her off her feet with birthday wishes for your wife. Add wedding photos and send a romantic interactive surprise card!',
     intro: 'She runs the house, the calendar, and your heart. These birthday wishes for wives say what busy days leave unsaid, admiration, desire, gratitude, and a promise to celebrate her like day one.',
     tips: [
@@ -648,7 +648,7 @@ export const WISH_CATEGORIES = [
     title: 'Cute & Romantic Birthday Wishes for Boyfriend',
     navTitle: 'Boyfriend',
     shortDescription: 'Adorable birthday texts and love notes to make your boyfriend grin at his phone.',
-    metaTitle: 'Cute Birthday Wishes for Boyfriend (2026) | BirthdayGen',
+    metaTitle: 'Cute Birthday Wishes for Boyfriend (2026)',
     metaDescription: 'The cutest birthday wishes for your boyfriend, sweet, flirty, and fun. Send one as an interactive card with photos and candles!',
     intro: 'Whether it is your first birthday together or your fifth, these birthday wishes for boyfriends hit the sweet spot between cute and meaningful, flirty enough to make him blush, real enough to keep.',
     tips: [
@@ -701,7 +701,7 @@ export const WISH_CATEGORIES = [
     title: 'Sweet Birthday Wishes for Girlfriend That Melt Hearts',
     navTitle: 'Girlfriend',
     shortDescription: 'Charming birthday messages to show your girlfriend how special she truly is.',
-    metaTitle: 'Sweet Birthday Wishes for Girlfriend (2026) | BirthdayGen',
+    metaTitle: 'Sweet Birthday Wishes for Girlfriend (2026)',
     metaDescription: 'Win her heart again with sweet birthday wishes for your girlfriend. Pair with photos in an interactive card she will replay all year!',
     intro: 'Her birthday is your annual championship match, and these birthday wishes for girlfriends are your winning playbook. Sweet, a little flirty, genuinely observant: the combination that actually melts hearts.',
     tips: [
@@ -807,7 +807,7 @@ export const WISH_CATEGORIES = [
     title: 'Adorable Birthday Wishes for Daughter',
     navTitle: 'Daughter',
     shortDescription: 'Loving birthday wishes for your little princess or grown-up girl, straight from proud parents.',
-    metaTitle: 'Adorable Birthday Wishes for Daughter (2026) | BirthdayGen',
+    metaTitle: 'Adorable Birthday Wishes for Daughter (2026)',
     metaDescription: 'Shower her with love: birthday wishes for daughters from mom and dad. Add her photos and send a magical interactive card!',
     intro: 'She wrapped you around her finger on day one and never let go. These birthday wishes for daughters capture that fierce parental love, for pigtails today, graduation caps tomorrow, and the incredible woman always.',
     tips: [
@@ -860,7 +860,7 @@ export const WISH_CATEGORIES = [
     title: 'Warm Birthday Wishes for Grandma',
     navTitle: 'Grandma',
     shortDescription: 'Tender birthday greetings honouring grandma\'s love, stories, and legendary cooking.',
-    metaTitle: 'Warm Birthday Wishes for Grandma (2026) | BirthdayGen',
+    metaTitle: 'Warm Birthday Wishes for Grandma (2026)',
     metaDescription: 'Honour dadi/nani with warm birthday wishes for grandma. Add family photos and send her a surprise card the whole family signs!',
     intro: 'Her hands tell stories, her kitchen heals everything, and her blessings power the whole family. These birthday wishes for grandmothers honour the matriarch, best read aloud on a video call with the whole parivaar.',
     tips: [
@@ -913,7 +913,7 @@ export const WISH_CATEGORIES = [
     title: 'Respectful Birthday Wishes for Grandpa',
     navTitle: 'Grandpa',
     shortDescription: 'Honouring birthday messages for grandpa, his wisdom, wit, and wonderful stories.',
-    metaTitle: 'Respectful Birthday Wishes for Grandpa (2026) | BirthdayGen',
+    metaTitle: 'Respectful Birthday Wishes for Grandpa (2026)',
     metaDescription: 'Salute him with birthday wishes for grandpa, wise, warm, and witty. Add throwback photos in a family-signed interactive card!',
     intro: 'He has seen eras change and still beats everyone at cards. These birthday wishes for grandfathers salute the patriarch, his discipline that built the family and his mischief that keeps it laughing.',
     tips: [
@@ -966,7 +966,7 @@ export const WISH_CATEGORIES = [
     title: 'Professional Birthday Wishes for Colleagues & Coworkers',
     navTitle: 'Coworker',
     shortDescription: 'Polished, friendly birthday messages for colleagues, warm without crossing lines.',
-    metaTitle: 'Birthday Wishes for Colleague & Coworker (2026) | BirthdayGen',
+    metaTitle: 'Birthday Wishes for Colleague & Coworker (2026)',
     metaDescription: 'Perfect birthday wishes for colleagues, professional yet warm. Surprise your coworker with a fun team-signed interactive card!',
     intro: 'You spend more waking hours with colleagues than family, their birthday deserves better than a break-room mumur. These coworker birthday wishes are perfectly calibrated: friendly, inclusive, promotion-safe.',
     tips: [
@@ -1019,7 +1019,7 @@ export const WISH_CATEGORIES = [
     title: 'Grateful Birthday Wishes for Teachers & Mentors',
     navTitle: 'Teacher',
     shortDescription: 'Respectful birthday messages thanking the teachers and mentors who shaped you.',
-    metaTitle: 'Birthday Wishes for Teacher & Mentor (2026) | BirthdayGen',
+    metaTitle: 'Birthday Wishes for Teacher & Mentor (2026)',
     metaDescription: 'Thank them beautifully: birthday wishes for teachers and mentors. Get the whole class to sign an interactive surprise card!',
     intro: 'Great teachers echo through entire lives. These birthday wishes for teachers and mentors express the gratitude students feel but rarely send, perfect for a class-signed surprise that will genuinely move them.',
     tips: [
@@ -1072,7 +1072,7 @@ export const WISH_CATEGORIES = [
     title: 'Belated Birthday Wishes That Actually Apologise Well',
     navTitle: 'Belated',
     shortDescription: 'Charming late birthday messages that turn your oops into an even bigger surprise.',
-    metaTitle: 'Belated Happy Birthday Wishes & Messages (2026) | BirthdayGen',
+    metaTitle: 'Belated Happy Birthday Wishes & Messages (2026)',
     metaDescription: 'Missed the day? These belated birthday wishes save the day with humour and heart. Send a surprise interactive card, fashionably late!',
     intro: 'Missed the birthday? Relax, a late wish with extra effort beats an on-time "HBD" text every time. These belated birthday messages blend honest apology with humour, and a surprise BirthdayGen card proves you cared enough to overcompensate.',
     tips: [
@@ -1132,7 +1132,7 @@ export const WISH_CATEGORIES = [
     title: 'Birthday Wishes in Hindi: जन्मदिन की शुभकामनाएं',
     navTitle: 'Hindi',
     shortDescription: 'Beautiful birthday wishes in Hindi with English transliteration, copy, share, or turn into an interactive card.',
-    metaTitle: 'Birthday Wishes in Hindi (2026). जन्मदिन की शुभकामनाएं | BirthdayGen',
+    metaTitle: 'Birthday Wishes in Hindi (2026). जन्मदिन की शुभकामनाएं',
     metaDescription: 'Find heartfelt birthday wishes in Hindi. Copy the perfect janamdin ki shubhkamnaye message or create an interactive card with candles and music, free!',
     intro: 'Hindi birthday wishes carry warmth that English often cannot match. Whether you are wishing your mummy, papa, best friend, bhai or bhabhi, these birthday wishes in Hindi strike the perfect balance between tradition and emotion. Each wish comes with English transliteration so you can read, copy, and share with ease.',
     tips: [
@@ -1189,7 +1189,7 @@ export const WISH_CATEGORIES = [
     title: 'Birthday Wishes in Marathi: वाढदिवसाच्या शुभेच्छा',
     navTitle: 'Marathi',
     shortDescription: 'Authentic Marathi birthday wishes with transliteration, perfect for family and friends from Maharashtra.',
-    metaTitle: 'Birthday Wishes in Marathi (2026). वाढदिवसाच्या शुभेच्छा | BirthdayGen',
+    metaTitle: 'Birthday Wishes in Marathi (2026). वाढदिवसाच्या शुभेच्छा',
     metaDescription: 'Beautiful birthday wishes in Marathi with English transliteration. Copy, share on WhatsApp, or create an interactive birthday card, free on BirthdayGen!',
     intro: 'Marathi birthday wishes carry a unique warmth rooted in tradition. Whether for your aai, baba, mitra, or any loved one from Maharashtra, these vaadhdiwasachya shubhechha messages blend sincerity with Marathi culture. Each wish includes transliteration for easy sharing.',
     tips: [
@@ -1246,7 +1246,7 @@ export const WISH_CATEGORIES = [
     title: 'Birthday Wishes in Tamil: பிறந்தநாள் வாழ்த்துக்கள்',
     navTitle: 'Tamil',
     shortDescription: 'Warm and meaningful birthday wishes in Tamil with transliteration, for family, friends and loved ones.',
-    metaTitle: 'Birthday Wishes in Tamil (2026). பிறந்தநாள் வாழ்த்துக்கள் | BirthdayGen',
+    metaTitle: 'Birthday Wishes in Tamil (2026). பிறந்தநாள் வாழ்த்துக்கள்',
     metaDescription: 'Beautiful birthday wishes in Tamil with English transliteration. Share on WhatsApp or create a free interactive birthday card on BirthdayGen!',
     intro: 'Tamil birthday wishes blend poetic beauty with heartfelt emotion. Whether for your amma, appa, nanban, or any dear one, these piranthanaal vaalthukkal messages express love in the rich tradition of Tamil culture. Every wish includes transliteration for easy reading and sharing.',
     tips: [
@@ -1303,7 +1303,7 @@ export const WISH_CATEGORIES = [
     title: 'Birthday Wishes in Telugu: పుట్టినరోజు శుభాకాంక్షలు',
     navTitle: 'Telugu',
     shortDescription: 'Heartfelt Telugu birthday wishes with transliteration, for family, friends and loved ones.',
-    metaTitle: 'Birthday Wishes in Telugu (2026). పుట్టినరోజు శుభాకాంక్షలు | BirthdayGen',
+    metaTitle: 'Birthday Wishes in Telugu (2026). పుట్టినరోజు శుభాకాంక్షలు',
     metaDescription: 'Beautiful birthday wishes in Telugu with English transliteration. Copy and share or create a free interactive birthday card with candles on BirthdayGen!',
     intro: 'Telugu birthday wishes radiate warmth and affection. Whether for your amma, nanna, snehithudu, or any beloved person, these puttinaroju shubhakankshalu messages express your feelings in authentic Telugu. Each wish includes transliteration for easy sharing on WhatsApp.',
     tips: [
@@ -1360,7 +1360,7 @@ export const WISH_CATEGORIES = [
     title: 'Birthday Wishes in Bengali: শুভ জন্মদিন',
     navTitle: 'Bengali',
     shortDescription: 'Beautiful Bengali birthday wishes with transliteration, for family, friends and loved ones from Bengal.',
-    metaTitle: 'Birthday Wishes in Bengali (2026). শুভ জন্মদিন | BirthdayGen',
+    metaTitle: 'Birthday Wishes in Bengali (2026). শুভ জন্মদিন',
     metaDescription: 'Heartfelt birthday wishes in Bengali with transliteration. Copy and share on WhatsApp or create a free interactive card with candles on BirthdayGen!',
     intro: 'Bengali birthday wishes are known for their lyrical beauty and emotional depth. Whether for your maa, baba, bondhu, or any cherished person, these shubho jonmodin messages capture the soul of Bengali culture. Each wish includes transliteration for effortless sharing.',
     tips: [
@@ -1417,7 +1417,7 @@ export const WISH_CATEGORIES = [
     title: 'Birthday Wishes in Punjabi: ਜਨਮਦਿਨ ਮੁਬਾਰਕ',
     navTitle: 'Punjabi',
     shortDescription: 'Warm and vibrant Punjabi birthday wishes with transliteration, full of love, fun and blessings.',
-    metaTitle: 'Birthday Wishes in Punjabi (2026). ਜਨਮਦਿਨ ਮੁਬਾਰਕ | BirthdayGen',
+    metaTitle: 'Birthday Wishes in Punjabi (2026). ਜਨਮਦਿਨ ਮੁਬਾਰਕ',
     metaDescription: 'Vibrant birthday wishes in Punjabi with English transliteration. Share on WhatsApp or create a free interactive birthday card with candles on BirthdayGen!',
     intro: 'Punjabi birthday wishes are as vibrant and warm as the culture itself. Whether for your bebe, paji, yaar, or any loved one, these janamdin mubarak messages bring the full energy of Punjab to their special day. Each wish includes transliteration so you can share easily on WhatsApp.',
     tips: [
@@ -1477,7 +1477,7 @@ export const WISH_CATEGORIES = [
     title: 'Warm Birthday Wishes for Uncle',
     navTitle: 'Uncle',
     shortDescription: 'Heartfelt and respectful birthday wishes for your uncle, from funny to deeply appreciative.',
-    metaTitle: 'Birthday Wishes for Uncle: Heartfelt & Funny (2026) | BirthdayGen',
+    metaTitle: 'Birthday Wishes for Uncle: Heartfelt & Funny (2026)',
     metaDescription: 'Find the perfect birthday wishes for your uncle. From warm and respectful messages to funny greetings, copy or create a free interactive birthday card!',
     intro: 'Uncles hold a special place in our lives, part mentor, part friend, and always someone who has your back. Whether he is the cool uncle who spoils you or the wise one who gives the best advice, these birthday wishes help you celebrate him properly.',
     tips: [
@@ -1534,7 +1534,7 @@ export const WISH_CATEGORIES = [
     title: 'Loving Birthday Wishes for Aunt',
     navTitle: 'Aunt',
     shortDescription: 'Sweet and heartfelt birthday wishes for your aunt, from loving messages to fun celebrations.',
-    metaTitle: 'Birthday Wishes for Aunt: Sweet & Heartfelt (2026) | BirthdayGen',
+    metaTitle: 'Birthday Wishes for Aunt: Sweet & Heartfelt (2026)',
     metaDescription: 'Beautiful birthday wishes for your aunt. Heartfelt, funny, and warm messages to celebrate her special day, send as a free interactive card!',
     intro: 'Aunts are the unsung heroes of every family, part second mother, part secret-keeper, and always ready with love and support. These birthday wishes help you tell her just how much she means to you, whether she is the glamorous aunty or the warm-hearted one who always cooks your favourite meal.',
     tips: [
@@ -1591,7 +1591,7 @@ export const WISH_CATEGORIES = [
     title: 'Birthday Wishes for Cousin: Fun & Heartfelt',
     navTitle: 'Cousin',
     shortDescription: 'Fun, heartfelt and relatable birthday wishes for your cousin, your built-in best friend.',
-    metaTitle: 'Birthday Wishes for Cousin: Fun & Heartfelt (2026) | BirthdayGen',
+    metaTitle: 'Birthday Wishes for Cousin: Fun & Heartfelt (2026)',
     metaDescription: 'Find the best birthday wishes for your cousin. Fun, nostalgic, and heartfelt messages, copy or turn into a free interactive birthday card with candles!',
     intro: 'Cousins are the friends that family gives you for free, the childhood partners in crime who know all your embarrassing stories. Whether close as siblings or connected across cities, these birthday wishes celebrate the unique bond only cousins share.',
     tips: [
@@ -1648,7 +1648,7 @@ export const WISH_CATEGORIES = [
     title: 'Birthday Wishes for Nephew: Proud & Fun',
     navTitle: 'Nephew',
     shortDescription: 'Proud and fun birthday wishes for your nephew, from cool uncle/aunt vibes to heartfelt messages.',
-    metaTitle: 'Birthday Wishes for Nephew (2026) | BirthdayGen',
+    metaTitle: 'Birthday Wishes for Nephew (2026)',
     metaDescription: 'Find the perfect birthday wishes for your nephew. Proud, fun, and heartfelt messages, send as a free interactive birthday card with candles!',
     intro: 'Your nephew might be small or grown, but he will always be the kid who stole your heart. These birthday wishes let you be the cool uncle or aunt who actually makes his birthday memorable, whether he is 5 or 25.',
     tips: [
@@ -1705,7 +1705,7 @@ export const WISH_CATEGORIES = [
     title: 'Birthday Wishes for Niece: Sweet & Proud',
     navTitle: 'Niece',
     shortDescription: 'Sweet and proud birthday wishes for your niece, from adorable to deeply heartfelt.',
-    metaTitle: 'Birthday Wishes for Niece: Sweet & Proud (2026) | BirthdayGen',
+    metaTitle: 'Birthday Wishes for Niece: Sweet & Proud (2026)',
     metaDescription: 'Beautiful birthday wishes for your niece. Sweet, proud, and heartfelt messages, copy or send as a free interactive birthday card on BirthdayGen!',
     intro: 'Your niece is the little (or not so little) sunshine who lights up every family gathering. Whether she is a toddler, a teenager, or a young woman, these birthday wishes help you be the aunt or uncle who always makes her feel special.',
     tips: [
@@ -1762,7 +1762,7 @@ export const WISH_CATEGORIES = [
     title: 'Professional Birthday Wishes for Boss',
     navTitle: 'Boss',
     shortDescription: 'Professional yet warm birthday wishes for your boss, respectful, appropriate and genuinely appreciative.',
-    metaTitle: 'Birthday Wishes for Boss: Professional & Warm (2026) | BirthdayGen',
+    metaTitle: 'Birthday Wishes for Boss: Professional & Warm (2026)',
     metaDescription: 'Find the perfect birthday wishes for your boss. Professional, respectful, and warm messages to celebrate their birthday. Send as a team card on BirthdayGen!',
     intro: 'Wishing your boss a happy birthday strikes a delicate balance, too formal feels robotic, too casual feels inappropriate. These birthday wishes for bosses are crafted to be genuinely warm without crossing professional boundaries. Perfect for team cards, emails, or a BirthdayGen surprise.',
     tips: [
@@ -1819,7 +1819,7 @@ export const WISH_CATEGORIES = [
     title: 'Birthday Wishes for Friend: Simple & Genuine',
     navTitle: 'Friend',
     shortDescription: 'Simple, genuine, and heartfelt birthday wishes for friends of all kinds, not just best friends.',
-    metaTitle: 'Birthday Wishes for Friend (2026). Simple & Genuine | BirthdayGen',
+    metaTitle: 'Birthday Wishes for Friend (2026). Simple & Genuine',
     metaDescription: 'Find simple and genuine birthday wishes for a friend. Warm, honest messages for close friends, work friends, and new friends, create a free card on BirthdayGen!',
     intro: 'Not every friend is a best friend, some are work friends, school friends, gym friends, or the kind of friend you do not see often but always pick up right where you left off. These birthday wishes are for all of them, simple, honest, and warm without being over the top.',
     tips: [
@@ -1876,7 +1876,7 @@ export const WISH_CATEGORIES = [
     title: 'Birthday Wishes for Crush: Subtle & Sweet',
     navTitle: 'Crush',
     shortDescription: 'Subtle, sweet birthday wishes for your crush, enough to show interest without scaring them away.',
-    metaTitle: 'Birthday Wishes for Crush: Cute & Subtle (2026) | BirthdayGen',
+    metaTitle: 'Birthday Wishes for Crush: Cute & Subtle (2026)',
     metaDescription: 'Cute and subtle birthday wishes for your crush. Say just enough to show you care, copy or send as a free interactive birthday card on BirthdayGen!',
     intro: 'Wishing your crush happy birthday is a high-stakes moment, say too little and you blend into the crowd, say too much and you might come on too strong. These wishes are calibrated to be sweetly suggestive without crossing any lines. Bonus points if you send a BirthdayGen card, nothing says "I put in effort" like an interactive surprise.',
     tips: [
@@ -1936,7 +1936,7 @@ export const WISH_CATEGORIES = [
     title: 'Birthday Captions for Instagram (2026). Aesthetic, Funny & Short',
     navTitle: 'Instagram Captions',
     shortDescription: 'Trending, aesthetic, funny, and short birthday captions for Instagram posts, stories, and reels.',
-    metaTitle: '100+ Best Birthday Captions for Instagram (2026) | BirthdayGen',
+    metaTitle: '100+ Best Birthday Captions for Instagram (2026)',
     metaDescription: 'Discover the best birthday captions for Instagram. Aesthetic, funny, baddie, short, and sentimental captions for your photos, stories, and reels. Copy or turn into an interactive birthday card!',
     intro: 'Finding the right Instagram caption for a birthday post shouldn’t take longer than picking the photo. Whether you are posting for yourself, your best friend, or your partner, here are top trending birthday captions for 2026, categorized from short & aesthetic to hilarious roasts.',
     tips: [
@@ -2003,7 +2003,7 @@ export const WISH_CATEGORIES = [
     title: 'Birthday Status for WhatsApp: Best One-Liners & Video Quotes',
     navTitle: 'WhatsApp Status',
     shortDescription: 'Short, sweet, and emoji-packed birthday status messages for WhatsApp, stories, and bios.',
-    metaTitle: 'Best Birthday Status for WhatsApp (2026). Short & Sweet | BirthdayGen',
+    metaTitle: 'Best Birthday Status for WhatsApp (2026). Short & Sweet',
     metaDescription: 'Find trending birthday WhatsApp status quotes and wishes. Perfect for 24-hour status, stories, and reels, copy with 1 click or share a virtual candle-blowing card link!',
     intro: 'A 24-hour WhatsApp status is the easiest way to show love on someone’s birthday. From midnight countdown messages to emotional lines and funny one-liners with emojis, here are the best WhatsApp birthday status updates ready to copy and post with one tap.',
     tips: [
@@ -2060,7 +2060,7 @@ export const WISH_CATEGORIES = [
     title: 'Inspiring Birthday Quotes: Meaningful & Famous Sayings',
     navTitle: 'Quotes',
     shortDescription: 'Thoughtful, inspiring, and timeless birthday quotes from renowned authors, poets, and thinkers.',
-    metaTitle: 'Inspiring Birthday Quotes & Famous Sayings (2026) | BirthdayGen',
+    metaTitle: 'Inspiring Birthday Quotes & Famous Sayings (2026)',
     metaDescription: 'Explore timeless and inspiring birthday quotes from famous authors and thinkers. Deep, poetic, and meaningful birthday messages, copy or design an interactive card!',
     intro: 'Sometimes our own words feel too small for someone who means the world to us. These timeless birthday quotes by poets, authors, and philosophers capture the beauty of aging, the joy of existence, and the deep gratitude of having someone in our lives.',
     tips: [

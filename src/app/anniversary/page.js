@@ -8,7 +8,7 @@ import { getBreadcrumbSchema, getFAQSchema } from '@/lib/seo';
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
 export const metadata = {
-  title: 'Free Anniversary Surprise Maker | Love Letter & Celebration Page | BirthdayGen',
+  title: 'Free Anniversary Surprise Maker | Love Letter & Celebration Page',
   description: 'Create a personal anniversary surprise website. An envelope that opens, your favorite photos together, promises from the heart, and music. Free to preview.',
   alternates: {
     canonical: '/anniversary',

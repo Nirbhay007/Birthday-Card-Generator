@@ -12,7 +12,7 @@ export const AGE_PAGES = [
     title: 'Sweet 16th Birthday Wishes',
     navTitle: '16th',
     shortDescription: 'Sweet-sixteen wishes full of dreams, freedom, and firsts.',
-    metaTitle: 'Sweet 16 Birthday Wishes (2026) | BirthdayGen',
+    metaTitle: 'Sweet 16 Birthday Wishes (2026)',
     metaDescription: 'Celebrate a sweet sixteen with dreamy 16th birthday wishes. Turn one into an interactive card with photos, music and blowable candles!',
     intro: 'Sixteen is the first taste of freedom, longer leashes, bigger dreams, and a year packed with firsts. These sweet-16 wishes are perfect for daughters, sons, nieces, nephews, and students stepping into their brightest chapter.',
     tips: [
@@ -71,7 +71,7 @@ export const AGE_PAGES = [
     title: '18th Birthday Wishes: Welcome to Adulthood',
     navTitle: '18th',
     shortDescription: 'Bold 18th birthday wishes celebrating freedom, adulthood, and big beginnings.',
-    metaTitle: '18th Birthday Wishes: Funny & Inspiring (2026) | BirthdayGen',
+    metaTitle: '18th Birthday Wishes: Funny & Inspiring (2026)',
     metaDescription: 'Welcome them to adulthood with the best 18th birthday wishes, funny, proud, and inspiring. Send as an interactive card with candles!',
     intro: 'Eighteen changes everything, voting, driving, adulting (sort of). These 18th birthday wishes balance pride with playfulness, perfect for sons, daughters, siblings, and friends crossing into adulthood.',
     tips: [
@@ -130,7 +130,7 @@ export const AGE_PAGES = [
     title: '21st Birthday Wishes: Cheers to Freedom',
     navTitle: '21st',
     shortDescription: 'Electric 21st birthday wishes, raise a glass to the wildest, freest year yet.',
-    metaTitle: '21st Birthday Wishes: Fun & Fabulous (2026) | BirthdayGen',
+    metaTitle: '21st Birthday Wishes: Fun & Fabulous (2026)',
     metaDescription: 'The ultimate 21st birthday wishes, funny, fierce, and full of cheers. Turn one into a party-style interactive card with candles!',
     intro: 'Twenty-one only happens once, the universal green light to celebrate big. These 21st birthday wishes bring the party energy for best friends, siblings, partners, and favourite cousins.',
     tips: [
@@ -244,7 +244,7 @@ export const AGE_PAGES = [
     title: '30th Birthday Wishes: Thrive in Your Thirties',
     navTitle: '30th',
     shortDescription: 'Confident, hilarious 30th birthday wishes, thirty, flirty, and thriving.',
-    metaTitle: '30th Birthday Wishes: Funny & Inspiring (2026) | BirthdayGen',
+    metaTitle: '30th Birthday Wishes: Funny & Inspiring (2026)',
     metaDescription: 'Thirty and thriving! The best 30th birthday wishes, from dirty-thirty jokes to genuine pride. Send as a classy interactive card!',
     intro: 'Thirty is when it all clicks, confidence up, nonsense tolerance down, skincare routine finally serious. These 30th birthday wishes celebrate the upgrade for friends, siblings, and partners hitting the big 3-0.',
     tips: [
@@ -303,7 +303,7 @@ export const AGE_PAGES = [
     title: '40th Birthday Wishes: Fabulous at Forty',
     navTitle: '40th',
     shortDescription: 'Fabulous forty wishes, forty is fierce, wise, and just getting started.',
-    metaTitle: '40th Birthday Wishes: Fabulous & Funny (2026) | BirthdayGen',
+    metaTitle: '40th Birthday Wishes: Fabulous & Funny (2026)',
     metaDescription: 'Forty and fabulous! Witty, warm 40th birthday wishes for friends and family. Send as an elegant interactive surprise card!',
     intro: 'Forty is the new everything, established, self-assured, and done apologising. These 40th birthday wishes honour the milestone with wit and warmth for spouses, siblings, and lifelong friends.',
     tips: [
@@ -358,7 +358,7 @@ export const AGE_PAGES = [
     title: '50th Birthday Wishes: Golden Half-Century',
     navTitle: '50th',
     shortDescription: 'Golden 50th birthday wishes honouring fifty remarkable years.',
-    metaTitle: '50th Birthday Wishes: Golden & Heartfelt (2026) | BirthdayGen',
+    metaTitle: '50th Birthday Wishes: Golden & Heartfelt (2026)',
     metaDescription: 'Half a century of brilliance! Golden 50th birthday wishes for parents, spouses & friends. Send a royal interactive card!',
     intro: 'Fifty years of stories, sacrifices, and triumphs deserve more than a card off a shelf. These 50th birthday wishes honour the golden milestone for parents, partners, and beloved friends, best delivered with a lifetime of photos.',
     tips: [
@@ -417,7 +417,7 @@ export const AGE_PAGES = [
     title: '60th Birthday Wishes: Diamond & Distinguished',
     navTitle: '60th',
     shortDescription: 'Distinguished 60th birthday wishes celebrating six decades of a life well lived.',
-    metaTitle: '60th Birthday Wishes: Warm & Distinguished (2026) | BirthdayGen',
+    metaTitle: '60th Birthday Wishes: Warm & Distinguished (2026)',
     metaDescription: 'Sixty years of wisdom! Distinguished 60th birthday wishes for parents & mentors. Send an elegant family-signed card!',
     intro: 'Sixty is diamond territory, six decades of perseverance, love, and stories worth volumes. These 60th birthday wishes carry the respect the milestone commands, perfect for parents, grandparents, mentors, and beloved elders.',
     tips: [
@@ -472,7 +472,7 @@ export const AGE_PAGES = [
     title: '1st Birthday Wishes: The Sweetest Milestone',
     navTitle: '1st',
     shortDescription: 'Adorable 1st birthday wishes for the baby who changed everything, perfect for parents to share.',
-    metaTitle: '1st Birthday Wishes for Baby Boy & Girl (2026) | BirthdayGen',
+    metaTitle: '1st Birthday Wishes for Baby Boy & Girl (2026)',
     metaDescription: 'Celebrate baby\'s first birthday with the sweetest 1st birthday wishes. Create a beautiful interactive card with photos and candles, free on BirthdayGen!',
     intro: 'The first birthday is not just for the baby, it is a celebration for the parents who survived the most beautiful, sleepless year of their lives. These 1st birthday wishes capture the magic of a baby turning one, perfect for sons, daughters, nieces, nephews, and grandchildren.',
     tips: [
@@ -531,7 +531,7 @@ export const AGE_PAGES = [
     title: '5th Birthday Wishes: High-Five, Superstar!',
     navTitle: '5th',
     shortDescription: 'Fun and magical 5th birthday wishes for kids full of imagination and energy.',
-    metaTitle: '5th Birthday Wishes for Kids (2026) | BirthdayGen',
+    metaTitle: '5th Birthday Wishes for Kids (2026)',
     metaDescription: 'Magical 5th birthday wishes for kids! Fun, creative messages for boys and girls turning five. Create a free interactive birthday card on BirthdayGen!',
     intro: 'Five is when the magic really begins, school starts, imaginations run wild, and every day is an adventure. These 5th birthday wishes are packed with fun and wonder, perfect for sons, daughters, nieces, nephews, and little friends who are turning the big F-I-V-E.',
     tips: [
@@ -590,7 +590,7 @@ export const AGE_PAGES = [
     title: '13th Birthday Wishes: Welcome to the Teens!',
     navTitle: '13th',
     shortDescription: 'Fun and exciting 13th birthday wishes for the newest teenager in the family.',
-    metaTitle: '13th Birthday Wishes: Welcome to Teenhood (2026) | BirthdayGen',
+    metaTitle: '13th Birthday Wishes: Welcome to Teenhood (2026)',
     metaDescription: 'Celebrate turning 13 with the best teenage birthday wishes! Fun, inspiring messages for new teens. Create a free interactive card on BirthdayGen!',
     intro: 'Thirteen is THE milestone, officially a teenager! These 13th birthday wishes celebrate the excitement of becoming a teen while reminding them they are loved, supported, and ready for the wild ride ahead. Perfect for sons, daughters, nieces, nephews, and young friends.',
     tips: [
@@ -649,7 +649,7 @@ export const AGE_PAGES = [
     title: '15th Birthday Wishes: Halfway Through the Teens',
     navTitle: '15th',
     shortDescription: 'Heartfelt and fun 15th birthday wishes for teens in the sweet spot of growing up.',
-    metaTitle: '15th Birthday Wishes & Quinceañera Messages (2026) | BirthdayGen',
+    metaTitle: '15th Birthday Wishes & Quinceañera Messages (2026)',
     metaDescription: 'Beautiful 15th birthday wishes for teens and quinceañera celebrations. Heartfelt and fun messages, create a free interactive card on BirthdayGen!',
     intro: 'Fifteen sits in the sweet spot, old enough to have opinions, young enough to dream without limits. In many cultures, it is a quinceañera celebration marking the transition to young adulthood. These 15th birthday wishes honour both the milestone and the person.',
     tips: [
@@ -708,7 +708,7 @@ export const AGE_PAGES = [
     title: '70th Birthday Wishes: Seven Decades of Grace',
     navTitle: '70th',
     shortDescription: 'Dignified and warm 70th birthday wishes celebrating seven decades of a remarkable life.',
-    metaTitle: '70th Birthday Wishes: Warm & Meaningful (2026) | BirthdayGen',
+    metaTitle: '70th Birthday Wishes: Warm & Meaningful (2026)',
     metaDescription: 'Honour 70 years with beautiful 70th birthday wishes. Dignified, warm messages for parents, grandparents, and loved ones. Create a family card on BirthdayGen!',
     intro: 'Seventy years is a tapestry of wisdom, love, and legacy. These 70th birthday wishes carry the respect and warmth that seven decades of life deserve, perfect for parents, grandparents, in-laws, mentors, and beloved community elders.',
     tips: [
@@ -767,7 +767,7 @@ export const AGE_PAGES = [
     title: '80th Birthday Wishes: Eight Decades of Extraordinary',
     navTitle: '80th',
     shortDescription: 'Reverent and heartfelt 80th birthday wishes honouring eight decades of an extraordinary life.',
-    metaTitle: '80th Birthday Wishes: Reverent & Loving (2026) | BirthdayGen',
+    metaTitle: '80th Birthday Wishes: Reverent & Loving (2026)',
     metaDescription: 'Celebrate 80 years with beautiful 80th birthday wishes. Reverent, loving messages for grandparents and parents. Create a family tribute card on BirthdayGen!',
     intro: 'Eighty years is an extraordinary achievement, a life filled with stories, sacrifices, and love that spans generations. These 80th birthday wishes honour the magnitude of eight decades with the reverence and warmth they deserve. Perfect for grandparents, parents, and beloved elders.',
     tips: [
@@ -826,7 +826,7 @@ export const AGE_PAGES = [
     title: '100th Birthday Wishes: A Century of Extraordinary Life',
     navTitle: '100th',
     shortDescription: 'Monumental 100th birthday wishes celebrating a century of life, love, and legacy.',
-    metaTitle: '100th Birthday Wishes: A Century Celebration (2026) | BirthdayGen',
+    metaTitle: '100th Birthday Wishes: A Century Celebration (2026)',
     metaDescription: 'Celebrate a centenarian with magnificent 100th birthday wishes. Create a century tribute card with family photos and messages on BirthdayGen, free!',
     intro: 'One hundred years. A century of history witnessed, a lifetime of love given, and a legacy that will endure for generations. These 100th birthday wishes carry the awe, gratitude, and celebration that a centenarian birthday deserves. This is not just a birthday, it is a monument.',
     tips: [

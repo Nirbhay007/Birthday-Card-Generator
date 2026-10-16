@@ -25,7 +25,7 @@ export async function generateMetadata({ params }) {
 
   if (!page) {
     return {
-      title: 'Birthday Wishes by Age Not Found | BirthdayGen',
+      title: 'Birthday Wishes by Age Not Found',
       description: 'The requested milestone-age birthday wishes could not be found.',
     };
   }
