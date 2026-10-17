@@ -1,4 +1,4 @@
-import { Inter, Playfair_Display, Lato, Fredoka, Quicksand, Press_Start_2P, VT323 } from "next/font/google";
+import { Inter, Playfair_Display, Lato, Fredoka, Quicksand, Press_Start_2P, VT323, Bricolage_Grotesque, Geist } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import "./themes.css";
@@ -8,6 +8,10 @@ import { Analytics } from "@vercel/analytics/react";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
+// Marketing type stack (see DESIGN.md): Bricolage Grotesque for display,
+// Geist for body/UI. The rest are card-theme assets used via themes.css.
+const bricolage = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-bricolage", display: "swap" });
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "swap" });
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair", display: "swap" });
 const lato = Lato({ weight: ["400", "700"], subsets: ["latin"], variable: "--font-lato", display: "swap" });
@@ -119,7 +123,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#9333ea",
+  themeColor: "#7c4dff",
   width: "device-width",
   initialScale: 1,
 };
@@ -159,7 +163,7 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(productSchema) }}
         />
       </head>
-      <body className={`${inter.variable} ${playfair.variable} ${lato.variable} ${fredoka.variable} ${quicksand.variable} ${pressStart.variable} ${vt323.variable}`}>
+      <body className={`${geist.variable} ${bricolage.variable} ${inter.variable} ${playfair.variable} ${lato.variable} ${fredoka.variable} ${quicksand.variable} ${pressStart.variable} ${vt323.variable}`}>
         {children}
         <Analytics />
         <SpeedInsights />
