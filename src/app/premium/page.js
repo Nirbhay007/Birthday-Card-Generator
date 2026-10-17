@@ -6,7 +6,7 @@ export const revalidate = 3600;
 import { PTHEME_IDS } from '@/components/premium/looks';
 import { REL_IDS } from '@/components/premium/relationships';
 import { TRACKS, PREMIUM_TRACKS } from '@/lib/music';
-import { getBreadcrumbSchema } from '@/lib/seo';
+import { getBreadcrumbSchema, serializeJsonLd } from '@/lib/seo';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
@@ -147,7 +147,7 @@ export default async function PremiumRoute({ searchParams }) {
 
     return (
         <>
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbs) }} />
             <PremiumPage to={to} from={from} message={message} age={age} occasion={occasion} unlockKey={unlockKey} customReasons={customReasons} customVows={customVows} initialPTheme={initialPTheme} initialMusic={initialMusic} initialMusicUrl={initialMusicUrl} initialMusicName={initialMusicName} initialRel={initialRel} initialPhotoUrl={initialPhotoUrl} initialPics={initialPics} giftPreview={giftPreview} initialMode={initialMode} fromBuilder={fromBuilder} />
         </>
     );

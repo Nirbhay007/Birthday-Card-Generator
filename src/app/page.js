@@ -7,7 +7,7 @@ import SupportButton from '@/components/SupportButton';
 import WhatsNew from '@/components/WhatsNew';
 import CinemaShowcase from '@/components/premium/CinemaShowcase';
 import { Sparkles, Heart, Music, Image as ImageIcon, Wind, ShieldCheck, Zap, HelpCircle, ArrowRight, BookOpen, Gift, PartyPopper, Timer } from 'lucide-react';
-import { getSoftwareApplicationSchema, getFAQSchema, getHowToSchema, getVideoObjectSchema } from '@/lib/seo';
+import { getSoftwareApplicationSchema, getFAQSchema, getHowToSchema, getVideoObjectSchema, serializeJsonLd } from '@/lib/seo';
 import { WISH_CATEGORIES } from '@/lib/wishesData';
 import { getAllAgePages } from '@/lib/ageWishesData';
 
@@ -59,20 +59,20 @@ export default function Home() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(softwareSchema) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(faqSchema) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(howToSchema) }}
       />
       {videoSchema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(videoSchema) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(videoSchema) }}
         />
       )}
 

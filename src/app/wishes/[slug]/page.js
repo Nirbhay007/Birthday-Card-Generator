@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Sparkles, ArrowRight, ArrowLeft, Heart, Copy, Check, Lightbulb, HelpCircle, Gift } from 'lucide-react';
 import { WISH_CATEGORIES, getCategoryBySlug, getAllCategories } from '@/lib/wishesData';
-import { getBreadcrumbSchema, getItemListSchema, getCollectionSchema, getFAQSchema } from '@/lib/seo';
+import { getBreadcrumbSchema, getItemListSchema, getCollectionSchema, getFAQSchema, serializeJsonLd } from '@/lib/seo';
 import WishCard from './WishCard';
 import MonetizationSlot from '@/components/MonetizationSlot';
 import SupportButton from '@/components/SupportButton';
@@ -89,20 +89,20 @@ export default async function CategoryWishesPage({ params }) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbs) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(collectionSchema) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(itemListSchema) }}
       />
       {faqSchema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(faqSchema) }}
         />
       )}
 

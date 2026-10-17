@@ -7,7 +7,7 @@ import AudioPlayer from '@/components/AudioPlayer';
 import ShareButtons from '@/components/ShareButtons';
 import MonetizationSlot from '@/components/MonetizationSlot';
 import BirthdayExperience from '@/components/BirthdayExperience';
-import { getBreadcrumbSchema, getGreetingCardSchema } from '@/lib/seo';
+import { getBreadcrumbSchema, getGreetingCardSchema, serializeJsonLd } from '@/lib/seo';
 
 // ISR: cache each card page for 5 minutes at the CDN.
 // Card views (the bulk of traffic) cost zero function time after the first hit.
@@ -147,8 +147,12 @@ export default async function BirthdayPage({ params }) {
     const visiblePhotos = (isVip || isVipPro) ? allPhotos.slice(0, photoCap) : allPhotos.slice(0, 3);
     const lockedPhotosCount = (isVip || isVipPro) ? Math.max(0, allPhotos.length - photoCap) : Math.max(0, allPhotos.length - 3);
 
+    // Never ship the ownership secret to the browser as page data — the
+    // creator's own browser holds it in localStorage (kept there at creation).
+    const { editToken: _editToken, ...publicPage } = page;
+
     const experiencePage = {
-        ...page,
+        ...publicPage,
         theme: activeTheme,
         music: activeMusic,
         originalTheme: page.theme,
@@ -162,11 +166,11 @@ export default async function BirthdayPage({ params }) {
         <>
             <script
                 type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+                dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbs) }}
             />
             <script
                 type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(greetingCardSchema) }}
+                dangerouslySetInnerHTML={{ __html: serializeJsonLd(greetingCardSchema) }}
             />
 
             <main

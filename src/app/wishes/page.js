@@ -4,7 +4,7 @@ import { Sparkles, Heart, Laugh, Users, Award, MessageCircle, ArrowRight, CheckC
 import SupportButton from '@/components/SupportButton';
 import WhatsNew from '@/components/WhatsNew';
 import { getAllCategories } from '@/lib/wishesData';
-import { getBreadcrumbSchema } from '@/lib/seo';
+import { getBreadcrumbSchema, serializeJsonLd } from '@/lib/seo';
 import WishCard from './[slug]/WishCard';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
@@ -121,7 +121,7 @@ export default function WishesIndexPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbs) }}
       />
 
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900">

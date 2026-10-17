@@ -6,6 +6,23 @@
 const SITE_DATE_PUBLISHED = '2024-01-01';
 const SITE_DATE_MODIFIED = new Date().toISOString().split('T')[0];
 
+/**
+ * Serialize a JSON-LD object for safe inline <script> injection.
+ *
+ * JSON.stringify leaves "</script>" sequences intact, so any user-provided
+ * string (a card message, a recipient name) could break out of the tag and
+ * inject executable markup (stored XSS). Escaping < > & as \uXXXX keeps the
+ * payload valid JSON while making tag breakout impossible.
+ *
+ * Always use this instead of JSON.stringify for dangerouslySetInnerHTML.
+ */
+export function serializeJsonLd(data) {
+  return JSON.stringify(data)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
+}
+
 export function getWebSiteSchema(siteUrl) {
   return {
     '@context': 'https://schema.org',

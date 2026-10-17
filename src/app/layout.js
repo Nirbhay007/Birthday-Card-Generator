@@ -2,7 +2,7 @@ import { Inter, Playfair_Display, Lato, Fredoka, Quicksand, Press_Start_2P, VT32
 import Script from "next/script";
 import "./globals.css";
 import "./themes.css";
-import { getWebSiteSchema, getOrganizationSchema, getWebApplicationSchema, getProductSchema } from "@/lib/seo";
+import { getWebSiteSchema, getOrganizationSchema, getWebApplicationSchema, getProductSchema, serializeJsonLd } from "@/lib/seo";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -144,19 +144,19 @@ export default function RootLayout({ children }) {
         {/* Structured data */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(websiteSchema) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationSchema) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppSchema) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(webAppSchema) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(productSchema) }}
         />
       </head>
       <body className={`${inter.variable} ${playfair.variable} ${lato.variable} ${fredoka.variable} ${quicksand.variable} ${pressStart.variable} ${vt323.variable}`}>

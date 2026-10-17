@@ -5,7 +5,7 @@ import SupportButton from '@/components/SupportButton';
 import WhatsNew from '@/components/WhatsNew';
 import { getAllAgePages } from '@/lib/ageWishesData';
 import { getAllCategories } from '@/lib/wishesData';
-import { getBreadcrumbSchema } from '@/lib/seo';
+import { getBreadcrumbSchema, serializeJsonLd } from '@/lib/seo';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
@@ -44,7 +44,7 @@ export default function AgesIndexPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbs) }}
       />
 
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900">

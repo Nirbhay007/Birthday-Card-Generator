@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Sparkles, Heart, Crown, Film, ArrowRight, ShieldCheck, Copy, Check, Gift, HelpCircle, Star } from 'lucide-react';
 import SupportButton from '@/components/SupportButton';
 import WhatsNew from '@/components/WhatsNew';
-import { getBreadcrumbSchema, getFAQSchema } from '@/lib/seo';
+import { getBreadcrumbSchema, getFAQSchema, serializeJsonLd } from '@/lib/seo';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
@@ -89,11 +89,11 @@ export default function AnniversaryPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbs) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(faqSchema) }}
       />
 
       <div className="min-h-screen bg-gradient-to-br from-rose-950 via-slate-900 to-purple-950 text-white selection:bg-rose-500 selection:text-white">
