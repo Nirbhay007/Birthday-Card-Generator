@@ -30,6 +30,22 @@ module.exports = {
                     DEFAULT: '#F2C14E',
                     soft: '#FBF3DC',
                 },
+                // Legacy components were built on Tailwind's purple-* utilities.
+                // Remapping the scale to brand violet harmonizes every pre-revamp
+                // surface without touching their class strings (see DESIGN.md).
+                purple: {
+                    50: '#F4F1FF',
+                    100: '#EBE5FF',
+                    200: '#D9CEFF',
+                    300: '#BCA5FF',
+                    400: '#9B73FF',
+                    500: '#7C4DFF',
+                    600: '#6D33E8',
+                    700: '#5A24C4',
+                    800: '#4A1FA0',
+                    900: '#3B1B7E',
+                    950: '#241052',
+                },
             },
             fontFamily: {
                 sans: ['var(--font-geist)', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],

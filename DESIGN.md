@@ -46,6 +46,7 @@ Defined in `globals.css` (CSS vars) and `tailwind.config.js` (utilities).
 
 ## Anti-slop checklist (repo-specific)
 
+- Legacy pre-revamp components use `purple-*` utilities; the scale is remapped to brand violet in `tailwind.config.js`, so they harmonize automatically. New code uses `brand-*`.
 - No gradient text on marketing headings; no glassmorphism on marketing chrome.
 - No rows of 3 equal cards — use asymmetric grids / bento spans.
 - No fake-precise stats and no fake screenshots: every preview is a real component, theme token, or real asset.
