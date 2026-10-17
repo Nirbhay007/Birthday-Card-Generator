@@ -193,16 +193,18 @@ export async function verifyPremiumPayment(payload) {
  *
  * @param {string}         orderId     Razorpay order ID (e.g. order_Tj3R9Sb6D4kUHz)
  * @param {Object}         opts
+ * @param {string}         opts.token        Per-order pollToken issued by /api/premium/order
  * @param {number}         opts.maxAttempts  Max number of polls (default 20 → ~60 s)
  * @param {number}         opts.intervalMs   Delay between polls in ms (default 3000)
  * @param {AbortSignal}    opts.signal       Optional AbortSignal to cancel early
  * @returns {Promise<{paid: true, unlockKey: string, pageId?: string} | null>}
  */
-export async function pollOrderStatus(orderId, { maxAttempts = 20, intervalMs = 3000, signal } = {}) {
+export async function pollOrderStatus(orderId, { token = '', maxAttempts = 20, intervalMs = 3000, signal } = {}) {
     for (let i = 0; i < maxAttempts; i++) {
         if (signal?.aborted) return null;
         try {
-            const r = await fetch(`/api/premium/order/status?orderId=${encodeURIComponent(orderId)}`);
+            const qs = `orderId=${encodeURIComponent(orderId)}${token ? `&token=${encodeURIComponent(token)}` : ''}`;
+            const r = await fetch(`/api/premium/order/status?${qs}`);
             const d = await r.json();
             if (d.paid && d.unlockKey) return d;
         } catch {}

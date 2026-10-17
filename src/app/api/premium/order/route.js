@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import prisma from '@/lib/prisma';
@@ -33,6 +34,16 @@ function throttled(ip) {
     hits.set(ip, arr);
     if (hits.size > 5000) hits.delete(hits.keys().next().value);
     return arr.length > MAX_PER_WINDOW;
+}
+
+/**
+ * Stateless per-order polling credential: HMAC(secret, order id). Returned to
+ * the buyer's browser with the order; /api/premium/order/status requires it,
+ * so knowing/leaking an order id alone can no longer fetch the unlock key.
+ */
+function pollTokenFor(orderId) {
+    const secret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
+    return crypto.createHmac('sha256', secret).update(`poll:${orderId}`).digest('hex');
 }
 
 function razorpayClient() {
@@ -89,6 +100,7 @@ export async function POST(request) {
             amount,
             currency,
             keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID,
+            pollToken: pollTokenFor(order.id),
         });
     } catch (error) {
         const desc = error?.error?.description || error?.message || error;

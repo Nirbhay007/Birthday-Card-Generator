@@ -89,7 +89,7 @@ export default function PostCreationModal({
             // Background poll for UPI recovery (browser may lose the Razorpay
             // callback when the user switches to their UPI app).
             const abort = new AbortController();
-            const poll = pollOrderStatus(order.orderId, { signal: abort.signal });
+            const poll = pollOrderStatus(order.orderId, { token: order.pollToken, signal: abort.signal });
 
             let callbackOk = false;
             try {

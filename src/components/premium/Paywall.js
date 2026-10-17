@@ -62,13 +62,13 @@ export default function Paywall({ onUnlocked }) {
             if (!raw) return;
             let pending;
             try { pending = JSON.parse(raw); } catch { try { localStorage.removeItem(PENDING_ORDER_KEY); } catch {} return; }
-            const { orderId, ts } = pending || {};
-            if (!orderId || Date.now() - (ts || 0) > 10 * 60 * 1000) {
+            const { orderId, pollToken, ts } = pending || {};
+            if (!orderId || !pollToken || Date.now() - (ts || 0) > 10 * 60 * 1000) {
                 try { localStorage.removeItem(PENDING_ORDER_KEY); } catch {}
                 return;
             }
             setStatus({ phase: 'verifying', message: 'Checking your previous payment…' });
-            const result = await pollOrderStatus(orderId, { maxAttempts: 10, intervalMs: 2000 });
+            const result = await pollOrderStatus(orderId, { token: pollToken, maxAttempts: 10, intervalMs: 2000 });
             if (result?.unlockKey) {
                 try { localStorage.removeItem(PENDING_ORDER_KEY); } catch {}
                 track('premium_unlock');
@@ -126,15 +126,15 @@ export default function Paywall({ onUnlocked }) {
         try {
             const snapshotUrl = typeof window !== 'undefined' ? window.location.href : '';
             const order = await createPremiumOrder(region, { snapshotUrl });
-            // Persist order ID so we can recover if the browser dies during UPI app switch.
-            try { localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify({ orderId: order.orderId, ts: Date.now() })); } catch {}
+            // Persist order ID + poll token so we can recover if the browser dies during UPI app switch.
+            try { localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify({ orderId: order.orderId, pollToken: order.pollToken, ts: Date.now() })); } catch {}
             track('checkout_start', { amount: region === 'IN' ? 49 : 1 });
             setStatus({ phase: 'verifying', message: 'Opening secure checkout…' });
 
             // Background poll catches payments the Razorpay JS callback misses
             // (common with UPI intent on mobile: tab killed during app switch).
             const abort = new AbortController();
-            const poll = pollOrderStatus(order.orderId, { signal: abort.signal });
+            const poll = pollOrderStatus(order.orderId, { token: order.pollToken, signal: abort.signal });
 
             let callbackOk = false;
             try {
