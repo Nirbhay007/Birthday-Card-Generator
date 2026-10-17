@@ -1,14 +1,20 @@
+import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendEmailAlert } from '@/lib/alerts';
+
+// Cap per-IP creations per hour. High enough for shared networks (family wifi,
+// CGNAT mobile carriers) but low enough to stop scripted abuse of storage.
+const MAX_PAGES_PER_HOUR = 10;
 
 export async function POST(request) {
     try {
         const body = await request.json();
         const { recipientName, birthdayDate, message, theme, photos, reminderEmail, remindNextYear, age, senderName, relationship, music, source } = body;
 
-        // Rate Limiting — findFirst is faster than count() for threshold checks
-        const ip = request.headers.get('x-forwarded-for') || 'unknown';
+        // Rate Limiting — findMany with take=limit is cheaper than count() for
+        // threshold checks: we only need to know whether >= limit rows exist.
+        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
         const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
         const recentCheck = await prisma.birthdayPage.findMany({
@@ -17,11 +23,14 @@ export async function POST(request) {
                 createdAt: { gte: oneHourAgo },
             },
             select: { id: true },
-            take: 6, // only need to know if >= 5 exist
+            take: MAX_PAGES_PER_HOUR,
         });
 
-        if (recentCheck.length >= 15) {
-            return NextResponse.json({ success: false, error: 'Rate limit exceeded. You can only create 5 pages per hour.' }, { status: 429 });
+        if (recentCheck.length >= MAX_PAGES_PER_HOUR) {
+            return NextResponse.json(
+                { success: false, error: `Rate limit exceeded. You can create up to ${MAX_PAGES_PER_HOUR} pages per hour.` },
+                { status: 429 }
+            );
         }
 
         if (!recipientName) {
@@ -59,9 +68,15 @@ export async function POST(request) {
             }
         }
 
+        // Ownership secret: whoever holds this token may edit the card later
+        // (theme/music/message via PATCH). Returned once to the creator and
+        // kept in their browser's localStorage — never rendered on the page.
+        const editToken = crypto.randomBytes(24).toString('hex'); // 192-bit
+
         // Create the page and photos in a transaction
         const page = await prisma.birthdayPage.create({
             data: {
+                editToken,
                 recipientName: String(recipientName).slice(0, 80),
                 birthdayDate: validBirthdayDate,
                 message: typeof message === 'string' ? message.slice(0, 2000) : null,
@@ -82,7 +97,7 @@ export async function POST(request) {
             },
         });
 
-        return NextResponse.json({ success: true, id: page.id });
+        return NextResponse.json({ success: true, id: page.id, editToken });
     } catch (error) {
         console.error('Create page error:', error);
         sendEmailAlert({

@@ -399,6 +399,11 @@ export default function CreateForm({ formData, setFormData }) {
                 try {
                     localStorage.removeItem(DRAFT_KEY);
                     localStorage.setItem(`bgen_owner_${data.id}`, '1');
+                    // Ownership secret — required by PATCH /api/birthday/[id].
+                    // This browser is the only place it is kept.
+                    if (data.editToken) {
+                        localStorage.setItem(`bgen_edit_token_${data.id}`, data.editToken);
+                    }
                 } catch { }
                 router.push(`/b/${data.id}?created=1`);
             } else {

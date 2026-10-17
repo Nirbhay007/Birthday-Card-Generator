@@ -5,6 +5,18 @@ import prisma from '@/lib/prisma';
 const VALID_THEMES = ['fun', 'elegant', 'royal', 'neon', 'midnight', 'princess', 'retro', 'sunset', 'unicorn', 'minimal', 'holo', 'aurora'];
 const VALID_TRACKS = ['classic', 'rock', 'off', 'musicbox', 'strings', 'party', 'piano', 'retro', 'acoustic', 'reggae', 'techno', 'beats', 'waltz', 'lullaby', 'fanfare', 'chamber', 'marching'];
 
+const MAX_PHOTOS = 24;
+
+/** Constant-time string comparison for the card's edit token. */
+function tokensMatch(expected, provided) {
+    if (typeof provided !== 'string' || provided.length !== expected.length) return false;
+    let diff = 0;
+    for (let i = 0; i < expected.length; i++) {
+        diff |= expected.charCodeAt(i) ^ provided.charCodeAt(i);
+    }
+    return diff === 0;
+}
+
 export async function PATCH(request, { params }) {
     try {
         const { id } = await params;
@@ -13,7 +25,7 @@ export async function PATCH(request, { params }) {
         }
 
         const body = await request.json();
-        const { theme, music, message, cleanFree, photos } = body;
+        const { theme, music, message, cleanFree, photos, editToken } = body;
 
         // For cleanFree we need to read existing values — single select query
         if (cleanFree) {
@@ -37,6 +49,21 @@ export async function PATCH(request, { params }) {
             });
         }
 
+        // Ownership gate: the card ID is public (it is in the share link), so
+        // edits require the secret handed to the creator at creation time.
+        // Cards created before edit tokens existed (null) keep the legacy
+        // open-edit behavior so existing owners don't lose access.
+        const ownership = await prisma.birthdayPage.findUnique({
+            where: { id },
+            select: { editToken: true },
+        });
+        if (!ownership) {
+            return NextResponse.json({ success: false, error: 'Card not found' }, { status: 404 });
+        }
+        if (ownership.editToken && !tokensMatch(ownership.editToken, editToken)) {
+            return NextResponse.json({ success: false, error: 'You are not allowed to edit this card.' }, { status: 403 });
+        }
+
         const updateData = {};
 
         if (typeof theme === 'string' && VALID_THEMES.includes(theme.trim().toLowerCase())) {
@@ -52,7 +79,15 @@ export async function PATCH(request, { params }) {
         }
 
         if (Array.isArray(photos)) {
-            updateData.photos = photos;
+            // Replace the whole gallery. Only http(s) URLs survive — these are
+            // upload-service URLs, never arbitrary schemes.
+            updateData.photos = {
+                deleteMany: {},
+                create: photos
+                    .filter((url) => typeof url === 'string' && /^https?:\/\//i.test(url))
+                    .slice(0, MAX_PHOTOS)
+                    .map((url, index) => ({ url, order: index })),
+            };
         }
 
         if (Object.keys(updateData).length === 0) {

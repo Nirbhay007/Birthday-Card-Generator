@@ -77,6 +77,10 @@ export default function VipCustomizerModal({ isOpen, onClose, page, onUpdated })
         stopAllAudioPreviews();
         audioControllerRef.current = null;
         setPreviewTrackId(null);
+        let editToken = null;
+        try {
+            editToken = localStorage.getItem(`bgen_edit_token_${page.id}`);
+        } catch { }
         try {
             const res = await fetch(`/api/birthday/${page.id}`, {
                 method: 'PATCH',
@@ -84,15 +88,22 @@ export default function VipCustomizerModal({ isOpen, onClose, page, onUpdated })
                 body: JSON.stringify({
                     theme: selectedTheme,
                     music: selectedMusic,
+                    ...(editToken ? { editToken } : {}),
                 }),
             });
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
             if (data.success) {
                 if (onUpdated) onUpdated(data.page);
                 window.location.reload();
+            } else {
+                alert(
+                    data?.error ||
+                    'Could not save your changes. If you created this card on another device, customize it from that device.'
+                );
             }
         } catch (e) {
             console.error('Save customization error:', e);
+            alert('Could not save your changes. Please check your connection and try again.');
         } finally {
             setSaving(false);
         }

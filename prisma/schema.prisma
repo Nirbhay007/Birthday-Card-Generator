@@ -13,6 +13,9 @@ datasource db {
 
 model BirthdayPage {
   id           String   @id @default(cuid())
+  // Ownership secret (192-bit hex). Required to edit the card via PATCH.
+  // Nullable: cards created before this column exist stay editable (legacy).
+  editToken    String?  @unique
   recipientName String
   birthdayDate DateTime?
   message      String?
@@ -40,6 +43,10 @@ model Photo {
   order     Int          @default(0)
   pageId    String
   page      BirthdayPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  // Postgres does not index foreign keys automatically; photo joins/cleanup
+  // filter by pageId and grow one row per uploaded photo.
+  @@index([pageId])
 }
 
 // Donation-funnel analytics (append-only, no PII).
