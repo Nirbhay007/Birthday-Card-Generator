@@ -133,12 +133,12 @@ export default function PhotoUploader({ photos, setPhotos, maxPhotos = 4 }) {
                     disabled={processing || photos.length >= maxPhotos}
                     onClick={() => cameraInputRef.current?.click()}
                     className={cn(
-                        'border-2 border-dashed rounded-xl p-5 text-center transition-colors border-gray-300 hover:border-pink-400 bg-pink-50/40 cursor-pointer',
+                        'border-2 border-dashed rounded-xl p-5 text-center transition-colors border-gray-300 hover:border-purple-400 bg-purple-50/40 cursor-pointer',
                         (processing || photos.length >= maxPhotos) && 'opacity-50 cursor-not-allowed'
                     )}
                 >
                     <span className="flex flex-col items-center justify-center space-y-1.5 text-gray-500">
-                        <Camera className="w-7 h-7 text-pink-500" />
+                        <Camera className="w-7 h-7 text-purple-500" />
                         <span className="text-xs font-bold text-gray-700">Take a photo</span>
                         <span className="text-[11px] text-gray-400">Use your camera</span>
                     </span>

@@ -42,7 +42,7 @@ export default function WhatsNew() {
                 <Sparkles className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">What&apos;s New</span>
                 {unseen && (
-                    <span className="absolute -top-1 -right-2 w-2.5 h-2.5 bg-pink-500 rounded-full animate-pulse" aria-label="New updates available" />
+                    <span className="absolute -top-1 -right-2 w-2.5 h-2.5 bg-brand-600 rounded-full animate-pulse" aria-label="New updates available" />
                 )}
             </button>
 

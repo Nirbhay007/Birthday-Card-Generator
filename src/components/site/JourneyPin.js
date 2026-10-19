@@ -90,8 +90,10 @@ const SCENES = [
 ];
 
 /**
- * Three-scene product story. On desktop each scene is sticky and stacks while
- * the previous one recedes (GSAP scrub). On mobile and with reduced motion it
+ * Three-scene product story. On desktop each scene is a full-bleed sticky
+ * "sheet" that sweeps up and covers the previous one (GSAP scrub), whose
+ * content scales down and dims as it recedes. Sheets stay opaque, so scenes
+ * never ghost through each other. On mobile and with reduced motion it
  * degrades to plain stacked cards — no pinning, no hijacking.
  */
 export default function JourneyPin() {
@@ -103,17 +105,26 @@ export default function JourneyPin() {
             const slides = gsap.utils.toArray('.journey-slide', root.current);
             slides.forEach((slide, i) => {
                 if (i === slides.length - 1) return;
-                gsap.to(slide, {
-                    scale: 0.93,
-                    opacity: 0.4,
-                    ease: 'none',
-                    scrollTrigger: {
-                        trigger: slides[i + 1],
-                        start: 'top bottom',
-                        end: 'top top+=80',
-                        scrub: true,
-                    },
-                });
+                // Recede the scene content, never the sheet itself: the sheet
+                // stays opaque so earlier scenes can't ghost through it.
+                const scene = slide.querySelector('.journey-scene');
+                gsap.fromTo(
+                    scene,
+                    { scale: 1, opacity: 1 },
+                    {
+                        scale: 0.94,
+                        opacity: 0.5,
+                        ease: 'none',
+                        scrollTrigger: {
+                            trigger: slides[i + 1],
+                            start: 'top bottom',
+                            // Nav is h-16 (64px) and slides stick flush below it.
+                            end: 'top top+=64',
+                            scrub: 0.4,
+                            invalidateOnRefresh: true,
+                        },
+                    }
+                );
             });
         });
         return () => mm.revert();
@@ -121,37 +132,39 @@ export default function JourneyPin() {
 
     return (
         <section id="how-it-works" ref={root} className="scroll-mt-20">
-            <div className="mx-auto max-w-6xl px-4 pt-20 sm:px-6">
+            <div className="mx-auto max-w-6xl px-4 pt-20 sm:px-6 ">
                 <span className="text-xs font-bold uppercase tracking-widest text-brand-600">How it works</span>
-                <h2 className="mt-3 max-w-2xl font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
+                <h2 className="mt-3 mb-10 max-w-2xl font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
                     Thirty seconds of setup. A moment they replay for years.
                 </h2>
             </div>
 
-            <div className="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
+            <div className="">
                 {SCENES.map((scene, i) => {
                     const Icon = scene.icon;
                     return (
                         <div
                             key={scene.id}
-                            className="journey-slide md:sticky md:top-20 md:flex md:min-h-[92svh] md:items-center"
+                            className="journey-slide md:sticky md:top-16 md:flex md:min-h-[calc(100svh-4rem)] md:items-center md:rounded-t-[2rem] md:bg-paper md:shadow-[0_-28px_56px_-40px_rgba(21,17,31,0.28)]"
                             style={{ zIndex: i + 1 }}
                         >
-                            <div className="grid w-full items-center gap-8 py-8 md:grid-cols-2 md:gap-16 md:py-12">
-                                <div className={i % 2 === 1 ? 'md:order-2' : ''}>
-                                    <div className="flex items-center gap-3">
-                                        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-700">
-                                            <Icon className="h-5 w-5" strokeWidth={1.75} />
-                                        </span>
-                                        <span className="font-display text-sm font-bold text-ink/40">{scene.step}</span>
+                            <div className="journey-scene mx-auto w-full max-w-6xl px-4 sm:px-6">
+                                <div className="grid items-center gap-8 py-8 md:grid-cols-2 md:gap-16 md:py-12">
+                                    <div className={i % 2 === 1 ? 'md:order-2' : ''}>
+                                        <div className="flex items-center gap-3">
+                                            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-700">
+                                                <Icon className="h-5 w-5" strokeWidth={1.75} />
+                                            </span>
+                                            <span className="font-display text-sm font-bold text-ink/40">{scene.step}</span>
+                                        </div>
+                                        <h3 className="mt-4 font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
+                                            {scene.title}
+                                        </h3>
+                                        <p className="mt-3 max-w-md text-base leading-relaxed text-muted">{scene.body}</p>
                                     </div>
-                                    <h3 className="mt-4 font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
-                                        {scene.title}
-                                    </h3>
-                                    <p className="mt-3 max-w-md text-base leading-relaxed text-muted">{scene.body}</p>
-                                </div>
-                                <div className={`flex justify-center ${i % 2 === 1 ? 'md:order-1' : ''}`}>
-                                    {scene.visual}
+                                    <div className={`flex justify-center ${i % 2 === 1 ? 'md:order-1' : ''}`}>
+                                        {scene.visual}
+                                    </div>
                                 </div>
                             </div>
                         </div>

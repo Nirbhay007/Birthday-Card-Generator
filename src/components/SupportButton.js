@@ -158,7 +158,7 @@ export default function SupportButton({ variant = 'pill' }) {
                         <a
                             href={upiUrl}
                             onClick={() => trackSupport('pay_click', true)}
-                            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                            className="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold shadow-md transition-all flex items-center justify-center gap-2"
                         >
                             <Smartphone className="w-5 h-5" />
                             {validAmount ? `Pay ₹${validAmount} via UPI` : 'Pay via UPI'}

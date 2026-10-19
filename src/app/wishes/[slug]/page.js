@@ -106,10 +106,10 @@ export default async function CategoryWishesPage({ params }) {
         />
       )}
 
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900">
+      <div className="min-h-screen bg-paper text-gray-900">
         {/* Navigation Bar */}
         <nav className="container mx-auto px-4 py-4 flex justify-between items-center border-b border-purple-100/60 bg-white/70 backdrop-blur-md sticky top-0 z-50">
-          <Link href="/" className="inline-flex items-center gap-2 text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <Link href="/" className="inline-flex items-center gap-2 text-xl font-bold text-ink">
             <span className="text-2xl">🎉</span> BirthdayGen
           </Link>
           <div className="flex gap-4 sm:gap-6 text-sm font-medium text-gray-600 items-center">
@@ -145,7 +145,7 @@ export default async function CategoryWishesPage({ params }) {
           <div className="flex flex-wrap gap-4 items-center">
             <Link
               href="/#create"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-sm shadow-md hover:shadow-lg transition-all hover:scale-105"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm shadow-md hover:shadow-lg transition-all hover:scale-105"
             >
               <Sparkles className="w-4 h-4" /> Create Interactive Birthday Card
             </Link>
@@ -187,7 +187,7 @@ export default async function CategoryWishesPage({ params }) {
           {category.tips && (
             <section className="bg-white rounded-3xl p-8 border border-purple-100 shadow-sm mb-16">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Lightbulb className="w-6 h-6 text-amber-500" /> Tips for Writing the Best {category.navTitle} Birthday Wish
+                <Lightbulb className="w-6 h-6 text-purple-600" /> Tips for Writing the Best {category.navTitle} Birthday Wish
               </h2>
               <ul className="space-y-3 text-gray-700">
                 {category.tips.map((tip, idx) => (
@@ -226,7 +226,7 @@ export default async function CategoryWishesPage({ params }) {
           )}
 
           {/* Internal Linking: Explore More Categories */}
-          <section className="bg-gradient-to-br from-white to-purple-50/50 rounded-3xl p-8 border border-purple-100 shadow-sm">
+          <section className="bg-white rounded-3xl p-8 border border-purple-100 shadow-sm">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Explore More Birthday Wish Collections</h2>
             <div className="flex flex-wrap gap-2.5">
               {otherCategories.map((c) => (

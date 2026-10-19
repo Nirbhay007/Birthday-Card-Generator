@@ -8,22 +8,23 @@ module.exports = {
     theme: {
         extend: {
             colors: {
-                // Marketing "paper" theme — see DESIGN.md for the full ledger.
-                ink: '#15111F',
-                paper: '#F7F6FB',
-                muted: '#5B5568',
+                // Marketing "porcelain" theme — neutral warm-white base, ink
+                // type, one vermilion accent. No lavender tints, no gradients.
+                ink: '#1C1917',
+                paper: '#FAF9F7',
+                muted: '#57534E',
                 brand: {
-                    50: '#F4F1FF',
-                    100: '#EBE5FF',
-                    200: '#D9CEFF',
-                    300: '#BCA5FF',
-                    400: '#9B73FF',
-                    500: '#7C4DFF',
-                    600: '#6D33E8',
-                    700: '#5A24C4',
-                    800: '#4A1FA0',
-                    900: '#3B1B7E',
-                    950: '#241052',
+                    50: '#FCF4F0',
+                    100: '#F9E6DE',
+                    200: '#F4CBBB',
+                    300: '#ECA98D',
+                    400: '#E17C55',
+                    500: '#D6542B',
+                    600: '#C5401A',
+                    700: '#A33514',
+                    800: '#852C12',
+                    900: '#6E2613',
+                    950: '#3B1309',
                 },
                 // VIP semantics only (badges, keepsake moments). Never decorative.
                 gold: {
@@ -31,20 +32,21 @@ module.exports = {
                     soft: '#FBF3DC',
                 },
                 // Legacy components were built on Tailwind's purple-* utilities.
-                // Remapping the scale to brand violet harmonizes every pre-revamp
-                // surface without touching their class strings (see DESIGN.md).
+                // Remapping the scale to the brand vermilion keeps every
+                // pre-revamp surface on-palette without touching class strings
+                // (see DESIGN.md).
                 purple: {
-                    50: '#F4F1FF',
-                    100: '#EBE5FF',
-                    200: '#D9CEFF',
-                    300: '#BCA5FF',
-                    400: '#9B73FF',
-                    500: '#7C4DFF',
-                    600: '#6D33E8',
-                    700: '#5A24C4',
-                    800: '#4A1FA0',
-                    900: '#3B1B7E',
-                    950: '#241052',
+                    50: '#FCF4F0',
+                    100: '#F9E6DE',
+                    200: '#F4CBBB',
+                    300: '#ECA98D',
+                    400: '#E17C55',
+                    500: '#D6542B',
+                    600: '#C5401A',
+                    700: '#A33514',
+                    800: '#852C12',
+                    900: '#6E2613',
+                    950: '#3B1309',
                 },
             },
             fontFamily: {
@@ -55,8 +57,8 @@ module.exports = {
                 card: '1.5rem',
             },
             boxShadow: {
-                soft: '0 1px 2px rgba(21, 17, 31, 0.04), 0 12px 32px -12px rgba(21, 17, 31, 0.12)',
-                lift: '0 2px 4px rgba(21, 17, 31, 0.04), 0 24px 48px -16px rgba(21, 17, 31, 0.18)',
+                soft: '0 1px 2px rgba(28, 25, 23, 0.04), 0 12px 32px -12px rgba(28, 25, 23, 0.12)',
+                lift: '0 2px 4px rgba(28, 25, 23, 0.04), 0 24px 48px -16px rgba(28, 25, 23, 0.18)',
             },
         },
     },

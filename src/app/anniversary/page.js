@@ -96,17 +96,17 @@ export default function AnniversaryPage() {
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(faqSchema) }}
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-rose-950 via-slate-900 to-purple-950 text-white selection:bg-rose-500 selection:text-white">
+      <div className="min-h-screen bg-gradient-to-br from-rose-950 via-slate-900 to-slate-950 text-white selection:bg-rose-500 selection:text-white">
         {/* Navigation Bar */}
         <nav className="container mx-auto px-4 py-4 flex justify-between items-center border-b border-rose-500/20 bg-black/40 backdrop-blur-md sticky top-0 z-50">
-          <Link href="/" className="inline-flex items-center gap-2 text-xl font-bold bg-gradient-to-r from-rose-400 via-pink-300 to-amber-300 bg-clip-text text-transparent">
+          <Link href="/" className="inline-flex items-center gap-2 text-xl font-bold text-white">
             <Heart className="w-5 h-5 text-rose-500 fill-rose-500" /> BirthdayGen
           </Link>
           <div className="flex gap-4 sm:gap-6 text-sm font-medium text-gray-300 items-center">
-            <Link href="/" className="hover:text-rose-400 transition-colors">Birthday Card</Link>
+            <Link href="/" className="hidden hover:text-rose-400 transition-colors sm:inline">Birthday Card</Link>
             <Link href="/wishes" className="hover:text-rose-400 transition-colors">Wishes</Link>
-            <Link href="/premium?occasion=anniversary" className="text-rose-400 font-semibold flex items-center gap-1">
-              <Crown className="w-4 h-4 text-amber-400" /> Premium Cinema
+            <Link href="/premium?occasion=anniversary" className="text-rose-400 font-semibold flex items-center gap-1 whitespace-nowrap">
+              <Crown className="w-4 h-4 text-amber-400" /> Premium<span className="hidden sm:inline"> Cinema</span>
             </Link>
             <WhatsNew />
           </div>
@@ -117,7 +117,7 @@ export default function AnniversaryPage() {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold uppercase tracking-wider mb-6">
             <Heart className="w-3.5 h-3.5 fill-rose-400" /> Celebrate Your Love Story
           </div>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight mb-6 bg-gradient-to-r from-white via-rose-100 to-amber-200 bg-clip-text text-transparent">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight mb-6 text-white">
             An Anniversary Surprise They Will Actually Keep
           </h1>
           <p className="text-lg md:text-xl text-rose-100/80 max-w-2xl mx-auto leading-relaxed mb-8">
@@ -127,7 +127,7 @@ export default function AnniversaryPage() {
           <div className="flex flex-wrap gap-4 justify-center items-center">
             <Link
               href="/premium?occasion=anniversary&for=partner"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-rose-500 via-pink-500 to-amber-400 text-white font-extrabold text-base shadow-xl hover:shadow-rose-500/25 transition-all hover:scale-105"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-base shadow-xl hover:shadow-rose-500/25 transition-all hover:scale-105"
             >
               <Film className="w-5 h-5" /> Create Anniversary Cinema Surprise
             </Link>
@@ -213,7 +213,7 @@ export default function AnniversaryPage() {
           </section>
 
           {/* Pricing & Guarantee Strip */}
-          <section className="bg-gradient-to-r from-rose-900/40 via-purple-900/40 to-slate-900/60 border border-rose-500/30 rounded-3xl p-8 sm:p-10 text-center mb-16">
+          <section className="bg-gradient-to-r from-rose-900/40 via-slate-900/50 to-slate-900/60 border border-rose-500/30 rounded-3xl p-8 sm:p-10 text-center mb-16">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">
               Give Them Something Special This Year
             </h2>

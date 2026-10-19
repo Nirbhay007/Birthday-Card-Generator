@@ -47,9 +47,9 @@ export default function AgesIndexPage() {
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbs) }}
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900">
+      <div className="min-h-screen bg-paper text-gray-900">
         <nav className="container mx-auto px-4 py-4 flex justify-between items-center border-b border-purple-100/60 bg-white/70 backdrop-blur-md sticky top-0 z-50">
-          <Link href="/" className="inline-flex items-center gap-2 text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <Link href="/" className="inline-flex items-center gap-2 text-xl font-bold text-ink">
             <span className="text-2xl">🎉</span> BirthdayGen
           </Link>
           <div className="flex gap-4 sm:gap-6 text-sm font-medium text-gray-600 items-center">
@@ -60,7 +60,7 @@ export default function AgesIndexPage() {
         </nav>
 
         <header className="container mx-auto px-4 py-12 text-center max-w-4xl">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold uppercase tracking-wider mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold uppercase tracking-wider mb-6">
             <Cake className="w-4 h-4" /> Milestone Age Collections
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mb-6 tracking-tight leading-tight">
@@ -83,7 +83,7 @@ export default function AgesIndexPage() {
                 href={`/ages/${a.age}`}
                 className="group bg-white rounded-3xl p-6 border border-purple-100/80 shadow-sm hover:shadow-xl transition-all duration-300 text-center hover:-translate-y-1"
               >
-                <div className="text-5xl font-extrabold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-1">
+                <div className="text-5xl font-extrabold text-ink mb-1">
                   {a.age}
                 </div>
                 <p className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors text-sm sm:text-base">{a.title}</p>
@@ -95,7 +95,7 @@ export default function AgesIndexPage() {
             ))}
           </div>
 
-          <section className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-3xl p-8 sm:p-12 shadow-xl mb-16 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-8">
+          <section className="bg-purple-600 text-white rounded-3xl p-8 sm:p-12 shadow-xl mb-16 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-8">
             <div className="max-w-xl">
               <h2 className="text-3xl font-extrabold mb-3">Turning Their Milestone Into a Moment</h2>
               <p className="text-purple-100 leading-relaxed text-sm sm:text-base">

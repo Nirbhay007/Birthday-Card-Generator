@@ -226,7 +226,7 @@ export default async function BirthdayPage({ params }) {
                                     <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                                         <Link
                                             href="/"
-                                            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-95 transition-all text-sm font-bold shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-purple-300"
+                                            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white transition-all text-sm font-bold shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-purple-300"
                                         >
                                             <span>🎉 Create your own free card</span>
                                         </Link>

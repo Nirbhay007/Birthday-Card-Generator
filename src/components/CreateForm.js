@@ -427,9 +427,9 @@ export default function CreateForm({ formData, setFormData }) {
 
     return (
         <>
-            <form ref={formRef} onSubmit={handleSubmit} className="max-w-2xl mx-auto p-6 sm:p-8 bg-white/90 backdrop-blur-md rounded-3xl shadow-xl border border-purple-100">
+            <form ref={formRef} onSubmit={handleSubmit} className="max-w-2xl mx-auto p-6 sm:p-8 bg-white rounded-3xl shadow-soft border border-ink/[0.06]">
                 <div className="space-y-2 text-center mb-6">
-                    <h2 className="text-3xl font-extrabold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    <h2 className="font-display text-3xl font-extrabold tracking-tight text-ink">
                         Create a Birthday Page
                     </h2>
                     <p className="text-gray-600 text-sm">Three quick steps. Your draft saves automatically.</p>
@@ -453,7 +453,7 @@ export default function CreateForm({ formData, setFormData }) {
                                     }}
                                     className={cn(
                                         'w-full flex items-center justify-center gap-1.5 rounded-full px-2 py-2 text-xs font-bold transition-all',
-                                        active ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                                        active ? 'bg-purple-600 text-white shadow-md'
                                             : done ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 cursor-pointer'
                                                 : 'bg-gray-100 text-gray-400'
                                     )}
@@ -497,7 +497,6 @@ export default function CreateForm({ formData, setFormData }) {
                                 type="text"
                                 required
                                 aria-required="true"
-                                autoFocus
                                 placeholder="Recipient's Name (e.g. Sarah)"
                                 className={cn(inputCls, nameError && 'border-red-400 ring-2 ring-red-100')}
                                 value={formData.recipientName}
@@ -619,13 +618,13 @@ export default function CreateForm({ formData, setFormData }) {
                             />
                             <div className="flex flex-wrap items-center gap-2 mt-2">
                                 <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Magic touch:</span>
-                                <button type="button" onClick={() => handleTone('warmer')} className="inline-flex items-center gap-1 text-xs font-bold text-pink-700 bg-pink-50 hover:bg-pink-100 border border-pink-200 px-2.5 py-1 rounded-full transition-colors cursor-pointer">
+                                <button type="button" onClick={() => handleTone('warmer')} className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-full transition-colors cursor-pointer">
                                     <Heart className="w-3.5 h-3.5" /> Warmer
                                 </button>
-                                <button type="button" onClick={() => handleTone('funnier')} className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2.5 py-1 rounded-full transition-colors cursor-pointer">
+                                <button type="button" onClick={() => handleTone('funnier')} className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-full transition-colors cursor-pointer">
                                     <Laugh className="w-3.5 h-3.5" /> Funnier
                                 </button>
-                                <button type="button" onClick={() => handleTone('shorter')} className="inline-flex items-center gap-1 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2.5 py-1 rounded-full transition-colors cursor-pointer">
+                                <button type="button" onClick={() => handleTone('shorter')} className="inline-flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-full transition-colors cursor-pointer">
                                     <Scissors className="w-3.5 h-3.5" /> Shorter
                                 </button>
                                 {toneMsg && <span className="text-xs font-semibold text-green-700 pop-in">{toneMsg}</span>}
@@ -683,7 +682,7 @@ export default function CreateForm({ formData, setFormData }) {
                                             </span>
                                         </div>
                                         {theme.vip ? (
-                                            <span className="absolute top-2 right-2 text-[9px] font-extrabold bg-gradient-to-r from-amber-300 to-amber-400 text-gray-950 px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-xs">
+                                            <span className="absolute top-2 right-2 text-[9px] font-extrabold bg-amber-300 text-amber-950 px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-xs">
                                                 👑 VIP
                                             </span>
                                         ) : (
@@ -700,7 +699,7 @@ export default function CreateForm({ formData, setFormData }) {
                                 ))}
                             </div>
                             {THEMES.find((t) => t.id === formData.theme)?.vip && (
-                                <div className="mt-2.5 p-3 rounded-2xl bg-gradient-to-r from-amber-50 via-amber-100/60 to-purple-50 border border-amber-300/80 flex items-center gap-2.5 text-xs text-amber-950 pop-in shadow-2xs">
+                                <div className="mt-2.5 p-3 rounded-2xl bg-amber-50 border border-amber-300/80 flex items-center gap-2.5 text-xs text-amber-950 pop-in shadow-2xs">
                                     <Crown className="w-4 h-4 text-amber-600 shrink-0" />
                                     <span>
                                         <strong>{(THEMES.find((t) => t.id === formData.theme) || {}).name} (VIP Theme)</strong>: Radiant illuminated borders, custom luxury gift box, and glowing atmosphere selected!
@@ -896,7 +895,7 @@ export default function CreateForm({ formData, setFormData }) {
                         <button
                             type="button"
                             onClick={goNext}
-                            className="flex-1 inline-flex items-center justify-center gap-1.5 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all cursor-pointer focus:outline-none focus:ring-4 focus:ring-purple-300"
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-md transition-all cursor-pointer focus:outline-none focus:ring-4 focus:ring-purple-300"
                         >
                             Continue <ArrowRight className="w-4 h-4" />
                         </button>
@@ -906,7 +905,7 @@ export default function CreateForm({ formData, setFormData }) {
                             disabled={loading}
                             aria-busy={loading}
                             onClick={handleGenerateClick}
-                            className="flex-1 py-3.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold text-base sm:text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:scale-[0.98] disabled:transform-none transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-4 focus-visible:ring-purple-300 cursor-pointer"
+                            className="flex-1 py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-base sm:text-lg shadow-md transform hover:-translate-y-0.5 active:scale-[0.98] disabled:transform-none transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-4 focus-visible:ring-purple-300 cursor-pointer"
                         >
                             {loading ? (
                                 <><Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" /> {loadingMessage || 'Wrapping your surprise...'}</>

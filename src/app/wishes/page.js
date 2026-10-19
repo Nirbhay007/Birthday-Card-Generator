@@ -124,10 +124,10 @@ export default function WishesIndexPage() {
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbs) }}
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 text-gray-900">
+      <div className="min-h-screen bg-paper text-gray-900">
         {/* Navigation Bar */}
         <nav className="container mx-auto px-4 py-4 flex justify-between items-center border-b border-purple-100/60 bg-white/70 backdrop-blur-md sticky top-0 z-50">
-          <Link href="/" className="inline-flex items-center gap-2 text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <Link href="/" className="inline-flex items-center gap-2 text-xl font-bold text-ink">
             <span className="text-2xl">🎉</span> BirthdayGen
           </Link>
           <div className="flex gap-4 sm:gap-6 text-sm font-medium text-gray-600 items-center">
@@ -165,7 +165,7 @@ export default function WishesIndexPage() {
               </div>
               <Link
                 href="/#create"
-                className="self-start sm:self-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all hover:scale-105"
+                className="self-start sm:self-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all hover:scale-105"
               >
                 <span>✨ Start From Scratch</span>
               </Link>
@@ -221,7 +221,7 @@ export default function WishesIndexPage() {
           </div>
 
           {/* Featured Highlight: Transform any wish into a card */}
-          <section className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-3xl p-8 sm:p-12 shadow-xl mb-8 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-8">
+          <section className="bg-purple-600 text-white rounded-3xl p-8 sm:p-12 shadow-xl mb-8 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-8">
             <div className="max-w-xl">
               <h2 className="text-3xl font-extrabold mb-3">Turn Any Wish Into An Interactive Surprise</h2>
               <p className="text-purple-100 leading-relaxed text-sm sm:text-base">
@@ -244,7 +244,7 @@ export default function WishesIndexPage() {
             </p>
             <Link
               href="/ages"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-amber-500 to-pink-600 text-white font-bold text-sm shadow-md hover:shadow-lg transition-all hover:scale-105"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold text-sm shadow-md hover:shadow-lg transition-all hover:scale-105"
             >
               Browse Wishes by Age <ArrowRight className="w-4 h-4" />
             </Link>
@@ -257,21 +257,21 @@ export default function WishesIndexPage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="flex gap-4 items-start">
-                <CheckCircle className="w-6 h-6 text-green-500 shrink-0 mt-1" />
+                <CheckCircle className="w-6 h-6 text-purple-600 shrink-0 mt-1" />
                 <div>
                   <h3 className="font-bold text-gray-900 mb-1">Make It Personal</h3>
                   <p className="text-sm text-gray-600">Recall a specific funny moment, inside joke, or milestone you shared together this past year.</p>
                 </div>
               </div>
               <div className="flex gap-4 items-start">
-                <CheckCircle className="w-6 h-6 text-green-500 shrink-0 mt-1" />
+                <CheckCircle className="w-6 h-6 text-purple-600 shrink-0 mt-1" />
                 <div>
                   <h3 className="font-bold text-gray-900 mb-1">Wish For Their Future</h3>
                   <p className="text-sm text-gray-600">Express enthusiasm and excitement for their dreams, goals, career, and adventures in the year ahead.</p>
                 </div>
               </div>
               <div className="flex gap-4 items-start">
-                <CheckCircle className="w-6 h-6 text-green-500 shrink-0 mt-1" />
+                <CheckCircle className="w-6 h-6 text-purple-600 shrink-0 mt-1" />
                 <div>
                   <h3 className="font-bold text-gray-900 mb-1">Pair With Photos & Music</h3>
                   <p className="text-sm text-gray-600">A visual keepsake lasts much longer than a fleeting text message. Add cherished photos in our card maker.</p>

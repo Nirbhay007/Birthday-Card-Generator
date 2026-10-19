@@ -123,7 +123,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#7c4dff",
+  themeColor: "#1C1917",
   width: "device-width",
   initialScale: 1,
 };
@@ -135,7 +135,10 @@ export default function RootLayout({ children }) {
   const productSchema = getProductSchema(baseUrl);
 
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      className={`${geist.variable} ${bricolage.variable} ${inter.variable} ${playfair.variable} ${lato.variable} ${fredoka.variable} ${quicksand.variable} ${pressStart.variable} ${vt323.variable}`}
+    >
       <head>
         {/* Preconnect to external origins for faster resource loading */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -163,7 +166,7 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(productSchema) }}
         />
       </head>
-      <body className={`${geist.variable} ${bricolage.variable} ${inter.variable} ${playfair.variable} ${lato.variable} ${fredoka.variable} ${quicksand.variable} ${pressStart.variable} ${vt323.variable}`}>
+      <body>
         {children}
         <Analytics />
         <SpeedInsights />

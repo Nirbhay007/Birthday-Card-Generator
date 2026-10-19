@@ -12,7 +12,7 @@ import JourneyPin from '@/components/site/JourneyPin';
 import ThemesRail from '@/components/site/ThemesRail';
 import {
   Sparkles, Heart, Music, Mic, Timer, Wind, Smartphone, Crown,
-  ShieldCheck, Zap, HelpCircle, ArrowRight, BookOpen, Gift, ChevronDown,
+  ShieldCheck, Zap, HelpCircle, ArrowRight, BookOpen, Gift, ChevronDown, Check,
 } from 'lucide-react';
 import { getSoftwareApplicationSchema, getFAQSchema, getHowToSchema, getVideoObjectSchema, serializeJsonLd } from '@/lib/seo';
 import { WISH_CATEGORIES } from '@/lib/wishesData';
@@ -147,7 +147,7 @@ export default function Home() {
         <JourneyPin />
 
         {/* ── The generator ─────────────────────────────────────────────── */}
-        <section id="create" className="scroll-mt-20 py-16">
+        <section id="create" className="scroll-mt-20 py-10">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mb-10 text-center">
               <h2 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Start the surprise</h2>
@@ -329,25 +329,45 @@ export default function Home() {
                 <tbody className="divide-y divide-ink/[0.05]">
                   <tr>
                     <td className="p-4 font-semibold">Interactive candle blowing</td>
-                    <td className="p-4 font-semibold text-emerald-600">Yes (mic activated)</td>
+                    <td className="p-4 font-semibold text-ink">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Check className="h-4 w-4 text-brand-600" strokeWidth={1.75} />
+                        Yes (mic activated)
+                      </span>
+                    </td>
                     <td className="p-4 text-muted">No</td>
                     <td className="p-4 text-muted">No</td>
                   </tr>
                   <tr>
                     <td className="p-4 font-semibold">Photo memories album</td>
-                    <td className="p-4 font-semibold text-emerald-600">Yes (multi-photo)</td>
+                    <td className="p-4 font-semibold text-ink">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Check className="h-4 w-4 text-brand-600" strokeWidth={1.75} />
+                        Yes (multi-photo)
+                      </span>
+                    </td>
                     <td className="p-4 text-muted">Static single image</td>
                     <td className="p-4 text-muted">Static printed photo</td>
                   </tr>
                   <tr>
                     <td className="p-4 font-semibold">Background music</td>
-                    <td className="p-4 font-semibold text-emerald-600">Yes</td>
+                    <td className="p-4 font-semibold text-ink">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Check className="h-4 w-4 text-brand-600" strokeWidth={1.75} />
+                        Yes
+                      </span>
+                    </td>
                     <td className="p-4 text-muted">No</td>
                     <td className="p-4 text-muted">No</td>
                   </tr>
                   <tr>
-                    <td className="p-4 font-semibold">Cost & delivery</td>
-                    <td className="p-4 font-semibold text-emerald-600">100% free / instant</td>
+                    <td className="p-4 font-semibold">Cost &amp; delivery</td>
+                    <td className="p-4 font-semibold text-ink">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Check className="h-4 w-4 text-brand-600" strokeWidth={1.75} />
+                        100% free / instant
+                      </span>
+                    </td>
                     <td className="p-4 text-muted">Free or subscription</td>
                     <td className="p-4 text-muted">$5–$10 + shipping</td>
                   </tr>
@@ -412,7 +432,7 @@ export default function Home() {
         <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
           <div className="relative overflow-hidden rounded-[2rem] bg-ink px-6 py-16 text-center text-white sm:px-12">
             <div
-              className="pointer-events-none absolute -top-28 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-brand-600/40 blur-3xl"
+              className="pointer-events-none absolute -top-28 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-brand-600/25 blur-3xl"
               aria-hidden="true"
             />
             <div className="relative">
@@ -454,7 +474,7 @@ export default function Home() {
 
         <div className="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
           <p className="flex items-center justify-center gap-2 text-center text-xs text-muted">
-            <Heart className="h-3.5 w-3.5 text-rose-500" strokeWidth={1.75} />
+            <Heart className="h-3.5 w-3.5 text-brand-600" strokeWidth={1.75} />
             Every card is free forever. Premium universes are optional.
           </p>
         </div>

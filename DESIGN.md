@@ -11,7 +11,7 @@ Anti-slop brief ledger for the 2026 UI revamp. Read this before touching styles.
 
 ## Theme lock
 
-- **Marketing pages** (/, /wishes, /ages, /anniversary): light "paper" theme — paper background, ink text, violet accent.
+- **Marketing pages** (/, /wishes, /ages, /anniversary): light "porcelain" theme — porcelain background, ink text, vermilion accent.
 - **Card experience** (/b/[id]): unchanged per-card `data-theme` system (it is the product itself).
 - **Premium surfaces**: existing dark cinematic `.prm-*` system (restyle in a later pass; do not mix tokens).
 - No mid-page theme flips. Dark panels (footer, final CTA) are components, not theme flips.
@@ -20,11 +20,11 @@ Anti-slop brief ledger for the 2026 UI revamp. Read this before touching styles.
 
 Defined in `globals.css` (CSS vars) and `tailwind.config.js` (utilities).
 
-- `ink` #15111F · `paper` #F7F6FB · `muted` #5B5568 · line rgba(21,17,31,.08) · surface #FFFFFF
-- `brand` (violet — the single accent): 50 #F4F1FF · 100 #EBE5FF · 200 #D9CEFF · 300 #BCA5FF · 400 #9B73FF · 500 #7C4DFF · 600 #6D33E8 · 700 #5A24C4 · 800 #4A1FA0 · 950 #241052
+- `ink` #1C1917 · `paper` #FAF9F7 · `muted` #57534E · line rgba(28,25,23,.08) · surface #FFFFFF
+- `brand` (vermilion — the single accent): 50 #FCF4F0 · 100 #F9E6DE · 200 #F4CBBB · 300 #ECA98D · 400 #E17C55 · 500 #D6542B · 600 #C5401A · 700 #A33514 · 800 #852C12 · 950 #3B1309
 - `gold` #F2C14E — **VIP semantics only** (badges, keepsake, crown moments). Never decorative.
 - Radii: buttons pill · cards `rounded-3xl` · inputs 12px.
-- Shadows are violet-tinted and low-spread (`shadow-soft`, `shadow-lift`). No hard black shadows.
+- Shadows are ink-tinted and low-spread (`shadow-soft`, `shadow-lift`). No hard black shadows. No gradient fills on buttons or section panels; no tinted background washes.
 
 ## Typography
 
@@ -46,7 +46,7 @@ Defined in `globals.css` (CSS vars) and `tailwind.config.js` (utilities).
 
 ## Anti-slop checklist (repo-specific)
 
-- Legacy pre-revamp components use `purple-*` utilities; the scale is remapped to brand violet in `tailwind.config.js`, so they harmonize automatically. New code uses `brand-*`.
+- Legacy pre-revamp components use `purple-*` utilities; the scale is remapped to brand vermilion in `tailwind.config.js`, so they harmonize automatically. New code uses `brand-*`.
 - No gradient text on marketing headings; no glassmorphism on marketing chrome.
 - No rows of 3 equal cards — use asymmetric grids / bento spans.
 - No fake-precise stats and no fake screenshots: every preview is a real component, theme token, or real asset.

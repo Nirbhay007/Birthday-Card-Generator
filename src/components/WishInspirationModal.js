@@ -42,7 +42,7 @@ export default function WishInspirationModal({ isOpen, onClose, onSelectWish }) 
     >
       <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-purple-100 overflow-hidden">
         {/* Modal Header */}
-        <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-purple-50 via-pink-50 to-white">
+        <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-purple-50/60">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-xs">
               <Sparkles className="w-4 h-4" />
