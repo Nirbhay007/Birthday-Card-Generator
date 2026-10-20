@@ -29,13 +29,19 @@ export async function GET(request) {
     try {
         const since = new Date(Date.now() - 14 * 24 * 3600 * 1000);
 
-        const [pages, photos, sums, reminders, perDay, byTheme, byRelationship, byMusic, bySource] = await Promise.all([
+        const [pages, photos, sums, reminders, trackedShares, perDay, byTheme, byRelationship, byMusic, bySource] = await Promise.all([
             prisma.birthdayPage.count(),
             prisma.photo.count(),
             prisma.birthdayPage.aggregate({
                 _sum: { viewCount: true, loves: true, shares: true },
             }),
             prisma.birthdayPage.count({ where: { reminderEmail: { not: null } } }),
+            // ShareEvent is the accurate source (one deduped row per real
+            // share action). Null means it hasn't been migrated yet.
+            prisma.shareEvent.count().catch((err) => {
+                console.error('Share stats unavailable (pending migration?):', err?.message || err);
+                return null;
+            }),
             prisma.$queryRaw`
                 SELECT DATE("createdAt")::text AS day, COUNT(*)::int AS pages,
                        COALESCE(SUM("viewCount"), 0)::int AS views
@@ -142,7 +148,10 @@ export async function GET(request) {
                     avgPhotosPerPage: pages ? +(photos / pages).toFixed(2) : 0,
                     views: sums._sum.viewCount || 0,
                     loves: sums._sum.loves || 0,
-                    shares: sums._sum.shares || 0,
+                    // Event-truth shares (deduped). Falls back to the legacy
+                    // counter only when ShareEvent hasn't been migrated.
+                    shares: trackedShares ?? (sums._sum.shares || 0),
+                    legacyShareClicks: sums._sum.shares || 0,
                     reminderOptIns: reminders,
                     reminderRate: pages ? +((reminders / pages) * 100).toFixed(1) : 0,
                 },

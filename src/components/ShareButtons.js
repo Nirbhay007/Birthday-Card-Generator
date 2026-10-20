@@ -2,17 +2,7 @@
 
 import React, { useState } from 'react';
 import { Share2, Copy, Check, MessageCircle, Send, Twitter, Facebook } from 'lucide-react';
-
-function isPreviewUrl() {
-    try {
-        const q = new URLSearchParams(window.location.search);
-        if (!q.has('preview')) return false;
-        const v = (q.get('preview') || '').toLowerCase();
-        return v === '' || v === '1' || v === 'true' || v === 'yes' || v === 'on';
-    } catch {
-        return false;
-    }
-}
+import { trackShare } from '@/lib/shareTracking';
 
 export default function ShareButtons({ title, text, pageId }) {
     const [copied, setCopied] = useState(false);
@@ -35,36 +25,36 @@ export default function ShareButtons({ title, text, pageId }) {
     };
     const shareText = text || 'Open this on your phone and blow out the candles! ✨';
 
-    // Fire-and-forget share counter for future growth analytics.
-    // Skipped in preview mode so owner testing never inflates counts.
-    const trackShare = () => {
-        if (!pageId) return;
-        try {
-            if (isPreviewUrl()) return;
-            fetch(`/api/birthday/${pageId}/react`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'share' }),
-            }).catch(() => {});
-        } catch {}
+    // One share event per channel per browsing session. Preview mode and
+    // duplicate clicks are filtered inside trackShare (client + server).
+    const recordShare = (channel) => {
+        trackShare({ pageId, channel, source: 'card_footer' });
     };
 
     const handleCopy = async () => {
-        trackShare();
-        if (typeof window !== 'undefined') {
+        if (typeof window === 'undefined') return;
+        const shareUrl = getUrl();
+        let copiedOk = false;
+        try {
+            if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(shareUrl);
+                copiedOk = true;
+            }
+        } catch { }
+        if (!copiedOk) {
             try {
-                await navigator?.clipboard?.writeText(getUrl());
-            } catch {
                 const ta = document.createElement('textarea');
-                ta.value = getUrl();
+                ta.value = shareUrl;
                 document.body.appendChild(ta);
                 ta.select();
-                document.execCommand('copy');
+                copiedOk = document.execCommand('copy');
                 document.body.removeChild(ta);
-            }
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+            } catch { }
         }
+        // Only count a copy that actually landed on the clipboard.
+        if (copiedOk) recordShare('copy');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     const url = getUrl();
@@ -79,7 +69,7 @@ export default function ShareButtons({ title, text, pageId }) {
         if (typeof window !== 'undefined' && navigator?.share) {
             try {
                 await navigator.share({ title: title || 'Happy Birthday! 🎂', text: cleanShareText, url });
-                trackShare();
+                recordShare('native');
             } catch (err) {
                 console.log('Share cancelled');
             }
@@ -88,37 +78,37 @@ export default function ShareButtons({ title, text, pageId }) {
         }
     };
 
-    const openPopup = (url) => {
-        trackShare();
-        if (typeof window !== 'undefined') window.open(url, '_blank', 'noopener,noreferrer,width=600,height=540');
+    const openPopup = (targetUrl, channel) => {
+        recordShare(channel);
+        if (typeof window !== 'undefined') window.open(targetUrl, '_blank', 'noopener,noreferrer,width=600,height=540');
     };
 
     return (
         <div className="mt-6">
             <div className="flex flex-wrap justify-center gap-2.5">
                 <button
-                    onClick={() => openPopup(encodedWhatsAppUrl)}
+                    onClick={() => openPopup(encodedWhatsAppUrl, 'whatsapp')}
                     className="flex items-center gap-1.5 px-4 py-2.5 bg-[#25D366] text-white rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all text-sm font-bold focus:outline-none focus:ring-4 focus:ring-green-200 cursor-pointer"
                     aria-label="Share on WhatsApp"
                 >
                     <MessageCircle className="w-4 h-4" aria-hidden="true" /> WhatsApp
                 </button>
                 <button
-                    onClick={() => openPopup(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`)}
+                    onClick={() => openPopup(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`, 'telegram')}
                     className="flex items-center gap-1.5 px-4 py-2.5 bg-[#229ED9] text-white rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all text-sm font-bold focus:outline-none focus:ring-4 focus:ring-sky-200 cursor-pointer"
                     aria-label="Share on Telegram"
                 >
                     <Send className="w-4 h-4" aria-hidden="true" /> Telegram
                 </button>
                 <button
-                    onClick={() => openPopup(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`)}
+                    onClick={() => openPopup(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, 'facebook')}
                     className="flex items-center gap-1.5 px-4 py-2.5 bg-[#1877F2] text-white rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all text-sm font-bold focus:outline-none focus:ring-4 focus:ring-blue-200 cursor-pointer"
                     aria-label="Share on Facebook"
                 >
                     <Facebook className="w-4 h-4" aria-hidden="true" /> Facebook
                 </button>
                 <button
-                    onClick={() => openPopup(`https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`)}
+                    onClick={() => openPopup(`https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`, 'x')}
                     className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-900 text-white rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all text-sm font-bold focus:outline-none focus:ring-4 focus:ring-gray-300 cursor-pointer"
                     aria-label="Share on X"
                 >

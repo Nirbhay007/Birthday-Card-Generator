@@ -88,3 +88,23 @@ model PremiumOrder {
   @@index([status, createdAt])
   @@index([pageId])
 }
+
+// Append-only share intents (ADDITIVE ONLY). One row per real share action,
+// written at the moment it happens so analytics can group by event time
+// instead of by the card's creation date.
+//
+// `BirthdayPage.shares` remains the lifetime counter and is still incremented
+// alongside the event. Dedupe is per (pageId, channel, sessionId) within a
+// short window, so double-clicks and repeat channel clicks don't inflate it,
+// while sharing to a different channel still counts.
+model ShareEvent {
+  id        String   @id @default(cuid())
+  pageId    String
+  channel   String // 'whatsapp' | 'telegram' | 'facebook' | 'x' | 'copy' | 'native' | 'other'
+  source    String   @default("card_footer") // 'post_creation' | 'creator_notice' | 'card_footer'
+  sessionId String? // random per-tab-session id used only for dedupe (no PII)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([pageId, channel, sessionId, createdAt])
+}

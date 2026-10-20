@@ -69,6 +69,13 @@ async function run() {
     try {
         const now = new Date();
         const currentIST = formatIST(now);
+        const todayLabel = new Intl.DateTimeFormat('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            day: '2-digit',
+            month: 'short',
+        })
+            .format(now)
+            .toUpperCase();
 
         // 1. Daily Card Creation & Engagement Metrics
         const dailyCardStats = await prisma.$queryRaw`
@@ -78,7 +85,6 @@ async function run() {
                 COUNT(DISTINCT "ipAddress")::int AS unique_creators,
                 COALESCE(SUM("viewCount"), 0)::int AS views,
                 COALESCE(SUM("loves"), 0)::int AS loves,
-                COALESCE(SUM("shares"), 0)::int AS shares,
                 COUNT(CASE WHEN "isVip" = true OR "isVipPro" = true THEN 1 END)::int AS vip_cards
             FROM "BirthdayPage"
             WHERE ("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Kolkata' >= (NOW() AT TIME ZONE 'Asia/Kolkata')::date - (${DAYS}::text || ' days')::interval
@@ -86,6 +92,24 @@ async function run() {
             GROUP BY date_ist
             ORDER BY date_ist DESC
         `;
+
+        // 1b. Share intents by EVENT day (not by the card's creation day).
+        // Deduping happens when the row is written, so every row here is a
+        // distinct share action on a distinct channel within a session.
+        const dailyShareStats = await prisma.$queryRaw`
+            SELECT
+                TO_CHAR(("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM-DD (Dy)') AS date_ist,
+                COUNT(*)::int AS shares,
+                COUNT(CASE WHEN "source" = 'post_creation' THEN 1 END)::int AS creator_modal_shares,
+                COUNT(DISTINCT "pageId")::int AS cards_shared
+            FROM "ShareEvent"
+            WHERE ("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Kolkata' >= (NOW() AT TIME ZONE 'Asia/Kolkata')::date - (${DAYS}::text || ' days')::interval
+            GROUP BY date_ist
+            ORDER BY date_ist DESC
+        `;
+
+        const shareMap = new Map();
+        dailyShareStats.forEach((r) => shareMap.set(r.date_ist, r));
 
         // 2. Daily Photos Attached
         const dailyPhotoStats = await prisma.$queryRaw`
@@ -128,6 +152,7 @@ async function run() {
         // Combined Daily Table
         const combinedDaily = dailyCardStats.map((c) => {
             const p = photoMap.get(c.date_ist) || { cards_with_photos: 0, total_photos: 0 };
+            const shares = shareMap.get(c.date_ist) || { shares: 0, creator_modal_shares: 0, cards_shared: 0 };
             const prem = premiumMap.get(c.date_ist) || {
                 intent_orders: 0,
                 paid_orders: 0,
@@ -138,6 +163,7 @@ async function run() {
             const attachPct = c.cards_created > 0 ? ((p.cards_with_photos / c.cards_created) * 100).toFixed(0) + '%' : '0%';
             const convPct = prem.intent_orders > 0 ? ((prem.paid_orders / prem.intent_orders) * 100).toFixed(0) + '%' : '0%';
             const inrRevenue = `₹${(Number(prem.inr_revenue_paise) / 100).toFixed(0)}`;
+            const shareRate = c.cards_created > 0 ? ((shares.shares / c.cards_created) * 100).toFixed(0) + '%' : '0%';
 
             return {
                 Date: c.date_ist,
@@ -147,11 +173,35 @@ async function run() {
                 Photos: p.total_photos,
                 Views: c.views,
                 Loves: c.loves,
-                Shares: c.shares,
+                'Shares (events)': shares.shares,
+                'Shares / New Card': shareRate,
                 'Prem Intent': prem.intent_orders,
                 'Prem Paid': `${prem.paid_orders} (${convPct})`,
                 Revenue: inrRevenue,
             };
+        });
+
+        // 1c. Share intents by channel + page location (past N days).
+        // This is the honest "where did shares come from?" table: the
+        // post-creation modal is the creator's first send; the card footer
+        // (and creator notice copy) is every later share.
+        const shareChannelStats = await prisma.$queryRaw`
+            SELECT
+                "channel",
+                "source",
+                COUNT(*)::int AS shares,
+                COUNT(DISTINCT "pageId")::int AS cards,
+                COUNT(CASE WHEN (("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Kolkata')::date = (NOW() AT TIME ZONE 'Asia/Kolkata')::date THEN 1 END)::int AS today
+            FROM "ShareEvent"
+            WHERE ("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Kolkata' >= (NOW() AT TIME ZONE 'Asia/Kolkata')::date - (${DAYS}::text || ' days')::interval
+            GROUP BY "channel", "source"
+            ORDER BY shares DESC
+        `;
+
+        // Lifetime legacy counter, shown only for reconciliation. It includes
+        // pre-fix repeat clicks and is deliberately excluded from the table.
+        const legacyShareCounter = await prisma.birthdayPage.aggregate({
+            _sum: { shares: true },
         });
 
         // 4. Today's Hourly Breakdown (IST)
@@ -237,6 +287,11 @@ async function run() {
                     {
                         generatedAt: currentIST,
                         daily: combinedDaily,
+                        shareEvents: {
+                            daily: dailyShareStats,
+                            byChannel: shareChannelStats,
+                        },
+                        legacyShareCounter: legacyShareCounter._sum.shares || 0,
                         todayHourly,
                         storage: { total: allTodayUrls.length, r2: r2Photos, blob: blobPhotos, other: otherPhotos },
                         recentOrders,
@@ -258,15 +313,36 @@ async function run() {
 
         console.log('📊 1. DAILY CREATION, ENGAGEMENT & MONETIZATION FUNNEL (IST)');
         console.table(combinedDaily);
+        console.log('   ↳ Shares = deduplicated share intents recorded at event time.');
+        console.log('     Not lifetime clicks on cards that happened to be created that day.\n');
 
-        console.log('⚡ 2. TODAY\'S HOURLY ACTIVITY (OCT 13 IST)');
+        console.log(`🔗 2. SHARE INTENTS BY CHANNEL & SOURCE (PAST ${DAYS} DAYS)`);
+        if (shareChannelStats.length > 0) {
+            console.table(
+                shareChannelStats.map((r) => ({
+                    Channel: r.channel,
+                    Source: r.source,
+                    Shares: r.shares,
+                    Cards: r.cards,
+                    Today: r.today,
+                }))
+            );
+        } else {
+            console.log('No share events recorded yet.\n');
+        }
+        console.log(
+            `   ↳ Legacy BirthdayPage.shares counter: ${legacyShareCounter._sum.shares || 0} clicks (all time).`
+        );
+        console.log('     Includes pre-fix repeat clicks, so it is not used in the tables above.\n');
+
+        console.log(`⚡ 3. TODAY'S HOURLY ACTIVITY (${todayLabel} IST)`);
         if (todayHourly.length > 0) {
             console.table(todayHourly);
         } else {
             console.log('No cards recorded yet today.\n');
         }
 
-        console.log('🖼️ 3. MEDIA & STORAGE HEALTH (TODAY)');
+        console.log('🖼️ 4. MEDIA & STORAGE HEALTH (TODAY)');
         const todayTotalCards = todayCards.length;
         const todayCardsWithPhotos = todayCards.filter((c) => c.photos.length > 0).length;
         const todayPhotoCount = allTodayUrls.length;
@@ -278,7 +354,7 @@ async function run() {
         console.log(` • Storage Target:       Cloudflare R2 = ${r2Photos} | Vercel Blob = ${blobPhotos} | Other = ${otherPhotos}`);
         console.log(` • Storage Status:       ${blobPhotos === 0 && otherPhotos === 0 ? '🟢 100% Direct R2 (Optimal)' : '🟡 Fallback Active'}\n`);
 
-        console.log('💎 4. PREMIUM INTENT & RECENT CHECKOUTS');
+        console.log('💎 5. PREMIUM INTENT & RECENT CHECKOUTS');
         const formattedOrders = recentOrders.map((o) => {
             let targetName = 'N/A';
             if (o.snapshotUrl) {
@@ -300,10 +376,10 @@ async function run() {
         });
         console.table(formattedOrders);
 
-        console.log('💖 5. SUPPORT & DONATION FUNNEL (PAST 7 DAYS)');
+        console.log('💖 6. SUPPORT & DONATION FUNNEL (PAST 7 DAYS)');
         console.table(supportEvents);
 
-        console.log('🎨 6. THEME POPULARITY');
+        console.log('🎨 7. THEME POPULARITY');
         console.table(topThemes);
 
         console.log('========================================================================================\n');

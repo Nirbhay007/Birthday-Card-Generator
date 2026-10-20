@@ -7,7 +7,18 @@
     "build": "prisma generate --no-engine && next build",
     "start": "next start",
     "lint": "eslint",
-    "analytics": "node scripts/analytics.js"
+    "analytics": "node scripts/analytics.js",
+    "qa": "node qa/run.js",
+    "qa:test": "playwright test",
+    "qa:ui": "node qa/run.js --ui",
+    "qa:headed": "node qa/run.js --headed",
+    "qa:smoke": "node qa/run.js --grep @smoke",
+    "qa:critical": "node qa/run.js --grep @critical",
+    "qa:razorpay": "node qa/run.js e2e/razorpay.spec.js --project=chromium",
+    "qa:setup": "node qa/run.js --setup-only",
+    "qa:report": "playwright show-report",
+    "qa:db": "docker compose -f qa/docker-compose.yml up -d --wait --wait-timeout 120",
+    "qa:db:stop": "docker compose -f qa/docker-compose.yml down -v"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1129.0",
@@ -32,6 +43,7 @@
     "resend": "^6.32.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "autoprefixer": "^10.4.22",
     "baseline-browser-mapping": "^2.11.24",
     "eslint": "^9",

@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // QA runs a second dev server without clobbering the developer's .next dir.
+    distDir: process.env.NEXT_DIST_DIR || '.next',
+    // The dev indicator sits in the bottom-left corner, exactly where the card
+    // owner toolbar lives. Hide it only for the isolated QA dev server.
+    devIndicators: process.env.NEXT_DIST_DIR === '.next-qa' ? false : undefined,
     // Don't advertise the framework version to the world.
     poweredByHeader: false,
     images: {
@@ -34,15 +39,22 @@ const nextConfig = {
         // - img/media allow `https:` broadly because user media lives on
         //   Cloudflare R2 (custom domain varies per environment) and Vercel
         //   Blob; scripts/frames/connections stay narrowly allow-listed.
+        const isDev = process.env.NODE_ENV !== 'production';
         const csp = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://checkout.razorpay.com https://va.vercel-scripts.com https://www.googletagmanager.com",
+            // React's dev-only debugging features need eval(); production
+            // never does. Without this, Next's dev overlay reports an eval
+            // error on every page and its pill covers fixed UI in QA.
+            // cdn.razorpay.com serves the risk-detection bundle loaded by
+            // Razorpay's checkout script; without it the checkout logs a CSP
+            // error and loses device-risk signals.
+            `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} 'wasm-unsafe-eval' https://checkout.razorpay.com https://cdn.razorpay.com https://va.vercel-scripts.com https://www.googletagmanager.com`,
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "img-src 'self' data: blob: https:",
             "font-src 'self' data: https://fonts.gstatic.com",
             "media-src 'self' blob: https:",
             "worker-src 'self' blob:",
-            "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com https://vitals.vercel-insights.com https://www.google-analytics.com https://region1.google-analytics.com",
+            "connect-src 'self' https://api.razorpay.com https://cdn.razorpay.com https://lumberjack.razorpay.com https://vitals.vercel-insights.com https://www.google-analytics.com https://region1.google-analytics.com",
             "frame-src https://api.razorpay.com https://checkout.razorpay.com",
             "object-src 'none'",
             "base-uri 'self'",

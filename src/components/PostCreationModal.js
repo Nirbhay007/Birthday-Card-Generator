@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { Crown, Check, Copy, Sparkles, ArrowRight, X, Eye } from 'lucide-react';
 import { detectRegion, getVipCardPrice, createPremiumOrder, openRazorpayCheckout, verifyPremiumPayment, pollOrderStatus } from '@/lib/payments';
+import { trackShare } from '@/lib/shareTracking';
 
 export default function PostCreationModal({
     isOpen,
@@ -47,15 +48,24 @@ export default function PostCreationModal({
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
 
     const handleCopy = async () => {
+        let copiedOk = false;
         try {
             await navigator.clipboard.writeText(cardUrl);
+            copiedOk = true;
         } catch {
-            const el = document.createElement('textarea');
-            el.value = cardUrl;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
+            try {
+                const el = document.createElement('textarea');
+                el.value = cardUrl;
+                document.body.appendChild(el);
+                el.select();
+                copiedOk = document.execCommand('copy');
+                document.body.removeChild(el);
+            } catch { }
+        }
+        // Count the creator's primary distribution action. Deduped per
+        // session/channel so repeated copies only count once.
+        if (copiedOk) {
+            trackShare({ pageId: card.id, channel: 'copy', source: 'post_creation' });
         }
         setCopied(true);
         setTimeout(() => setCopied(false), 2500);
@@ -217,6 +227,7 @@ export default function PostCreationModal({
                         href={whatsappUrl}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={() => trackShare({ pageId: card.id, channel: 'whatsapp', source: 'post_creation' })}
                         className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white text-sm font-bold shadow-md hover:brightness-110 active:scale-[0.99] transition-all cursor-pointer"
                     >
                         <span>📲 Share to WhatsApp</span>

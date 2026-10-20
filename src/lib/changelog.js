@@ -4,9 +4,32 @@
  * so visitors see the unread dot exactly once per update.
  */
 
-export const CHANGELOG_VERSION = '2026-09-06-support';
+export const CHANGELOG_VERSION = '2026-10-21-cinema';
 
 export const CHANGELOG = [
+  {
+    date: 'Oct 2026',
+    title: 'The premium cinema update 🎬',
+    items: [
+      'New: Premium Experience (₹49, or $1 worldwide) with a four-scene film, wax-sealed envelope, personal letter, reasons, promises and a candle finale',
+      'New: keepsake download. Export the whole story as a print-ready card with their photo and a gold frame',
+      'New: memory album. A tilted polaroid strip of up to 12 photos with a full-screen viewer',
+      'New: sealed locker. Tap a wax seal and it refuses to open, with a wink and a peek at what is inside',
+      'New: ₹29 VIP card pass with 8 VIP themes, extra music tracks and living atmosphere effects',
+      'Free to preview every scene before you pay, and nothing changes on cards you already made',
+    ],
+  },
+  {
+    date: 'Oct 2026',
+    title: 'A brand-new BirthdayGen ✨',
+    items: [
+      'Redesigned homepage: sticky nav, asymmetric hero with a live card preview, and a scroll-driven product story',
+      'Theme rail now renders the real card themes and labels Free vs VIP honestly',
+      'New anniversary hub with ready-to-send letters from paper (1st) to golden (50th)',
+      'New type and colour system (paper, ink and violet) across every page',
+      'Faster, quieter pages with lighter uploads and smoother mobile navigation',
+    ],
+  },
   {
     date: 'Sep 2026',
     title: 'Support the project + lots of polish 🎂',

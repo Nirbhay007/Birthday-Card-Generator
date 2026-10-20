@@ -5,6 +5,7 @@ import "./themes.css";
 import { getWebSiteSchema, getOrganizationSchema, getWebApplicationSchema, getProductSchema, serializeJsonLd } from "@/lib/seo";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
+import HydrationMarker from "@/components/HydrationMarker";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
@@ -167,6 +168,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
+        <HydrationMarker />
         {children}
         <Analytics />
         <SpeedInsights />

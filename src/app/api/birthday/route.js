@@ -33,7 +33,10 @@ export async function POST(request) {
             );
         }
 
-        if (!recipientName) {
+        // Trim before validating: whitespace-only names are not names, and the
+        // stored value should match what the creator sees.
+        const cleanRecipientName = typeof recipientName === 'string' ? recipientName.trim() : '';
+        if (!cleanRecipientName) {
             return NextResponse.json({ success: false, error: 'Recipient name is required' }, { status: 400 });
         }
 
@@ -77,7 +80,7 @@ export async function POST(request) {
         const page = await prisma.birthdayPage.create({
             data: {
                 editToken,
-                recipientName: String(recipientName).slice(0, 80),
+                recipientName: cleanRecipientName.slice(0, 80),
                 birthdayDate: validBirthdayDate,
                 message: typeof message === 'string' ? message.slice(0, 2000) : null,
                 theme: theme || 'elegant',

@@ -116,15 +116,17 @@ export default function PremiumExperience({
     // The floating Watch Cinema pill yields that corner so the money button
     // never has another CTA painted over it.
     const [stickyCtaVisible, setStickyCtaVisible] = useState(false);
-    // Preloader veil: SSR shows it; reduced-motion visitors skip it on first
-    // paint (hydration covered by suppressHydrationWarning on the gate).
-    const [veil, setVeil] = useState(() => {
+    // Preloader veil: always render it on the first paint so server and client
+    // agree during hydration. Reduced-motion visitors drop it immediately
+    // after mount instead of branching the tree on the client.
+    const [veil, setVeil] = useState(true);
+    useEffect(() => {
         try {
-            return typeof window === 'undefined' || !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-        } catch {
-            return false;
-        }
-    });
+            if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+                setVeil(false);
+            }
+        } catch { }
+    }, []);
     const rootRef = useRef(null);
     const sealRef = useRef(null);
     const countRef = useRef(null);

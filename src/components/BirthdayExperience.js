@@ -10,6 +10,7 @@ import VipCustomizerModal from '@/components/VipCustomizerModal';
 import PostCreationModal from '@/components/PostCreationModal';
 import KeepsakeCard from '@/components/premium/KeepsakeCard';
 import { BIRTHDAY_OPENED_EVENT } from '@/lib/music';
+import { trackShare } from '@/lib/shareTracking';
 import { detectRegion, getVipCardPrice } from '@/lib/payments';
 import { cn } from '@/lib/utils';
 
@@ -77,20 +78,32 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     const [heartCount, setHeartCount] = useState(page.loves || 0);
     const [viewCount, setViewCount] = useState(page.viewCount || 0);
     const [customizerOpen, setCustomizerOpen] = useState(false);
-    const [vipModalOpen, setVipModalOpen] = useState(() => autoOpen || isCreatedParam());
-    const [isOwner] = useState(() => checkIsOwner(page.id, preview));
-    const [isViewerPreview] = useState(() => isViewerParam());
+    // URL-derived UI starts from the server-safe value and is applied after
+    // hydration. Branching on window.location during the first render makes
+    // SSR and the client disagree (React hydration mismatch).
+    const [vipModalOpen, setVipModalOpen] = useState(!!autoOpen);
+    const [isOwner, setIsOwner] = useState(!!preview);
+    const [isViewerPreview, setIsViewerPreview] = useState(false);
     const [showCreatorNotice, setShowCreatorNotice] = useState(true);
     const [copiedNotice, setCopiedNotice] = useState(false);
-    const [vipPrice, setVipPrice] = useState(() => (typeof window !== 'undefined' ? getVipCardPrice(detectRegion()) : { label: '₹29' }));
+    const [vipPrice, setVipPrice] = useState({ label: '₹29' });
     // Show a hint pointing to Customize after fresh VIP activation (from ?vip=1 param)
-    const [showCustomizeHint, setShowCustomizeHint] = useState(() => {
-        if (typeof window === 'undefined') return false;
+    const [showCustomizeHint, setShowCustomizeHint] = useState(false);
+
+    useEffect(() => {
+        if (isCreatedParam()) setVipModalOpen(true);
+        setIsOwner(checkIsOwner(page.id, preview));
+        setIsViewerPreview(isViewerParam());
         try {
-            const q = new URLSearchParams(window.location.search);
-            return q.has('vip') && !!page.isVip;
-        } catch { return false; }
-    });
+            setVipPrice(getVipCardPrice(detectRegion()));
+        } catch { }
+        if (page.isVip) {
+            try {
+                const q = new URLSearchParams(window.location.search);
+                if (q.has('vip')) setShowCustomizeHint(true);
+            } catch { }
+        }
+    }, [page.id, page.isVip, preview]);
     // Auto-dismiss the customize hint after 6 seconds
     useEffect(() => {
         if (!showCustomizeHint) return;
@@ -98,7 +111,11 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
         return () => clearTimeout(t);
     }, [showCustomizeHint]);
     // Server prop covers first paint; live URL check covers client-side nav.
-    const [previewMode] = useState(() => preview || (typeof window !== 'undefined' && isPreviewUrl()));
+    // Applying the URL check after mount keeps hydration deterministic.
+    const [previewMode, setPreviewMode] = useState(!!preview);
+    useEffect(() => {
+        if (!preview && isPreviewUrl()) setPreviewMode(true);
+    }, [preview]);
     const typedName = useTypewriter(page.recipientName || 'Friend', opened, 90);
 
     const handleCopyLink = async () => {
@@ -106,6 +123,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
             const url = typeof window !== 'undefined' ? `${window.location.origin}/b/${page.id}` : '';
             if (url) {
                 await navigator.clipboard.writeText(url);
+                trackShare({ pageId: page.id, channel: 'copy', source: 'creator_notice' });
                 setCopiedNotice(true);
                 setTimeout(() => setCopiedNotice(false), 2000);
             }
