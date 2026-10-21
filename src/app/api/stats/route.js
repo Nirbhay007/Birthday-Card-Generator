@@ -6,7 +6,10 @@ import prisma from '@/lib/prisma';
  * Usage: GET /api/stats?token=YOUR_STATS_TOKEN
  * Set STATS_TOKEN in .env / Vercel env. Unset token = endpoint disabled (404).
  */
-// Cached at CDN for 5 minutes — stats page doesn't need real-time precision
+// The route is dynamic because it reads the request URL, so this revalidate
+// hint does not cache it. The response header below does: stats are
+// token-gated and per-URL, so a short private browser cache is safe and
+// stops repeated dashboard loads from re-running the full query set.
 export const revalidate = 300;
 
 function authorized(provided, expected) {
@@ -170,7 +173,7 @@ export async function GET(request) {
             },
             {
                 headers: {
-                    'Cache-Control': 'private, s-maxage=300, stale-while-revalidate=60',
+                    'Cache-Control': 'private, max-age=60, stale-while-revalidate=60',
                 },
             }
         );

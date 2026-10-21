@@ -9,11 +9,14 @@ import MonetizationSlot from '@/components/MonetizationSlot';
 import BirthdayExperience from '@/components/BirthdayExperience';
 import { getBreadcrumbSchema, getGreetingCardSchema, serializeJsonLd } from '@/lib/seo';
 
-// ISR: cache each card page for 5 minutes at the CDN.
-// Card views (the bulk of traffic) cost zero function time after the first hit.
-// URL flags (?created=1 / ?preview=1 / ?viewer=1) are handled client-side in
-// <BirthdayExperience />, so they share this cache entry without breaking.
-export const revalidate = 300;
+// ISR: cache each card page for 1 hour at the CDN.
+// Card views are the bulk of traffic, and page content only changes through
+// the app, which calls revalidatePath() on edits and VIP upgrades. A longer
+// window avoids re-rendering healthy cards every 5 minutes while they are
+// being viewed. URL flags (?created=1 / ?preview=1 / ?viewer=1) are handled
+// client-side in <BirthdayExperience />, so they share this cache entry
+// without breaking.
+export const revalidate = 3600;
 // Classic on-demand ISR opt-in for dynamic segments: prebuild nothing, but
 // render-and-cache each /b/[id] the first time it is requested.
 export const dynamicParams = true;
