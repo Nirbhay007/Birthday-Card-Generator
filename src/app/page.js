@@ -245,7 +245,7 @@ export default function Home() {
                 <p className="mt-1.5 text-sm leading-relaxed text-amber-900/70">
                   Premium universes add sealed letters and a cinematic keepsake to save forever.
                 </p>
-                <Link href="/premium" className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-amber-800 hover:text-amber-900">
+                <Link href="/premium" prefetch={false} className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-amber-800 hover:text-amber-900">
                   See premium <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
                 </Link>
               </div>
@@ -452,6 +452,7 @@ export default function Home() {
                 </a>
                 <Link
                   href="/premium"
+                  prefetch={false}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:border-white/50"
                 >
                   See cinematic premium

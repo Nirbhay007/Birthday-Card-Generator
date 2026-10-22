@@ -168,8 +168,12 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
         if (previewMode || (typeof window !== 'undefined' && isPreviewUrl())) return;
         try {
             const key = `bgen-viewed-${page.id}`;
-            if (sessionStorage.getItem(key)) return;
+            // The server also dedupes with an httpOnly cookie, so a returning
+            // browser already cannot increment the count. Skip the network call
+            // entirely for those repeat visits.
+            if (sessionStorage.getItem(key) || localStorage.getItem(key)) return;
             sessionStorage.setItem(key, '1');
+            localStorage.setItem(key, '1');
             fetch(`/api/birthday/${page.id}/react`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

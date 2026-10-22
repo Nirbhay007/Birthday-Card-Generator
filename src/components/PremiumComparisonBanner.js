@@ -116,6 +116,7 @@ export default function PremiumComparisonBanner({ relationship = 'friend', title
           <div className="mt-6 pt-4 border-t border-amber-400/20">
             <Link
               href={premiumLink}
+              prefetch={false}
               className="group flex items-center justify-center gap-2 w-full text-center py-3 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 text-gray-950 font-extrabold text-sm shadow-lg hover:shadow-amber-400/25 transition-all hover:scale-[1.02]"
             >
               <span>Preview Cinema Surprise Free</span>

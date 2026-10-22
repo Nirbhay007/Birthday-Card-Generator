@@ -272,6 +272,7 @@ export default function PremiumLocker({ to = 'them', priceLabel = '₹49', giftM
                             {giftMode ? (
                                 <Link
                                     href="/premium"
+                                    prefetch={false}
                                     className="prm-shimmer-btn w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-4 rounded-full bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] font-extrabold text-base sm:text-lg shadow-[0_20px_60px_rgba(242,193,78,0.4)] transition-transform hover:scale-[1.03] active:scale-95"
                                 >
                                     Make your own universe

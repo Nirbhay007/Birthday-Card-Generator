@@ -193,6 +193,7 @@ export default function CinemaShowcase() {
                         <div className="pt-2 space-y-3">
                             <Link
                                 href={`/premium?for=${encodeURIComponent(selectedRel.id.toLowerCase())}&to=${encodeURIComponent(selectedRel.name)}`}
+                                prefetch={false}
                                 className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#f2c14e] via-[#f7dc9a] to-[#fb7185] px-7 py-4 text-sm sm:text-base font-extrabold text-[#241031] shadow-xl hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
                             >
                                 <span>Preview {selectedRel.name}&apos;s Cinema (Free to Try)</span>

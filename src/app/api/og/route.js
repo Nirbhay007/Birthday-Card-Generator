@@ -23,8 +23,8 @@ export async function GET(request) {
         const [bg1, bg2, fg] = THEME_BG[theme] || THEME_BG.fun;
 
         const senderBadge = sender
-            ? `🎁 A SPECIAL SURPRISE FROM ${sender.toUpperCase()}`
-            : '🎁 YOU HAVE A BIRTHDAY SURPRISE';
+            ? `A SPECIAL SURPRISE FROM ${sender.toUpperCase()}`
+            : 'YOU HAVE A BIRTHDAY SURPRISE';
 
         return new ImageResponse(
             (
@@ -106,7 +106,7 @@ export async function GET(request) {
                             opacity: 0.95,
                         }}
                     >
-                        {age ? `Turning ${age} • 🎂 Tap to Blow Out Virtual Candles` : '🎂 Tap to Blow Out Virtual Candles & Open Wishes'}
+                        {age ? `Turning ${age} • Tap to Blow Out Virtual Candles` : 'Tap to Blow Out Virtual Candles & Open Wishes'}
                     </div>
 
                     {/* Interactive hints */}
@@ -122,11 +122,11 @@ export async function GET(request) {
                             fontWeight: 600,
                         }}
                     >
-                        <span>🎵 Music</span>
+                        <span>Music</span>
                         <span>•</span>
-                        <span>📸 Photo Gallery</span>
+                        <span>Photo Gallery</span>
                         <span>•</span>
-                        <span>🎈 Virtual Gift Box</span>
+                        <span>Virtual Gift Box</span>
                     </div>
                 </div>
             ),

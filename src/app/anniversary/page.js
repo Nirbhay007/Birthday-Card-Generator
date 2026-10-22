@@ -105,7 +105,7 @@ export default function AnniversaryPage() {
           <div className="flex gap-4 sm:gap-6 text-sm font-medium text-gray-300 items-center">
             <Link href="/" className="hidden hover:text-rose-400 transition-colors sm:inline">Birthday Card</Link>
             <Link href="/wishes" className="hover:text-rose-400 transition-colors">Wishes</Link>
-            <Link href="/premium?occasion=anniversary" className="text-rose-400 font-semibold flex items-center gap-1 whitespace-nowrap">
+            <Link href="/premium?occasion=anniversary" prefetch={false} className="text-rose-400 font-semibold flex items-center gap-1 whitespace-nowrap">
               <Crown className="w-4 h-4 text-amber-400" /> Premium<span className="hidden sm:inline"> Cinema</span>
             </Link>
             <WhatsNew />
@@ -127,6 +127,7 @@ export default function AnniversaryPage() {
           <div className="flex flex-wrap gap-4 justify-center items-center">
             <Link
               href="/premium?occasion=anniversary&for=partner"
+              prefetch={false}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-base shadow-xl hover:shadow-rose-500/25 transition-all hover:scale-105"
             >
               <Film className="w-5 h-5" /> Create Anniversary Cinema Surprise
@@ -202,6 +203,7 @@ export default function AnniversaryPage() {
                   <div className="pt-4 border-t border-white/10 flex justify-between items-center">
                     <Link
                       href={`/premium?occasion=anniversary&for=partner`}
+                      prefetch={false}
                       className="text-xs font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1"
                     >
                       Use in Cinema Surprise →
@@ -222,6 +224,7 @@ export default function AnniversaryPage() {
             </p>
             <Link
               href="/premium?occasion=anniversary&for=partner"
+              prefetch={false}
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-gradient-to-r from-amber-400 to-rose-400 text-gray-950 font-extrabold text-sm shadow-lg hover:scale-105 transition-all"
             >
               <span>Start Your Free Preview</span>
@@ -258,7 +261,7 @@ export default function AnniversaryPage() {
             <div className="flex gap-4">
               <Link href="/" className="hover:text-white transition-colors">Card Generator</Link>
               <Link href="/wishes" className="hover:text-white transition-colors">Wishes Hub</Link>
-              <Link href="/premium" className="hover:text-white transition-colors">Premium</Link>
+              <Link href="/premium" prefetch={false} className="hover:text-white transition-colors">Premium</Link>
               <SupportButton variant="link" />
             </div>
           </div>
