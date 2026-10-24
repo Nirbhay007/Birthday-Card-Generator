@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
+import { warmOgImage } from '@/lib/og-warm';
 
 const VALID_THEMES = ['fun', 'elegant', 'royal', 'neon', 'midnight', 'princess', 'retro', 'sunset', 'unicorn', 'minimal', 'holo', 'aurora'];
 const VALID_TRACKS = ['classic', 'rock', 'off', 'musicbox', 'strings', 'party', 'piano', 'retro', 'acoustic', 'reggae', 'techno', 'beats', 'waltz', 'lullaby', 'fanfare', 'chamber', 'marching'];
@@ -102,6 +103,10 @@ export async function PATCH(request, { params }) {
 
         // Bust ISR cache so VIP theme/music changes are visible immediately
         try { revalidatePath(`/b/${id}`); } catch {}
+
+        // A theme change produces a different preview image. Render it now so
+        // the next unfurl is served from R2 instead of a cold edge isolate.
+        if (updateData.theme) warmOgImage(request, updated);
 
         return NextResponse.json({
             success: true,

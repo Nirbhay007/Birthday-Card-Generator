@@ -8,6 +8,7 @@ import ShareButtons from '@/components/ShareButtons';
 import MonetizationSlot from '@/components/MonetizationSlot';
 import BirthdayExperience from '@/components/BirthdayExperience';
 import { getBreadcrumbSchema, getGreetingCardSchema, serializeJsonLd } from '@/lib/seo';
+import { buildOgPath } from '@/lib/og';
 
 // ISR: cache each card page for 1 hour at the CDN.
 // Card views are the bulk of traffic, and page content only changes through
@@ -65,8 +66,12 @@ export async function generateMetadata({ params }) {
         };
     }
 
-    const senderParam = page.senderName ? `&sender=${encodeURIComponent(page.senderName)}` : '';
-    const ogImage = `/api/og?name=${encodeURIComponent(page.recipientName)}${page.age ? `&age=${page.age}` : ''}&theme=${encodeURIComponent(page.theme || 'elegant')}${senderParam}`;
+    const ogImage = buildOgPath({
+        recipientName: page.recipientName,
+        age: page.age,
+        theme: page.theme,
+        senderName: page.senderName,
+    });
     const absoluteOgImage = `${baseUrl}${ogImage}`;
 
     const title = `Happy Birthday ${page.recipientName}! 🎂`;

@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendEmailAlert } from '@/lib/alerts';
+import { warmOgImage } from '@/lib/og-warm';
 
 // Cap per-IP creations per hour. High enough for shared networks (family wifi,
 // CGNAT mobile carriers) but low enough to stop scripted abuse of storage.
@@ -99,6 +100,8 @@ export async function POST(request) {
                 },
             },
         });
+
+        warmOgImage(request, page);
 
         return NextResponse.json({ success: true, id: page.id, editToken });
     } catch (error) {

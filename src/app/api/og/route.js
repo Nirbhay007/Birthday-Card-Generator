@@ -1,29 +1,51 @@
-import { ImageResponse } from 'next/og';
+import { THEME_BG, normalizeOgInput, ogStorageKey, ogPublicUrl } from '@/lib/og';
 
 export const runtime = 'edge';
 
-const THEME_BG = {
-    elegant: ['#fdfbf7', '#f3efe6', '#2c2c2c'],
-    fun: ['#fff0f5', '#ffd6e8', '#831843'],
-    retro: ['#2b2b2b', '#0f0f0f', '#f0f0f0'],
-    minimal: ['#ffffff', '#f3f4f6', '#111827'],
-    royal: ['#1a0f2e', '#4c1d95', '#fdf6e3'],
-    midnight: ['#0b1026', '#312e81', '#eef2ff'],
-    princess: ['#fff5f7', '#fecdd3', '#831843'],
-    unicorn: ['#f5f3ff', '#ddd6fe', '#4c1d95'],
-};
+const IMMUTABLE_CACHE = 'public, immutable, no-transform, max-age=31536000, s-maxage=31536000';
+
+// Upper bound on the R2 existence probe. If storage is slow or unreachable we
+// would rather render the image (correct, just slower) than stall the crawler.
+const PROBE_TIMEOUT_MS = 1500;
 
 export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url);
-        const rawName = (searchParams.get('name') || 'Friend').slice(0, 24);
-        const sender = (searchParams.get('sender') || '').slice(0, 24);
-        const age = searchParams.get('age');
-        const theme = searchParams.get('theme') || 'fun';
-        const [bg1, bg2, fg] = THEME_BG[theme] || THEME_BG.fun;
+        const input = normalizeOgInput(searchParams);
+        const [bg1, bg2, fg] = THEME_BG[input.theme] || THEME_BG.fun;
 
-        const senderBadge = sender
-            ? `A SPECIAL SURPRISE FROM ${sender.toUpperCase()}`
+        // Fast path. Cards are rendered once and stored in R2; every later
+        // unfurl (from any region) is served that static object by
+        // Cloudflare's CDN. Redirecting avoids booting Satori + resvg here,
+        // which is where ~1.2s of CPU per cold render was going.
+        const storedUrl = ogPublicUrl(ogStorageKey(input));
+        if (storedUrl) {
+            try {
+                const probe = await fetch(storedUrl, {
+                    method: 'HEAD',
+                    signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+                });
+                if (probe.ok) {
+                    return new Response(null, {
+                        status: 302,
+                        headers: {
+                            Location: storedUrl,
+                            'Cache-Control': IMMUTABLE_CACHE,
+                        },
+                    });
+                }
+            } catch {
+                // Fall through to on-demand rendering.
+            }
+        }
+
+        // Slow path: nothing stored yet. Importing here (rather than at module
+        // scope) keeps the WASM renderer out of the isolate's boot path, so
+        // the redirect above stays cheap.
+        const { ImageResponse } = await import('next/og');
+
+        const senderBadge = input.sender
+            ? `A SPECIAL SURPRISE FROM ${input.sender.toUpperCase()}`
             : 'YOU HAVE A BIRTHDAY SURPRISE';
 
         return new ImageResponse(
@@ -92,7 +114,7 @@ export async function GET(request) {
                             boxShadow: '0 12px 32px rgba(236, 72, 153, 0.35)',
                         }}
                     >
-                        {rawName}!
+                        {input.name}!
                     </div>
 
                     {/* Subtitle / Age */}
@@ -106,7 +128,7 @@ export async function GET(request) {
                             opacity: 0.95,
                         }}
                     >
-                        {age ? `Turning ${age} • Tap to Blow Out Virtual Candles` : 'Tap to Blow Out Virtual Candles & Open Wishes'}
+                        {input.age ? `Turning ${input.age} • Tap to Blow Out Virtual Candles` : 'Tap to Blow Out Virtual Candles & Open Wishes'}
                     </div>
 
                     {/* Interactive hints */}
@@ -134,7 +156,7 @@ export async function GET(request) {
                 width: 1200,
                 height: 630,
                 headers: {
-                    'Cache-Control': 'public, immutable, no-transform, max-age=31536000, s-maxage=31536000',
+                    'Cache-Control': IMMUTABLE_CACHE,
                 },
             }
         );
