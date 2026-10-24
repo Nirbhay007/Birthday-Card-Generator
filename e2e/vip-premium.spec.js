@@ -221,6 +221,43 @@ test.describe('VIP and premium payments', () => {
     expect(unlocked.isVipPro).toBe(true);
   });
 
+  test('owner sees the proof-moment upsell after real love @critical', async ({
+    page,
+    cards,
+    db,
+  }) => {
+    const card = await cards.create();
+    await db.birthdayPage.update({ where: { id: card.id }, data: { loves: 3 } });
+
+    await page.addInitScript((key) => {
+      localStorage.setItem(key, '1');
+    }, `bgen_owner_${card.id}`);
+
+    await page.goto(`/b/${card.id}`, { waitUntil: 'domcontentloaded' });
+    await page
+      .getByRole('button', { name: `Open birthday surprise for ${card.payload.recipientName}` })
+      .click();
+
+    const banner = page.getByRole('region', { name: 'VIP upgrade suggestion' });
+    await expect(banner).toBeVisible();
+    await expect(banner).toContainText(/3 people have sent love/);
+
+    await expect
+      .poll(
+        () =>
+          db.supportEvent.count({
+            where: { event: 'proof_upsell_shown', path: `/b/${card.id}` },
+          }),
+        { timeout: 12_000 },
+      )
+      .toBeGreaterThan(0);
+
+    await banner.getByRole('button', { name: /Make it unforgettable/ }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Make it Unforgettable with VIP' }),
+    ).toBeVisible();
+  });
+
   // Real keyed Razorpay coverage lives in e2e/razorpay.spec.js and is included
   // by `npm run qa` whenever a test pair is configured.
 });

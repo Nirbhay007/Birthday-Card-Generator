@@ -3,7 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { Crown, Check, Copy, Sparkles, ArrowRight, X, Eye } from 'lucide-react';
-import { detectRegion, getVipCardPrice, createPremiumOrder, openRazorpayCheckout, verifyPremiumPayment, pollOrderStatus } from '@/lib/payments';
+import {
+    detectRegion,
+    getVipCardPrice,
+    createPremiumOrder,
+    openRazorpayCheckout,
+    verifyPremiumPayment,
+    pollOrderStatus,
+    loadBuyerContact,
+    formatBuyerContact,
+} from '@/lib/payments';
+import { track } from '@/lib/track';
 import { trackShare } from '@/lib/shareTracking';
 
 export default function PostCreationModal({
@@ -15,12 +25,19 @@ export default function PostCreationModal({
     const [region] = useState(() => (typeof window !== 'undefined' ? detectRegion() : 'IN'));
     const [status, setStatus] = useState({ phase: 'idle', message: '' });
     const [upgraded, setUpgraded] = useState(false);
+    const [buyerContact, setBuyerContact] = useState({ name: '', email: '', phone: '' });
     // Origin resolves after mount so team/server share links and the first
     // client render agree (no hydration mismatch on dev or preview hosts).
     const [origin, setOrigin] = useState(null);
 
     useEffect(() => {
+        // Hydration-safe: origin and receipt details are read after mount.
+        /* eslint-disable react-hooks/set-state-in-effect */
         try { setOrigin(window.location.origin); } catch {}
+        // Reuse receipt details entered on the /premium paywall (same browser)
+        // so a card upgrade does not ask for them again.
+        try { setBuyerContact(loadBuyerContact()); } catch {}
+        /* eslint-enable react-hooks/set-state-in-effect */
     }, []);
 
     useEffect(() => {
@@ -75,6 +92,7 @@ export default function PostCreationModal({
         setUpgraded(true);
         try { localStorage.setItem(`bgen_owner_${card.id}`, '1'); } catch {}
         setStatus({ phase: 'success', message: 'VIP Activated!' });
+        track('upgrade_success');
         try {
             const premiumTrack = card.originalMusic || card.music || 'strings';
             window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { track: premiumTrack } }));
@@ -91,9 +109,10 @@ export default function PostCreationModal({
     };
 
     const handleUpgrade = async () => {
+        track('upgrade_click');
         setStatus({ phase: 'loading', message: 'Connecting to checkout…' });
         try {
-            const order = await createPremiumOrder(region, { tier: 'card_vip', pageId: card.id });
+            const order = await createPremiumOrder(region, { tier: 'card_vip', pageId: card.id, buyerContact: formatBuyerContact(buyerContact) });
             setStatus({ phase: 'checkout', message: 'Opening secure checkout…' });
 
             // Background poll for UPI recovery (browser may lose the Razorpay
@@ -103,10 +122,13 @@ export default function PostCreationModal({
 
             let callbackOk = false;
             try {
+                const savedContact = buyerContact;
                 const resp = await openRazorpayCheckout({
                     order,
                     keyId: order.keyId,
-                    buyerName: card.senderName || '',
+                    buyerName: card.senderName || savedContact.name || '',
+                    buyerEmail: savedContact.email,
+                    buyerPhone: savedContact.phone,
                     region,
                 });
                 callbackOk = true;
@@ -125,9 +147,20 @@ export default function PostCreationModal({
                 celebrateVip();
             } catch (modalErr) {
                 if (callbackOk) {
+                    track('upgrade_order_failed');
                     setStatus({ phase: 'error', message: modalErr?.message || 'Verification failed.' });
                     return;
                 }
+
+                // Explicit decline: no payment is pending, so show the real
+                // reason instead of waiting on the UPI recovery poll.
+                if (modalErr?.code && modalErr.code !== 'DISMISSED') {
+                    track('upgrade_order_failed');
+                    abort.abort();
+                    setStatus({ phase: 'error', message: modalErr?.message || 'Payment failed. No money moved.' });
+                    return;
+                }
+
                 // Razorpay modal dismissed — check if the background poll caught the payment.
                 setStatus({ phase: 'verifying', message: 'Checking payment status…' });
                 const pollResult = await Promise.race([
@@ -138,6 +171,7 @@ export default function PostCreationModal({
                 if (pollResult?.unlockKey) {
                     celebrateVip();
                 } else {
+                    track('upgrade_order_failed');
                     setStatus({ phase: 'error', message: 'Payment window closed. If money was deducted, refresh this page in a minute and your VIP upgrade will activate automatically.' });
                 }
             }
@@ -155,6 +189,7 @@ export default function PostCreationModal({
                     setStatus({ phase: 'error', message: 'Test activation failed.' });
                 }
             } else {
+                track('upgrade_order_failed');
                 setStatus({ phase: 'error', message: e?.message || 'Payment cancelled.' });
             }
         }

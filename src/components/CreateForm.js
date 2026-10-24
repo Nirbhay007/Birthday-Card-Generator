@@ -11,6 +11,7 @@ import {
     User, Palette, Camera, Heart, Laugh, Scissors, Music, Crown, Play, Square,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getAttributionSource } from '@/lib/attribution';
 import { FREE_TRACKS, VIP_TRACKS, PRO_TRACKS, ALL_TRACKS, getTrackName, playAudioPreview, stopAllAudioPreviews } from '@/lib/music';
 
 const DRAFT_KEY = 'birthdaygen-draft-v1';
@@ -270,6 +271,15 @@ export default function CreateForm({ formData, setFormData }) {
         }
     }, [searchParams, setFormData]);
 
+    // Attribute creations that land on a /wishes or /ages page without a
+    // preselected wish. An explicit ?from= always beats first-touch UTM data.
+    useEffect(() => {
+        const fromParam = searchParams.get('from');
+        if (fromParam && /^(wishes|ages)\/[a-z0-9-]+$/.test(fromParam)) {
+            setFormData((prev) => (prev.source === fromParam ? prev : { ...prev, source: fromParam }));
+        }
+    }, [searchParams, setFormData]);
+
     const goNext = () => {
         if (step === 1) {
             if (!formData.recipientName.trim()) {
@@ -386,11 +396,15 @@ export default function CreateForm({ formData, setFormData }) {
             }
 
             setLoadingMessage('Wrapping your surprise...');
+            // First-touch campaign/referrer attribution when no internal
+            // wish/age page already claimed the source. Server allowlists it.
+            const source = formData.source || getAttributionSource();
             const res = await fetch('/api/birthday', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...formData,
+                    ...(source ? { source } : {}),
                     photos: finalPhotoUrls,
                 }),
             });

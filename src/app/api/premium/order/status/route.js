@@ -1,6 +1,6 @@
-import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { pollTokenFor, safeEqual } from '@/lib/premiumTokens';
 
 /**
  * GET /api/premium/order/status?orderId=order_...&token=<pollToken>
@@ -18,16 +18,6 @@ import prisma from '@/lib/prisma';
  * /api/premium/order). An order id alone is not enough to fetch it.
  */
 
-/** Constant-time hex comparison. */
-function safeEqual(expected, provided) {
-    if (typeof provided !== 'string' || provided.length !== expected.length) return false;
-    let diff = 0;
-    for (let i = 0; i < expected.length; i++) {
-        diff |= expected.charCodeAt(i) ^ provided.charCodeAt(i);
-    }
-    return diff === 0;
-}
-
 export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url);
@@ -37,8 +27,7 @@ export async function GET(request) {
             return NextResponse.json({ paid: false });
         }
 
-        const secret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
-        const expected = crypto.createHmac('sha256', secret).update(`poll:${orderId}`).digest('hex');
+        const expected = pollTokenFor(orderId);
         if (!safeEqual(expected, token)) {
             return NextResponse.json({ paid: false, error: 'Invalid poll token' }, { status: 403 });
         }

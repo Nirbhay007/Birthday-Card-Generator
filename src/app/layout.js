@@ -6,6 +6,7 @@ import { getWebSiteSchema, getOrganizationSchema, getWebApplicationSchema, getPr
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import HydrationMarker from "@/components/HydrationMarker";
+import AttributionCapture from "@/components/AttributionCapture";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
@@ -169,6 +170,7 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <HydrationMarker />
+        <AttributionCapture />
         {children}
         <Analytics />
         <SpeedInsights />

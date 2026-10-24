@@ -106,4 +106,36 @@ test.describe('free card creation', () => {
 
     expect(pageErrors).toEqual([]);
   });
+
+  test('first-touch campaign source survives navigation and is sent with the card @smoke', async ({
+    page,
+    cards,
+  }) => {
+    await page.goto('/?utm_source=QA-Instagram', { waitUntil: 'domcontentloaded' });
+
+    const stored = await page.evaluate(() => {
+      try {
+        return JSON.parse(localStorage.getItem('bgen-attribution-v1') || 'null');
+      } catch {
+        return null;
+      }
+    });
+    expect(stored?.source).toBe('utm:qa-instagram');
+
+    // The campaign query is gone on this load; only the browser-local
+    // first-touch value remains, and submitting must still send it.
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+    await page.locator('#recipientName').fill(`QA Source ${Date.now().toString(36)}`);
+    await page.getByRole('button', { name: /^Continue/ }).click();
+    await page.getByRole('button', { name: /^Continue/ }).click();
+    await page.waitForTimeout(950);
+    await page.getByRole('button', { name: /Generate Free Birthday Page/ }).click();
+
+    await page.waitForURL(/\/b\/[a-z0-9]+\?created=1/, { timeout: 45_000 });
+    const id = new URL(page.url()).pathname.split('/').pop();
+    cards.track(id);
+
+    expect((await cards.get(id)).source).toBe('utm:qa-instagram');
+  });
 });

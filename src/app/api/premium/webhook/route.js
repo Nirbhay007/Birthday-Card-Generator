@@ -12,10 +12,20 @@ import prisma from '@/lib/prisma';
  *
  * Setup: Razorpay Dashboard → Settings → Webhooks → Add endpoint
  *   URL: https://birthday.nirbhay.online/api/premium/webhook
- *   Events: payment.captured
+ *   Events: payment.captured, payment.failed
  *   Secret: any random string → set as RAZORPAY_WEBHOOK_SECRET.
  * Without the secret this endpoint acknowledges without acting (200).
  */
+
+/** Flatten to one printable line (control characters removed). */
+function oneLine(value, max) {
+    if (typeof value !== 'string') return '';
+    return value
+        .replace(/[\u0000-\u001f\u007f-\u009f]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, max);
+}
 
 export async function POST(request) {
     const secret = (process.env.RAZORPAY_WEBHOOK_SECRET || '').trim();
@@ -72,6 +82,37 @@ export async function POST(request) {
                         data: { isVip: true, isVipPro: true },
                     }).catch((e) => console.error('Failed to mark page as VIP via webhook:', e?.message || e));
                     try { revalidatePath(`/b/${targetPageId.trim()}`); } catch {}
+                }
+            }
+        }
+
+        if (payload?.event === 'payment.failed') {
+            const payment = payload?.payload?.payment?.entity || {};
+            const orderId = payment.order_id;
+            if (orderId) {
+                const rawCode = oneLine(payment.error_code || payment.error?.code, 60).toUpperCase();
+                const code = /^[A-Z0-9_.:-]+$/.test(rawCode) ? rawCode : 'PAYMENT_FAILED';
+                const reason = oneLine(payment.error_description || payment.error?.description, 300) || null;
+                const rawMethod = oneLine(payment.method, 40).toLowerCase();
+                const method = /^[a-z0-9_-]+$/.test(rawMethod) ? rawMethod : null;
+                try {
+                    // Never downgrade a paid order, even if a late failed event
+                    // arrives after capture (retries can overlap).
+                    await prisma.premiumOrder.updateMany({
+                        where: { orderId, status: { not: 'paid' } },
+                        data: {
+                            status: 'failed',
+                            failureCode: code,
+                            failureReason: reason,
+                            failureMethod: method,
+                            failedAt: new Date(),
+                        },
+                    });
+                } catch (dbError) {
+                    // Additive columns may not be deployed yet — keep the
+                    // webhook acknowledging so Razorpay never retries a storm.
+                    if (dbError?.code !== 'P2021' && dbError?.code !== 'P2022') throw dbError;
+                    console.error('Premium failure columns missing:', dbError?.message || dbError);
                 }
             }
         }

@@ -79,6 +79,56 @@ export function getVipCardPrice(region) {
 }
 
 /**
+ * Buyer receipt details (email / phone) kept only in this browser.
+ *
+ * Why: Razorpay forces a mandatory contact step before payment methods. If we
+ * already have the buyer's details, we can prefill it and skip a screen. The
+ * same value is stored on the PremiumOrder row at creation, so support can
+ * reach a buyer even when the modal never completes.
+ */
+const BUYER_CONTACT_KEY = 'bgen-buyer-contact-v1';
+
+function cleanContactPart(value, max) {
+    if (typeof value !== 'string') return '';
+    return value.replace(/[\r\n\t]+/g, ' ').trim().slice(0, max);
+}
+
+export function loadBuyerContact() {
+    if (typeof window === 'undefined') return { name: '', email: '', phone: '' };
+    try {
+        const parsed = JSON.parse(localStorage.getItem(BUYER_CONTACT_KEY) || '{}');
+        return {
+            name: cleanContactPart(parsed?.name, 80),
+            email: cleanContactPart(parsed?.email, 120),
+            phone: cleanContactPart(parsed?.phone, 40),
+        };
+    } catch {
+        return { name: '', email: '', phone: '' };
+    }
+}
+
+export function saveBuyerContact(contact = {}) {
+    const clean = {
+        name: cleanContactPart(contact.name, 80),
+        email: cleanContactPart(contact.email, 120),
+        phone: cleanContactPart(contact.phone, 40),
+    };
+    if (typeof window === 'undefined') return clean;
+    try {
+        if (!clean.name && !clean.email && !clean.phone) localStorage.removeItem(BUYER_CONTACT_KEY);
+        else localStorage.setItem(BUYER_CONTACT_KEY, JSON.stringify(clean));
+    } catch { }
+    return clean;
+}
+
+/** "email · phone" summary for the order row and support views. */
+export function formatBuyerContact(contact = {}) {
+    return [cleanContactPart(contact.email, 120), cleanContactPart(contact.phone, 40)]
+        .filter(Boolean)
+        .join(' / ') || null;
+}
+
+/**
  * International card checkout via Razorpay (supports 100+ currencies with
  * auto FX settlement to your Indian bank account).
  *
@@ -113,7 +163,7 @@ function loadRazorpay() {
  * @returns {Promise<{orderId, paymentId, signature}>} — POST to /api/premium/verify
  * @throws {Error} with `code === 'TEST_MODE'` when server keys are missing.
  */
-export async function createPremiumOrder(region, { tier = 'universe', pageId = null, snapshotUrl = null } = {}) {
+export async function createPremiumOrder(region, { tier = 'universe', pageId = null, snapshotUrl = null, buyerContact = null } = {}) {
     const r = await fetch('/api/premium/order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -122,6 +172,7 @@ export async function createPremiumOrder(region, { tier = 'universe', pageId = n
             tier,
             pageId,
             snapshotUrl,
+            ...(buyerContact ? { buyerContact } : {}),
         }),
     });
     const d = await r.json().catch(() => ({}));
@@ -134,9 +185,92 @@ export async function createPremiumOrder(region, { tier = 'universe', pageId = n
     return d;
 }
 
-export async function openRazorpayCheckout({ order, keyId, buyerName = '', buyerEmail = '', region = 'IN' }) {
+/**
+ * Best-effort failure report. Uses sendBeacon so a failure that happens as the
+ * tab is closing (common on mobile) still reaches the server. Never throws and
+ * never blocks the checkout UI.
+ */
+function reportCheckoutFailure(order, { code, reason, method } = {}) {
+    try {
+        const orderId = order?.orderId;
+        const token = order?.pollToken;
+        if (!orderId || !token) return;
+
+        const body = JSON.stringify({
+            orderId,
+            token,
+            code: code || 'PAYMENT_FAILED',
+            reason: reason || null,
+            method: method || null,
+        });
+
+        if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+            try {
+                const blob = new Blob([body], { type: 'application/json' });
+                if (navigator.sendBeacon('/api/premium/failure', blob)) return;
+            } catch { }
+        }
+        fetch('/api/premium/failure', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body,
+            keepalive: true,
+        }).catch(() => { });
+    } catch { }
+}
+
+/**
+ * How often to re-check whether Razorpay's checkout iframe is still mounted
+ * after a decline. `payment.failed` deliberately does not reject the promise
+ * (the buyer gets one retry), but if the SDK closes the modal without firing
+ * `ondismiss`, nothing else would ever settle it. Watching the iframe lets us
+ * settle on close without cutting a live retry short.
+ */
+const FAILURE_RECHECK_MS = 15_000;
+
+function checkoutFrameMounted() {
+    if (typeof document === 'undefined') return false;
+    try {
+        return !!document.querySelector('iframe[src*="api.razorpay.com/v1/checkout/public"]');
+    } catch {
+        return false;
+    }
+}
+
+export async function openRazorpayCheckout({ order, keyId, buyerName = '', buyerEmail = '', buyerPhone = '', region = 'IN' }) {
     const Razorpay = await loadRazorpay();
     return new Promise((resolve, reject) => {
+        let settled = false;
+        let lastFailure = null;
+        let failureTimer = null;
+
+        const finish = (fn, value) => {
+            if (settled) return;
+            settled = true;
+            if (failureTimer) {
+                clearTimeout(failureTimer);
+                failureTimer = null;
+            }
+            fn(value);
+        };
+
+        const settleFailure = () => {
+            failureTimer = null;
+            if (settled || !lastFailure) return;
+
+            // Still on screen: the buyer may be correcting their card details
+            // or retrying, so wait. Only settle once the modal has gone away.
+            if (checkoutFrameMounted()) {
+                failureTimer = setTimeout(settleFailure, FAILURE_RECHECK_MS);
+                return;
+            }
+
+            const err = new Error(lastFailure.message);
+            err.code = lastFailure.code;
+            err.razorpay = lastFailure.raw;
+            finish(reject, err);
+        };
+
         const rzp = new Razorpay({
             key: keyId,
             order_id: order.orderId,
@@ -144,7 +278,11 @@ export async function openRazorpayCheckout({ order, keyId, buyerName = '', buyer
             currency: order.currency,
             name: 'BirthdayGen Premium',
             description: 'Premium Birthday Universe: lifetime access',
-            prefill: { name: buyerName, email: buyerEmail },
+            prefill: {
+                name: buyerName,
+                ...(buyerEmail ? { email: buyerEmail } : {}),
+                ...(buyerPhone ? { contact: buyerPhone } : {}),
+            },
             theme: { color: '#7c3aed', backdrop_color: 'rgba(7,4,18,0.8)' },
             retry: { enabled: true, max_count: 1 },
             timeout: 600,
@@ -153,10 +291,53 @@ export async function openRazorpayCheckout({ order, keyId, buyerName = '', buyer
             config: region === 'IN'
                 ? { display: { blocks: { upi: { name: 'UPI', instruments: [{ method: 'upi' }] }, card: { name: 'Card', instruments: [{ method: 'card' }] }, other: { name: 'More', instruments: [{ method: 'netbanking' }, { method: 'wallet' }] } }, sequence: ['block.upi', 'block.card', 'block.other'], preferences: { show_default_blocks: false } } }
                 : undefined,
-            handler: (resp) => resolve(resp), // verify server-side via /api/premium/verify
-            modal: { ondismiss: () => reject(new Error('Payment window closed. No money moved.')) },
+            handler: (resp) => finish(resolve, resp), // verify server-side via /api/premium/verify
+            modal: {
+                ondismiss: () => {
+                    // A concrete failure was already recorded for this attempt;
+                    // don't let the close event overwrite it with DISMISSED.
+                    if (lastFailure) {
+                        const err = new Error(lastFailure.message);
+                        err.code = lastFailure.code;
+                        err.razorpay = lastFailure.raw;
+                        finish(reject, err);
+                        return;
+                    }
+                    reportCheckoutFailure(order, {
+                        code: 'DISMISSED',
+                        reason: 'Checkout window closed before payment completed',
+                    });
+                    const err = new Error('Payment window closed. No money moved.');
+                    err.code = 'DISMISSED';
+                    finish(reject, err);
+                },
+            },
         });
-        rzp.on('payment.failed', (e) => reject(new Error(e?.error?.description || 'Payment failed. No money moved.')));
+
+        rzp.on('payment.failed', (e) => {
+            const raw = e?.error || {};
+            const code = String(raw.code || raw.reason || 'PAYMENT_FAILED').slice(0, 60);
+            const reason = String(raw.description || raw.reason || 'Payment failed').replace(/\s+/g, ' ').trim().slice(0, 300);
+            const method = typeof raw.method === 'string' ? raw.method : null;
+
+            lastFailure = {
+                code,
+                reason,
+                method,
+                raw,
+                message: `${reason}${/[.!?]$/.test(reason) ? '' : '.'} No money moved — you can try another card.`,
+            };
+
+            reportCheckoutFailure(order, { code, reason, method });
+
+            // Do NOT reject here: Razorpay keeps its modal open and offers one
+            // retry. The promise settles on success (handler), on close
+            // (ondismiss), or — if the SDK closes without firing ondismiss —
+            // when settleFailure sees the iframe disappear.
+            if (failureTimer) clearTimeout(failureTimer);
+            failureTimer = setTimeout(settleFailure, FAILURE_RECHECK_MS);
+        });
+
         rzp.open();
     });
 }

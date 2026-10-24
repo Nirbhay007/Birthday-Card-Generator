@@ -12,7 +12,24 @@ import prisma from '@/lib/prisma';
  * not being migrated yet) never break the donate modal — they just log.
  */
 
-const EVENTS = new Set(['modal_open', 'pay_click', 'copy_upi', 'paywall_open', 'checkout_start', 'premium_unlock']);
+const EVENTS = new Set([
+    'modal_open',
+    'pay_click',
+    'copy_upi',
+    'paywall_open',
+    'checkout_start',
+    'premium_unlock',
+    // Conversion instrumentation (client-side intents; payments are verified
+    // server-side and never inferred from these events).
+    'paywall_cta_click',
+    'order_create_failed',
+    'upgrade_cta_click',
+    'upgrade_click',
+    'upgrade_order_failed',
+    'upgrade_success',
+    'proof_upsell_shown',
+    'proof_upsell_click',
+]);
 
 // Best-effort per-IP throttle, mirroring the birthday react route.
 const WINDOW_MS = 60_000;

@@ -126,6 +126,7 @@ test.describe('recipient card experience', () => {
   test('owner sees creator tools that viewers never see @critical', async ({
     page,
     cards,
+    db,
   }) => {
     const card = await cards.create();
 
@@ -140,5 +141,16 @@ test.describe('recipient card experience', () => {
     await expect(notice.getByText(/Creator Mode/)).toBeVisible();
     await expect(notice.getByRole('button', { name: /Upgrade to VIP/ })).toBeVisible();
     await expect(page.getByText(new RegExp(`Copy Link for ${card.payload.recipientName}`))).toBeVisible();
+
+    // Owner interactions must never inflate the recipient's social proof.
+    await page
+      .getByRole('button', { name: `Open birthday surprise for ${card.payload.recipientName}` })
+      .click();
+    await page.getByRole('button', { name: 'Send love to this birthday page' }).click();
+    await page.waitForTimeout(800);
+
+    const afterOwner = await db.birthdayPage.findUnique({ where: { id: card.id } });
+    expect(afterOwner.viewCount).toBe(0);
+    expect(afterOwner.loves).toBe(0);
   });
 });

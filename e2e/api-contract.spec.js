@@ -29,6 +29,23 @@ test.describe('API contracts', () => {
     expect(stored.editToken).toBe(card.editToken);
   });
 
+  test('card source accepts only internal, utm and ref shapes @smoke', async ({
+    cards,
+  }) => {
+    const internal = await cards.create({ source: 'wishes/best-friend' });
+    expect((await cards.get(internal.id)).source).toBe('wishes/best-friend');
+
+    const campaign = await cards.create({ source: 'UTM:Instagram' });
+    expect((await cards.get(campaign.id)).source).toBe('utm:instagram');
+
+    const referrer = await cards.create({ source: 'ref:news.ycombinator.com' });
+    expect((await cards.get(referrer.id)).source).toBe('ref:news.ycombinator.com');
+
+    // Anything else is dropped rather than stored as unbounded free text.
+    const invalid = await cards.create({ source: 'https://evil.example/?q=secret' });
+    expect((await cards.get(invalid.id)).source).toBeNull();
+  });
+
   test('card edits require the ownership token @critical', async ({ request, cards, ip }) => {
     const headers = { 'x-forwarded-for': ip };
     const card = await cards.create();

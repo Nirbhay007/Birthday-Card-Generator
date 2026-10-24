@@ -68,6 +68,27 @@ function isPreviewRequest(request) {
     return false;
 }
 
+/**
+ * GET /api/birthday/[id]/react — current counters.
+ *
+ * Read-only and PII-free. Used by the creator's proof-moment banner so it can
+ * show fresh love counts on an otherwise ISR-cached card page.
+ */
+export async function GET(request, { params }) {
+    try {
+        const { id } = await params;
+        if (!id || typeof id !== 'string' || id.length > 64) {
+            return NextResponse.json({ success: false }, { status: 400 });
+        }
+        const page = await prisma.birthdayPage.findUnique({ where: { id }, select: COUNTS });
+        if (!page) return NextResponse.json({ success: false }, { status: 404 });
+        return NextResponse.json({ success: true, ...page });
+    } catch (error) {
+        console.error('React counter read error:', error?.message || error);
+        return NextResponse.json({ success: false }, { status: 200 });
+    }
+}
+
 export async function POST(request, { params }) {
     try {
         const { id } = await params;

@@ -2,21 +2,30 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Zap, Loader2, FlaskConical, Globe2, MapPin, Mail, Images, Film, Link2, ShieldCheck, Check, Lock } from 'lucide-react';
-import { detectRegion, getPremiumPrice, createPremiumOrder, openRazorpayCheckout, verifyPremiumPayment, pollOrderStatus } from '@/lib/payments';
+import {
+    detectRegion,
+    getPremiumPrice,
+    createPremiumOrder,
+    openRazorpayCheckout,
+    verifyPremiumPayment,
+    pollOrderStatus,
+    loadBuyerContact,
+    saveBuyerContact,
+    formatBuyerContact,
+} from '@/lib/payments';
+import { track } from '@/lib/track';
 import Reveal from './Reveal';
 import Magnetic from './Magnetic';
 
 /** localStorage key for surviving browser-kill during UPI app switch. */
 const PENDING_ORDER_KEY = 'bgen-premium-pending-v1';
 
-function track(event, extra = {}) {
-    try {
-        fetch('/api/support/track', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ event, path: typeof window !== 'undefined' ? window.location.pathname : null, ...extra }),
-        }).catch(() => {});
-    } catch {}
+function validEmail(value) {
+    return !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function validPhone(value) {
+    return !value || /^[+()\d][\d\s().-]{5,24}$/.test(value);
 }
 
 /**
@@ -37,10 +46,21 @@ export default function Paywall({ onUnlocked }) {
     const [status, setStatus] = useState({ phase: 'idle', message: '' });
     const [testMode, setTestMode] = useState(false);
     const [showStickyCta, setShowStickyCta] = useState(false);
+    const [contact, setContact] = useState({ name: '', email: '', phone: '' });
+    const [contactOpen, setContactOpen] = useState(false);
+    const [contactError, setContactError] = useState('');
     const opened = useRef(false);
     const sectionRef = useRef(null);
     const ctaRef = useRef(null);
     const price = getPremiumPrice(region);
+    const verifying = status.phase === 'verifying';
+
+    useEffect(() => {
+        const saved = loadBuyerContact();
+        // Hydration-safe: this runs after mount, never during SSR.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (saved.email || saved.phone) setContact(saved);
+    }, []);
 
     useEffect(() => {
         if (opened.current) return;
@@ -122,10 +142,37 @@ export default function Paywall({ onUnlocked }) {
 
     const fail = (message) => setStatus({ phase: 'error', message });
     const checkout = async () => {
+        if (verifying) return;
+
+        // This counts every checkout attempt, including the sticky re-offer.
+        track('paywall_cta_click');
+
+        const email = contact.email.trim();
+        const phone = contact.phone.trim();
+        if (!validEmail(email)) {
+            setContactOpen(true);
+            setContactError('That email looks incomplete. Fix it or leave it blank.');
+            return;
+        }
+        if (!validPhone(phone)) {
+            setContactOpen(true);
+            setContactError('That phone number looks incomplete. Fix it or leave it blank.');
+            return;
+        }
+        setContactError('');
+        const savedContact = saveBuyerContact({ ...contact, email, phone });
+        const buyerContact = formatBuyerContact(savedContact);
+
         setStatus({ phase: 'verifying', message: 'Contacting secure checkout…' });
         try {
             const snapshotUrl = typeof window !== 'undefined' ? window.location.href : '';
-            const order = await createPremiumOrder(region, { snapshotUrl });
+            let order;
+            try {
+                order = await createPremiumOrder(region, { snapshotUrl, buyerContact });
+            } catch (orderErr) {
+                if (orderErr?.code !== 'TEST_MODE') track('order_create_failed');
+                throw orderErr;
+            }
             // Persist order ID + poll token so we can recover if the browser dies during UPI app switch.
             try { localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify({ orderId: order.orderId, pollToken: order.pollToken, ts: Date.now() })); } catch {}
             track('checkout_start', { amount: region === 'IN' ? 49 : 1 });
@@ -138,7 +185,13 @@ export default function Paywall({ onUnlocked }) {
 
             let callbackOk = false;
             try {
-                const resp = await openRazorpayCheckout({ order, keyId: order.keyId, region });
+                const resp = await openRazorpayCheckout({
+                    order,
+                    keyId: order.keyId,
+                    region,
+                    buyerEmail: savedContact.email,
+                    buyerPhone: savedContact.phone,
+                });
                 callbackOk = true;
                 abort.abort();
                 setStatus({ phase: 'verifying', message: 'Confirming your payment…' });
@@ -154,6 +207,16 @@ export default function Paywall({ onUnlocked }) {
                 onUnlocked?.({ testMode: false, unlockKey: receipt.unlockKey || null, receiptKept: !!receipt.unlockKey });
             } catch (modalErr) {
                 if (callbackOk) { fail(modalErr?.message || 'Verification failed.'); return; }
+
+                // A concrete decline (card rejected, 3DS failed, …) means no
+                // money is pending. Show the real reason immediately instead
+                // of making the buyer wait through the UPI recovery window.
+                if (modalErr?.code && modalErr.code !== 'DISMISSED') {
+                    abort.abort();
+                    fail(modalErr?.message || 'Payment failed. No money moved.');
+                    return;
+                }
+
                 // Razorpay modal dismissed — the payment may still have gone through
                 // via UPI.  Give the background poll a few more seconds to catch it.
                 setStatus({ phase: 'verifying', message: 'Checking payment status…' });
@@ -191,8 +254,6 @@ export default function Paywall({ onUnlocked }) {
             fail(e?.message || 'Something went wrong.');
         }
     };
-
-    const verifying = status.phase === 'verifying';
 
     // The value stack, stated once, plainly. No fake timers, no fake scarcity.
     const inside = [
@@ -250,6 +311,68 @@ export default function Paywall({ onUnlocked }) {
                         </p>
                         <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#b9aed4] mt-3 mb-1">one-time · theirs forever</p>
                         <p className="text-sm font-bold text-[#7ee2a8] mb-8">{price.saveLabel} today · less than a pizza slice · less than chai for two</p>
+
+                        {/* Optional receipt details. Collapsed by default so a
+                            first-time buyer sees one button, not a form. When
+                            present, Razorpay skips its mandatory contact step
+                            and support can recover an interrupted checkout. */}
+                        <div className="mb-3 text-left">
+                            {!contactOpen ? (
+                                <button
+                                    type="button"
+                                    onClick={() => { setContactOpen(true); setContactError(''); }}
+                                    className="mx-auto flex items-center justify-center gap-1.5 text-[11px] font-bold text-[#b9aed4] hover:text-white transition-colors"
+                                >
+                                    <Mail className="w-3.5 h-3.5" aria-hidden="true" />
+                                    {contact.email || contact.phone
+                                        ? `Receipt to ${contact.email || contact.phone} · Edit`
+                                        : 'Add email for the receipt (optional)'}
+                                </button>
+                            ) : (
+                                <div className="rounded-2xl border border-white/15 bg-white/[0.04] p-3.5 space-y-2.5">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b9aed4]">Receipt details · optional</p>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setContactOpen(false); setContactError(''); }}
+                                            className="text-[11px] font-bold text-[#b9aed4] hover:text-white"
+                                        >
+                                            Hide
+                                        </button>
+                                    </div>
+                                    <label className="block">
+                                        <span className="sr-only">Email for receipt</span>
+                                        <input
+                                            type="email"
+                                            value={contact.email}
+                                            onChange={(e) => setContact((c) => ({ ...c, email: e.target.value }))}
+                                            placeholder="you@example.com"
+                                            autoComplete="email"
+                                            inputMode="email"
+                                            className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-[#7f7597] focus:outline-none focus:ring-2 focus:ring-[#f2c14e]/60"
+                                        />
+                                    </label>
+                                    <label className="block">
+                                        <span className="sr-only">Phone for receipt and recovery (optional)</span>
+                                        <input
+                                            type="tel"
+                                            value={contact.phone}
+                                            onChange={(e) => setContact((c) => ({ ...c, phone: e.target.value }))}
+                                            placeholder="Phone with country code (optional)"
+                                            autoComplete="tel"
+                                            inputMode="tel"
+                                            className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-[#7f7597] focus:outline-none focus:ring-2 focus:ring-[#f2c14e]/60"
+                                        />
+                                    </label>
+                                    {contactError && (
+                                        <p role="alert" className="text-[11px] font-semibold text-[#fda4af]">{contactError}</p>
+                                    )}
+                                    <p className="text-[10px] leading-relaxed text-[#9f94b8]">
+                                        Only used for your receipt and to recover this unlock. Never shown on the card.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
 
                         <div className="space-y-3">
                             <Magnetic strength={26} className="block">

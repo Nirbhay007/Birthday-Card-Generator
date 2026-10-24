@@ -1,7 +1,7 @@
-import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import prisma from '@/lib/prisma';
+import { pollTokenFor } from '@/lib/premiumTokens';
 
 /**
  * POST /api/premium/order { region: 'IN' | 'INTL' }
@@ -37,13 +37,18 @@ function throttled(ip) {
 }
 
 /**
- * Stateless per-order polling credential: HMAC(secret, order id). Returned to
- * the buyer's browser with the order; /api/premium/order/status requires it,
- * so knowing/leaking an order id alone can no longer fetch the unlock key.
+ * Buyer-supplied receipt contact (email and/or phone). Optional, never shown
+ * on the card, and only used for support recovery. Control characters are
+ * stripped so the value can never forge a second line in an admin view.
  */
-function pollTokenFor(orderId) {
-    const secret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
-    return crypto.createHmac('sha256', secret).update(`poll:${orderId}`).digest('hex');
+function cleanBuyerContact(value) {
+    if (typeof value !== 'string') return null;
+    const clean = value
+        .replace(/[\u0000-\u001f\u007f-\u009f]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 200);
+    return clean || null;
 }
 
 function razorpayClient() {
@@ -71,6 +76,7 @@ export async function POST(request) {
         const tier = body?.tier === 'card_vip' ? 'card_vip' : 'universe';
         const pageId = typeof body?.pageId === 'string' && body.pageId.trim() ? body.pageId.trim().slice(0, 60) : null;
         const snapshotUrl = typeof body?.snapshotUrl === 'string' && body.snapshotUrl.trim() ? body.snapshotUrl.trim().slice(0, 2000) : null;
+        const buyerContact = cleanBuyerContact(body?.buyerContact);
         const { amount, currency } = (PRICES[tier] || PRICES.universe)[region];
 
         const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
@@ -88,7 +94,7 @@ export async function POST(request) {
         // Best-effort receipt (never blocks checkout if the table is missing)
         try {
             await prisma.premiumOrder.create({
-                data: { orderId: order.id, amount, currency, status: 'created', pageId, tier, snapshotUrl },
+                data: { orderId: order.id, amount, currency, status: 'created', pageId, tier, snapshotUrl, buyerContact },
             });
         } catch (dbError) {
             console.error('PremiumOrder create failed (pending migration?):', dbError?.message || dbError);

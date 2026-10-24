@@ -253,6 +253,10 @@ async function run() {
                 buyerContact: true,
                 snapshotUrl: true,
                 paidAt: true,
+                failureCode: true,
+                failureReason: true,
+                failureMethod: true,
+                failedAt: true,
             },
         });
 
@@ -372,6 +376,9 @@ async function run() {
                 Amount: formatCurrency(o.amount, o.currency),
                 Buyer: o.buyerContact || 'Anonymous',
                 Target: targetName,
+                Why: o.status === 'failed'
+                    ? ([o.failureCode, o.failureMethod, o.failureReason].filter(Boolean).join(' · ').slice(0, 64) || '—')
+                    : '—',
             };
         });
         console.table(formattedOrders);

@@ -84,6 +84,13 @@ model PremiumOrder {
   snapshotUrl  String?
   // Buyer phone/email from Razorpay — for support outreach without checking the dashboard.
   buyerContact String?
+  // Why a checkout did not complete. Populated by the client (payment.failed /
+  // dismissed modal) and the Razorpay webhook. Null means "no failure recorded"
+  // — never treat a null on a paid row as a failure.
+  failureCode   String? // Razorpay error.code, or 'DISMISSED' when the modal closed
+  failureReason String? // Human-readable error.description from Razorpay
+  failureMethod String? // Attempted instrument, e.g. 'card' | 'upi'
+  failedAt      DateTime?
 
   @@index([status, createdAt])
   @@index([pageId])

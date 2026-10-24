@@ -8,6 +8,23 @@ import { warmOgImage } from '@/lib/og-warm';
 // CGNAT mobile carriers) but low enough to stop scripted abuse of storage.
 const MAX_PAGES_PER_HOUR = 10;
 
+/**
+ * Allowed card.source values:
+ *   - wishes/<slug> | ages/<n>   internal landing pages
+ *   - utm:<source>               campaign attribution
+ *   - ref:<tag-or-hostname>      affiliate tag or external referrer
+ * Keep the shape strict: this value is grouped in analytics, so free-form
+ * query strings or URLs would explode the cardinality and leak PII.
+ */
+function normalizeSource(value) {
+    if (typeof value !== 'string') return null;
+    const source = value.trim().toLowerCase().slice(0, 60);
+    if (!source) return null;
+    if (/^(wishes|ages)\/[a-z0-9-]+$/.test(source)) return source;
+    if (/^(utm|ref):[a-z0-9][a-z0-9._-]{0,40}$/.test(source)) return source;
+    return null;
+}
+
 export async function POST(request) {
     try {
         const body = await request.json();
@@ -55,9 +72,7 @@ export async function POST(request) {
             : null;
         const MUSIC_CHOICES = ['classic', 'rock', 'musicbox', 'party', 'off', 'beats', 'strings', 'piano', 'waltz', 'lullaby', 'fanfare', 'retro', 'acoustic', 'reggae', 'techno', 'neon', 'sunset', 'starlight', 'chamber', 'marching'];
         const validMusic = MUSIC_CHOICES.includes(music) ? music : 'classic';
-        const validSource = typeof source === 'string' && /^(wishes|ages)\/[a-z0-9-]+$/.test(source)
-            ? source.slice(0, 60)
-            : null;
+        const validSource = normalizeSource(source);
 
         let validBirthdayDate = null;
         if (birthdayDate) {

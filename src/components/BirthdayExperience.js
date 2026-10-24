@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { Gift, Heart, Sparkles, Crown, Palette, Eye, Copy, Check, X } from 'lucide-react';
 import CandleBlower from '@/components/CandleBlower';
@@ -11,6 +11,7 @@ import PostCreationModal from '@/components/PostCreationModal';
 import KeepsakeCard from '@/components/premium/KeepsakeCard';
 import { BIRTHDAY_OPENED_EVENT } from '@/lib/music';
 import { trackShare } from '@/lib/shareTracking';
+import { track } from '@/lib/track';
 import { detectRegion, getVipCardPrice } from '@/lib/payments';
 import { cn } from '@/lib/utils';
 
@@ -89,6 +90,17 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     const [vipPrice, setVipPrice] = useState({ label: '₹29' });
     // Show a hint pointing to Customize after fresh VIP activation (from ?vip=1 param)
     const [showCustomizeHint, setShowCustomizeHint] = useState(false);
+    // Social-proof upsell is dismissible and remembered per card.
+    const [proofDismissed, setProofDismissed] = useState(false);
+    const proofShownRef = useRef(false);
+
+    useEffect(() => {
+        try {
+            // Hydration-safe: localStorage is only read after mount.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            if (localStorage.getItem(`bgen-proof-dismissed-${page.id}`)) setProofDismissed(true);
+        } catch { }
+    }, [page.id]);
 
     useEffect(() => {
         if (isCreatedParam()) setVipModalOpen(true);
@@ -118,6 +130,11 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     }, [preview]);
     const typedName = useTypewriter(page.recipientName || 'Friend', opened, 90);
 
+    const openVip = () => {
+        track('upgrade_cta_click');
+        setVipModalOpen(true);
+    };
+
     const handleCopyLink = async () => {
         try {
             const url = typeof window !== 'undefined' ? `${window.location.origin}/b/${page.id}` : '';
@@ -132,6 +149,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
 
     useEffect(() => {
         const onOpenVip = () => {
+            track('upgrade_cta_click');
             setVipModalOpen(true);
         };
         window.addEventListener('vip:open', onOpenVip);
@@ -163,9 +181,10 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     };
 
     // Count one view per visit (session-guarded), fire-and-forget.
-    // Skipped entirely in preview mode so owner visits never count.
+    // Skipped for preview links AND for the creator's own visits (owner token,
+    // ?viewer=1, ?preview=1) so creator self-views never inflate the count.
     useEffect(() => {
-        if (previewMode || (typeof window !== 'undefined' && isPreviewUrl())) return;
+        if (previewMode || isPreviewUrl() || isViewerParam() || checkIsOwner(page.id, preview)) return;
         try {
             const key = `bgen-viewed-${page.id}`;
             // The server also dedupes with an httpOnly cookie, so a returning
@@ -183,7 +202,21 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                 .then((d) => { if (d.success && typeof d.viewCount === 'number') setViewCount(d.viewCount); })
                 .catch(() => { });
         } catch { }
-    }, [page.id, previewMode]);
+    }, [page.id, previewMode, preview]);
+
+    // Fresh social proof for the owner's proof-moment banner. The server prop
+    // can be stale on an ISR page; this read is cheap and only runs for owners.
+    useEffect(() => {
+        if (!isOwner || page.isVip) return;
+        let alive = true;
+        fetch(`/api/birthday/${page.id}/react`)
+            .then((r) => r.json())
+            .then((d) => {
+                if (alive && d?.success && typeof d.loves === 'number') setHeartCount(d.loves);
+            })
+            .catch(() => { });
+        return () => { alive = false; };
+    }, [isOwner, page.id, page.isVip]);
 
     const handleOpen = () => {
         setOpened(true);
@@ -202,8 +235,10 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
         const id = Date.now() + Math.random();
         setHearts((h) => [...h.slice(-14), id]);
         setTimeout(() => setHearts((h) => h.filter((x) => x !== id)), 1600);
-        // Preview mode: animate locally only, never touch the counter.
-        if (previewMode) return;
+        // Preview mode / owner self-love: animate locally only, never touch
+        // the counter. The recipient's love is the social proof we later show
+        // the creator, so it must not include the creator's own taps.
+        if (previewMode || isViewerPreview || isViewerParam() || checkIsOwner(page.id, preview)) return;
         // Every tap animates; only the first tap per browser session is
         // counted (the server cookie is the authoritative second layer).
         try {
@@ -225,6 +260,27 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
         } catch {
             setHeartCount((c) => c + 1);
         }
+    };
+
+    // The proof moment: only the creator sees it, only after the recipient has
+    // actually sent love, and only while the card is still free. Never shown
+    // to viewers (they should see a clean surprise, not an upsell).
+    const showProofBanner = isOwner && !isViewerPreview && !page.isVip && heartCount > 0 && !proofDismissed;
+
+    useEffect(() => {
+        if (!opened || !showProofBanner || proofShownRef.current) return;
+        proofShownRef.current = true;
+        track('proof_upsell_shown');
+    }, [opened, showProofBanner]);
+
+    const dismissProof = () => {
+        setProofDismissed(true);
+        try { localStorage.setItem(`bgen-proof-dismissed-${page.id}`, '1'); } catch { }
+    };
+
+    const openProofUpsell = () => {
+        track('proof_upsell_click');
+        openVip();
     };
 
     return (
@@ -295,7 +351,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                             ) : (
                                 <button
                                     type="button"
-                                    onClick={() => setVipModalOpen(true)}
+                                    onClick={() => openVip()}
                                     className="inline-flex items-center gap-1.5 font-black text-gray-950 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:brightness-110 px-3.5 py-1.5 rounded-xl shadow-md transition-all cursor-pointer"
                                 >
                                     <Crown className="w-3.5 h-3.5 text-gray-950" />
@@ -453,8 +509,55 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                                 </span>
                             ))}
                         </div>
-                        <p className="text-xs opacity-60 mt-2">Tap to shower {page.recipientName} with love</p>
+                        <p className="text-xs opacity-60 mt-2">
+                            {isOwner && !isViewerPreview ? (
+                                <>Only {page.recipientName}&apos;s own taps add to the public count. Open the plain card link in Incognito to test the love flow.</>
+                            ) : isViewerPreview || previewMode ? (
+                                <>Reactions are paused in this preview. Open the plain card link in Incognito to test them.</>
+                            ) : (
+                                <>Tap to shower {page.recipientName} with love</>
+                            )}
+                        </p>
                     </div>
+
+                    {/* Proof-moment upsell: only the creator sees real love
+                        from the recipient, and only while the card is free. */}
+                    {showProofBanner && (
+                        <section
+                            aria-label="VIP upgrade suggestion"
+                            className="mb-10 rounded-2xl border border-amber-300/70 bg-gradient-to-br from-amber-50 via-white to-pink-50 p-4 sm:p-5 text-left shadow-lg pop-in"
+                        >
+                            <div className="flex items-start gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 text-white flex items-center justify-center text-lg shrink-0 shadow-md">
+                                    💜
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm sm:text-base font-extrabold text-gray-900">
+                                        {heartCount} {heartCount === 1 ? 'person has' : 'people have'} sent love to {page.recipientName}&apos;s card
+                                    </p>
+                                    <p className="text-xs sm:text-sm text-gray-700 mt-1 leading-relaxed">
+                                        That&apos;s the moment worth keeping. Add the golden crown, VIP themes, and the keepsake image they can save forever.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={openProofUpsell}
+                                        className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-pink-500 px-4 py-2.5 text-xs sm:text-sm font-extrabold text-gray-950 shadow-md hover:brightness-105 active:scale-[0.99] transition-all"
+                                    >
+                                        <Crown className="w-4 h-4" aria-hidden="true" />
+                                        Make it unforgettable · {vipPrice.label}
+                                    </button>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={dismissProof}
+                                    aria-label="Dismiss upgrade suggestion"
+                                    className="text-gray-400 hover:text-gray-700 p-1 rounded-lg hover:bg-black/5 transition-colors shrink-0"
+                                >
+                                    <X className="w-4 h-4" aria-hidden="true" />
+                                </button>
+                            </div>
+                        </section>
+                    )}
 
                     {shareSlot}
                 </div>
@@ -490,7 +593,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                         ) : (
                             <button
                                 type="button"
-                                onClick={() => setVipModalOpen(true)}
+                                onClick={() => openVip()}
                                 className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 hover:brightness-110 text-gray-950 shadow-2xl text-xs font-extrabold cursor-pointer transition-all hover:scale-105 border border-amber-300"
                                 title="Upgrade card to VIP"
                             >
@@ -503,7 +606,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-full bg-gray-950/90 hover:bg-gray-900 text-purple-200 hover:text-white backdrop-blur-md shadow-2xl border border-purple-400/30 text-xs font-bold cursor-pointer transition-all hover:scale-105"
-                            title="See exactly how others view this card (or test in Incognito)"
+                            title="See the recipient view. To test the love count, open the plain card link in Incognito."
                         >
                             <Eye className="w-3.5 h-3.5 text-purple-300" />
                             <span className="hidden sm:inline">Recipient View ↗</span>
