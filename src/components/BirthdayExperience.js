@@ -75,6 +75,7 @@ function isCreatedParam() {
 
 export default function BirthdayExperience({ page, photos, gallery, shareSlot, audioSlot, preview = false, autoOpen = false }) {
     const [opened, setOpened] = useState(false);
+    const blowTrackedRef = useRef(false);
     const [hearts, setHearts] = useState([]);
     const [heartCount, setHeartCount] = useState(page.loves || 0);
     const [viewCount, setViewCount] = useState(page.viewCount || 0);
@@ -273,6 +274,16 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
         track('proof_upsell_shown');
     }, [opened, showProofBanner]);
 
+    // Recipient activation: the candles going out is the product's "aha"
+    // moment. Count it once per card view, and never for the creator's own
+    // previews (?created, ?preview, ?viewer, or the owner's browser).
+    const handleCandleBlown = () => {
+        if (blowTrackedRef.current) return;
+        blowTrackedRef.current = true;
+        if (isOwner || previewMode || isViewerPreview || isCreatedParam() || isViewerParam() || checkIsOwner(page.id, preview)) return;
+        track('candle_blown', { path: '/b/[id]' });
+    };
+
     const dismissProof = () => {
         setProofDismissed(true);
         try { localStorage.setItem(`bgen-proof-dismissed-${page.id}`, '1'); } catch { }
@@ -458,7 +469,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                     </header>
 
                     <div className="mb-14 theme-card rounded-3xl p-4 sm:p-8 pop-in">
-                        <CandleBlower age={page.age} recipientName={page.recipientName} />
+                        <CandleBlower age={page.age} recipientName={page.recipientName} onBlow={handleCandleBlown} />
                     </div>
 
                     {photos?.length > 0 && (

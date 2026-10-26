@@ -202,7 +202,7 @@ export default function CinemaShowcase() {
 
                             <div className="flex items-center justify-between text-[11px] text-[#9f94b8] px-1">
                                 <span className="flex items-center gap-1">
-                                    <ShieldCheck className="w-3.5 h-3.5 text-[#f2c14e]" /> Free card creator stays 100% free
+                                    <ShieldCheck className="w-3.5 h-3.5 text-[#f2c14e]" /> The free card creator stays free
                                 </span>
                                 <span>No account needed · Instant delivery</span>
                             </div>

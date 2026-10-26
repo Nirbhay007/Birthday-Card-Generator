@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAttributionSource } from '@/lib/attribution';
+import { track } from '@/lib/track';
 import { FREE_TRACKS, VIP_TRACKS, PRO_TRACKS, ALL_TRACKS, getTrackName, playAudioPreview, stopAllAudioPreviews } from '@/lib/music';
 
 const DRAFT_KEY = 'birthdaygen-draft-v1';
@@ -134,6 +135,10 @@ export default function CreateForm({ formData, setFormData }) {
     const audioControllerRef = useRef(null);
     const [wishLoadedNotice, setWishLoadedNotice] = useState('');
     const wishAppliedRef = useRef(false);
+    // Funnel instrumentation: first interaction marks the start; each step
+    // counts once per page load so back-and-forth navigation cannot inflate it.
+    const startedRef = useRef(false);
+    const completedStepsRef = useRef(new Set());
 
     const toggleAudioPreview = (e, trackId) => {
         e.stopPropagation();
@@ -186,7 +191,22 @@ export default function CreateForm({ formData, setFormData }) {
         }, 50);
     };
 
-    const set = (patch) => setFormData((prev) => ({ ...prev, ...patch }));
+    const markStarted = () => {
+        if (startedRef.current) return;
+        startedRef.current = true;
+        track('create_start');
+    };
+
+    const markStep = (stepNumber) => {
+        if (completedStepsRef.current.has(stepNumber)) return;
+        completedStepsRef.current.add(stepNumber);
+        track(`create_step_${stepNumber}`);
+    };
+
+    const set = (patch) => {
+        markStarted();
+        setFormData((prev) => ({ ...prev, ...patch }));
+    };
 
     // Timestamp each step + drop focus so a stray Enter/Space can't
     // re-trigger the just-unmounted Continue button.
@@ -299,6 +319,8 @@ export default function CreateForm({ formData, setFormData }) {
         }
         setNameError('');
         setDateError('');
+        markStarted();
+        markStep(step);
         setStep((s) => Math.min(3, s + 1));
         scrollToFormTop();
     };
@@ -346,6 +368,9 @@ export default function CreateForm({ formData, setFormData }) {
                 return;
             }
         }
+        markStarted();
+        markStep(3);
+        track('create_submit');
         setLoading(true);
         setLoadingMessage('Uploading photos...');
         try {
@@ -419,6 +444,7 @@ export default function CreateForm({ formData, setFormData }) {
                         localStorage.setItem(`bgen_edit_token_${data.id}`, data.editToken);
                     }
                 } catch { }
+                track('card_created');
                 router.push(`/b/${data.id}?created=1`);
             } else {
                 alert('Failed to create page: ' + data.error);
@@ -931,7 +957,7 @@ export default function CreateForm({ formData, setFormData }) {
                 </div>
 
                 <p className="text-center text-xs text-gray-500 mt-5">
-                    Free forever, no signup 💜 · <SupportButton variant="inline" />
+                    Free to create, no signup 💜 · <SupportButton variant="inline" />
                 </p>
             </form>
 

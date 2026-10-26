@@ -2,8 +2,13 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
 /**
- * Donation-funnel analytics (append-only, no PII — no cookies, no IP stored).
- * POST /api/support/track { event: 'modal_open' | 'pay_click' | 'copy_upi', amount?, path? }
+ * Product + donation funnel analytics (append-only, no PII — no cookies, no
+ * IP stored). POST /api/support/track { event, amount?, path? }
+ *
+ * Funnel events answer the questions that matter for growth:
+ * create_start → create_step_1/2/3 → create_submit → card_created, plus
+ * candle_blown (recipient activation) and recipient_create_click (the viral
+ * loop from a received card back into the generator).
  *
  * NOTE on UPI: a `upi://pay` link hands off to GPay/PhonePe with no callback,
  * so `pay_click` measures payment *intent*, never completed payments.
@@ -29,6 +34,15 @@ const EVENTS = new Set([
     'upgrade_success',
     'proof_upsell_shown',
     'proof_upsell_click',
+    // Acquisition → activation funnel (PII-free; path + event name only).
+    'create_start',
+    'create_step_1',
+    'create_step_2',
+    'create_step_3',
+    'create_submit',
+    'card_created',
+    'candle_blown',
+    'recipient_create_click',
 ]);
 
 // Best-effort per-IP throttle, mirroring the birthday react route.

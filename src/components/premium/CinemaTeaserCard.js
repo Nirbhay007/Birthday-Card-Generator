@@ -215,7 +215,7 @@ export default function CinemaTeaserCard({
                     </Link>
 
                     <p className="text-[11px] text-[#9f94b8] leading-tight">
-                        ✨ Your free birthday card is 100% free to send forever. This is an optional keepsake if you want to make them tear up.
+                        ✨ Your birthday card is free to create and send. This is an optional keepsake if you want to make them tear up.
                     </p>
                 </div>
             </div>

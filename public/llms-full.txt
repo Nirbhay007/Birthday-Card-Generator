@@ -15,23 +15,28 @@ BirthdayGen transforms traditional static birthday greetings (cards, text messag
 - **Gift Box Reveal**: Recipient taps an animated gift box that bursts open with particle confetti
 - **Photo Slideshow**: Creators attach personal photos; recipients see a responsive mobile-first gallery
 - **Celebratory Music**: Integrated ambient audio — Classic Happy Birthday, Music Box, Upbeat Party Pop
-- **Zero Friction**: 100% free, no app downloads, no account registration or passwords
+- **Zero Friction**: free to create, no app downloads, no account registration or passwords
 - **Instant WhatsApp Sharing**: Custom OpenGraph dynamic previews show the recipient's name and theme
 
 ---
 
-## 2. Visual Themes (All Free)
+## 2. Visual Themes (2 Free, 8 Paid)
 
-BirthdayGen provides 8 distinct visual themes:
+BirthdayGen provides 10 distinct visual themes. Two are free; the other eight unlock with the ₹29 VIP card upgrade or the ₹49 Premium universe.
 
-1. **Royal Gold** (`royal`) — Dark luxury, deep purple + gleaming metallic gold accents
-2. **Midnight Stars** (`midnight`) — Dreamy cosmic navy + sparkling starlight animations
-3. **Princess Fairytale** (`princess`) — Soft pastel pinks, delicate typography, romantic elegance
-4. **Unicorn Kids** (`unicorn`) — Vibrant purple and rainbow palette for children's celebrations
-5. **Fun & Colorful** (`fun`) — Cheerful magenta + multicolored confetti explosion
-6. **Elegant Classic** (`elegant`) — Warm ivory + timeless serif typography
-7. **Retro Neon Arcade** (`retro`) — Cyberpunk terminal green + dark contrast arcade aesthetics
-8. **Modern Minimal** (`minimal`) — Clean monochromatic, typography-first, photography-focused
+Free:
+1. **Fun & Colorful** (`fun`) — Cheerful magenta + multicolored confetti explosion
+2. **Classic Ivory** (`elegant`) — Warm ivory + timeless serif typography
+
+Paid:
+3. **Royal Gold** (`royal`) — Dark luxury, deep purple + gleaming metallic gold accents
+4. **Cyber Neon** (`neon`) — Cyberpunk contrast with electric accents
+5. **Cosmic Galaxy** (`midnight`) — Dreamy cosmic navy + sparkling starlight animations
+6. **Fairy Princess** (`princess`) — Soft pastel pinks, delicate typography, romantic elegance
+7. **Retro Arcade** (`retro`) — Arcade green + dark contrast
+8. **Sunset Luxe** (`sunset`) — Warm dusk palette with an editorial finish
+9. **Holographic Dream** (`holo`) — Iridescent light and color
+10. **Arctic Aurora** (`aurora`) — Cool light palette with high contrast
 
 ---
 
@@ -39,10 +44,11 @@ BirthdayGen provides 8 distinct visual themes:
 
 | Tier | Price | What's included |
 |---|---|---|
-| Free | $0 / ₹0 | Birthday website, all 8 themes, photos, music, candle blowing, 30-day link, WhatsApp sharing |
-| Premium | from ₹49 (~$0.60) | Multi-act cinematic universe, wax-sealed letter reveal, anniversary mode |
+| Free | $0 / ₹0 | Birthday website, 2 themes, 3 photos, 1 music track, candle blowing, 30+ day link, WhatsApp sharing |
+| VIP card | ₹29 / $1 | 8 extra themes, 11 soundtracks, up to 12 photos, golden crown treatment |
+| Premium universe | ₹49 / $1 | Multi-act cinematic universe, wax-sealed letter reveal, anniversary mode, up to 12 photos, permanent magic link |
 
-No subscription. No watermarks. No hidden paywalls on the free tier.
+No subscription. No watermarks on the free tier. Paid extras are optional.
 
 ---
 
@@ -50,8 +56,8 @@ No subscription. No watermarks. No hidden paywalls on the free tier.
 
 1. Go to https://birthday.nirbhay.online/#create
 2. Enter the recipient's name and a heartfelt message
-3. Choose a visual theme (8 available, all free)
-4. Optionally upload personal photos (up to 5)
+3. Choose a visual theme (2 free, 8 more with VIP)
+4. Optionally upload personal photos (up to 3 free, up to 12 with Premium)
 5. Choose background music or leave off
 6. Click **Generate Birthday Page**
 7. Get a unique URL: `https://birthday.nirbhay.online/b/[id]`
@@ -122,8 +128,8 @@ BirthdayGen is a free birthday website maker. It generates an interactive, perso
 ### How does the virtual candle blowing work?
 BirthdayGen uses the browser's native Web Audio API (`AudioContext` and `AnalyserNode`). The recipient grants temporary microphone access. The app measures decibel peaks and turbulent frequencies characteristic of breath. When detected, candle flames extinguish with smoke animations, audio cheers, and confetti.
 
-### Is BirthdayGen completely free?
-Yes. Creating, personalizing, previewing and sharing is 100% free with no hidden paywalls, subscriptions, or watermarks. Premium multi-act cinematic keepsakes start at ₹49.
+### Is BirthdayGen free?
+Yes. Creating, personalizing, previewing and sharing the core birthday website is free, with no subscription or watermark. Optional VIP themes start at ₹29 and multi-act cinematic keepsakes at ₹49.
 
 ### Do I need to create an account?
 No. BirthdayGen never requires account creation or email registration — not even for Premium.
@@ -132,16 +138,16 @@ No. BirthdayGen never requires account creation or email registration — not ev
 After generating the page, click the WhatsApp share button. BirthdayGen opens a pre-filled WhatsApp chat with a rich preview card showing the recipient's name and theme.
 
 ### How long does a generated birthday website stay online?
-Pages remain active for 30 days. Users who opt into the free annual reminder have their pages preserved for next year too.
+Pages stay online for at least 30 days. Photos are kept for 7 days after the birthday; users who opt into the free annual reminder have the page and photos preserved for next year.
 
 ### Can I add photos?
-Yes, up to 5 personal photos can be uploaded during creation. They appear as a scrollable gallery on the birthday page.
+Yes. The free tier includes up to 3 photos in a scrollable gallery; the ₹29 VIP unlock raises that to 12. The Premium universe also supports up to 12 photos as instant-film cards.
 
 ### Can I choose background music?
 Yes. Choose from Classic Happy Birthday, Music Box, or Upbeat Party Pop — or leave music off entirely.
 
 ### What themes are available?
-8 free themes: Royal Gold, Midnight Stars, Princess Fairytale, Unicorn Kids, Fun & Colorful, Elegant Classic, Retro Neon Arcade, Modern Minimal.
+2 free themes (Fun & Colorful and Classic Ivory) plus 8 paid themes: Royal Gold, Cyber Neon, Cosmic Galaxy, Fairy Princess, Retro Arcade, Sunset Luxe, Holographic Dream and Arctic Aurora.
 
 ### Is user data and photos kept private?
 Yes. BirthdayGen does not sell user information, display intrusive ads, or require personal account creation. Uploaded photos are stored strictly to render the card. Individual greeting pages (`/b/[id]`) are `noindex` — personal names or photos never appear in search results.
@@ -167,7 +173,7 @@ Yes. Use the [Belated Birthday Wishes](https://birthday.nirbhay.online/wishes/be
 
 - Works in any modern browser with no plugins
 - Microphone permission for candle blowing is always optional — the experience works without it (manual tap-to-blow fallback)
-- High-contrast themes (Minimal, Elegant) available for readability
+- High-contrast themes (Classic Ivory, Arctic Aurora) available for readability
 - All interactive elements are keyboard-navigable
 - Images include descriptive alt text
 
@@ -176,7 +182,7 @@ Yes. Use the [Belated Birthday Wishes](https://birthday.nirbhay.online/wishes/be
 ## 10. Privacy Policy Summary
 
 - No account or email required — ever
-- Uploaded photos stored only to serve the birthday page; auto-deleted after 30 days
+- Uploaded photos stored only to serve the birthday page; deleted 7 days after the birthday unless the free annual reminder is enabled
 - Individual birthday pages (`/b/[id]`) are marked `noindex` — never appear in Google
 - No third-party advertising networks
 - No data sold to third parties
@@ -200,10 +206,10 @@ Yes. Use the [Belated Birthday Wishes](https://birthday.nirbhay.online/wishes/be
 
 - **Virtual mic candle blowing** — blow detection via Web Audio API
 - **Gift box reveal animation** — 3D flip + confetti burst
-- **8 visual themes** — all free, no premium lock
+- **2 free themes + 8 premium themes** — no signup required
 - **Premium cinematic universe** — multi-act storytelling experience
 - **WhatsApp rich preview** — dynamic OG image per recipient name
-- **Annual reminder** — keep birthday pages alive year to year
+- **Annual reminder opt-in** — preserves the page and photos for next year
 - **Age-specific wishes hub** — dedicated pages for 16th, 18th, 21st, 30th, 50th, 60th+
 - **Relationship wishes library** — 100+ curated messages across 19 categories
 

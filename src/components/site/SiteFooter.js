@@ -21,7 +21,7 @@ export default function SiteFooter() {
                             mic-powered candle blowing, shareable in one WhatsApp tap.
                         </p>
                         <p className="mt-4 text-xs text-white/40">
-                            Free forever · No signup · Pages last 30 days, extendable with the free annual reminder.
+                            Free to create · No signup · Add the free annual reminder to keep photos for next year.
                         </p>
                     </div>
 
@@ -30,6 +30,7 @@ export default function SiteFooter() {
                         <ul className="mt-4 space-y-2.5">
                             <li><a className={footerLink} href="#create">Create a birthday card</a></li>
                             <li><a className={footerLink} href="#how-it-works">How it works</a></li>
+                            <li><a className={footerLink} href="#pricing">Pricing</a></li>
                             <li><Link className={footerLink} href="/premium" prefetch={false}>Cinematic premium</Link></li>
                             <li>
                                 <a className={footerLink} href="https://invite.nirbhay.online/" target="_blank" rel="noopener">

@@ -9,6 +9,7 @@ import MonetizationSlot from '@/components/MonetizationSlot';
 import BirthdayExperience from '@/components/BirthdayExperience';
 import { getBreadcrumbSchema, getGreetingCardSchema, serializeJsonLd } from '@/lib/seo';
 import { buildOgPath } from '@/lib/og';
+import TrackedLink from '@/components/site/TrackedLink';
 
 // ISR: cache each card page for 1 hour at the CDN.
 // Card views are the bulk of traffic, and page content only changes through
@@ -232,12 +233,14 @@ export default async function BirthdayPage({ params }) {
                                 <div className="mt-8 sticky bottom-4 z-30 bg-white/85 backdrop-blur-md border border-purple-100 rounded-2xl p-4 shadow-xl">
                                     <p className="text-sm font-bold text-gray-900 mb-3">💜 Loved this surprise? Create yours free in 30 seconds</p>
                                     <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                                        <Link
-                                            href="/"
+                                        <TrackedLink
+                                            href="/?utm_source=recipient&utm_medium=card&utm_campaign=post_card_cta#create"
+                                            event="recipient_create_click"
+                                            eventData={{ path: '/b/[id]' }}
                                             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white transition-all text-sm font-bold shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-purple-300"
                                         >
                                             <span>🎉 Create your own free card</span>
-                                        </Link>
+                                        </TrackedLink>
                                         <Link
                                             href="/wishes"
                                             className="inline-flex items-center gap-1.5 px-5 py-3 rounded-full bg-white hover:bg-purple-50 text-purple-700 transition-all text-sm font-semibold border border-purple-200 shadow-xs"

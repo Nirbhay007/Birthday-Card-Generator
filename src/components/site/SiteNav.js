@@ -9,8 +9,10 @@ import WhatsNew from '@/components/WhatsNew';
 const NAV_LINKS = [
     { href: '#how-it-works', label: 'How it works' },
     { href: '#themes', label: 'Themes' },
-    { href: '/wishes', label: 'Wish ideas' },
+    { href: '/wishes', label: 'Wish ideas', route: true },
+    { href: '#pricing', label: 'Pricing' },
     { href: '#faqs', label: 'FAQs' },
+    { href: '/premium', label: 'Premium', route: true, prefetch: false },
 ];
 
 /**
@@ -28,12 +30,23 @@ export default function SiteNav() {
                     <span className="font-display text-lg font-extrabold tracking-tight">BirthdayGen</span>
                 </Link>
 
-                <div className="hidden items-center gap-7 md:flex">
-                    {NAV_LINKS.map((l) => (
-                        <a key={l.href} href={l.href} className="text-sm font-medium text-ink/70 transition-colors hover:text-ink">
-                            {l.label}
-                        </a>
-                    ))}
+                <div className="hidden items-center gap-6 lg:flex">
+                    {NAV_LINKS.map((l) =>
+                        l.route ? (
+                            <Link
+                                key={l.href}
+                                href={l.href}
+                                prefetch={l.prefetch}
+                                className="text-sm font-medium text-ink/70 transition-colors hover:text-ink"
+                            >
+                                {l.label}
+                            </Link>
+                        ) : (
+                            <a key={l.href} href={l.href} className="text-sm font-medium text-ink/70 transition-colors hover:text-ink">
+                                {l.label}
+                            </a>
+                        )
+                    )}
                     <WhatsNew />
                     <a href="#create" className="rounded-full bg-ink px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700">
                         Create a free card
@@ -45,7 +58,7 @@ export default function SiteNav() {
                     onClick={() => setOpen((v) => !v)}
                     aria-expanded={open}
                     aria-controls="mobile-nav"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-ink/10 text-ink md:hidden"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-ink/10 text-ink lg:hidden"
                 >
                     <span className="sr-only">Toggle menu</span>
                     {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -53,18 +66,30 @@ export default function SiteNav() {
             </nav>
 
             {open && (
-                <div id="mobile-nav" className="border-t border-ink/[0.06] bg-paper px-4 pb-5 pt-2 md:hidden">
+                <div id="mobile-nav" className="border-t border-ink/[0.06] bg-paper px-4 pb-5 pt-2 lg:hidden">
                     <div className="flex flex-col">
-                        {NAV_LINKS.map((l) => (
-                            <a
-                                key={l.href}
-                                href={l.href}
-                                onClick={() => setOpen(false)}
-                                className="rounded-xl px-3 py-3 text-sm font-medium text-ink/80 transition-colors hover:bg-ink/5"
-                            >
-                                {l.label}
-                            </a>
-                        ))}
+                        {NAV_LINKS.map((l) =>
+                            l.route ? (
+                                <Link
+                                    key={l.href}
+                                    href={l.href}
+                                    prefetch={l.prefetch}
+                                    onClick={() => setOpen(false)}
+                                    className="rounded-xl px-3 py-3 text-sm font-medium text-ink/80 transition-colors hover:bg-ink/5"
+                                >
+                                    {l.label}
+                                </Link>
+                            ) : (
+                                <a
+                                    key={l.href}
+                                    href={l.href}
+                                    onClick={() => setOpen(false)}
+                                    className="rounded-xl px-3 py-3 text-sm font-medium text-ink/80 transition-colors hover:bg-ink/5"
+                                >
+                                    {l.label}
+                                </a>
+                            )
+                        )}
                         <div className="mt-2 px-3">
                             <WhatsNew />
                         </div>

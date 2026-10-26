@@ -272,6 +272,25 @@ async function run() {
             ORDER BY count DESC
         `;
 
+        // 7b. Creator funnel + recipient loop (same 7-day window).
+        // Funnel events are written by CreateForm, BirthdayExperience and the
+        // card-page CTA. Step-to-step rates make drop-off obvious.
+        const eventCounts = Object.fromEntries(supportEvents.map((r) => [r.event, r.count]));
+        const creatorFunnelEvents = ['create_start', 'create_step_1', 'create_step_2', 'create_step_3', 'create_submit', 'card_created'];
+        const creatorFunnel = creatorFunnelEvents.map((event, i) => {
+            const count = eventCounts[event] || 0;
+            const prev = i === 0 ? null : eventCounts[creatorFunnelEvents[i - 1]] || 0;
+            return {
+                step: event,
+                count,
+                conversionFromPrevious: prev ? +((count / prev) * 100).toFixed(1) : null,
+            };
+        });
+        const recipientLoop = {
+            candleBlown: eventCounts.candle_blown || 0,
+            createClicks: eventCounts.recipient_create_click || 0,
+        };
+
         // 8. Top Themes Today & Past 7 Days
         const topThemes = await prisma.$queryRaw`
             SELECT 
@@ -300,6 +319,8 @@ async function run() {
                         storage: { total: allTodayUrls.length, r2: r2Photos, blob: blobPhotos, other: otherPhotos },
                         recentOrders,
                         supportEvents,
+                        creatorFunnel,
+                        recipientLoop,
                         topThemes,
                     },
                     null,
@@ -386,7 +407,19 @@ async function run() {
         console.log('💖 6. SUPPORT & DONATION FUNNEL (PAST 7 DAYS)');
         console.table(supportEvents);
 
-        console.log('🎨 7. THEME POPULARITY');
+        console.log('🚀 7. CREATOR FUNNEL & RECIPIENT LOOP (PAST 7 DAYS)');
+        console.table(
+            creatorFunnel.map((r) => ({
+                Step: r.step,
+                Count: r.count,
+                'vs Previous': r.conversionFromPrevious === null ? '—' : `${r.conversionFromPrevious}%`,
+            }))
+        );
+        console.log(
+            `   ↳ Recipient loop: ${recipientLoop.candleBlown} candle blows · ${recipientLoop.createClicks} "create your own" clicks.\n`
+        );
+
+        console.log('🎨 8. THEME POPULARITY');
         console.table(topThemes);
 
         console.log('========================================================================================\n');

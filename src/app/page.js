@@ -31,19 +31,19 @@ const FAQS = [
   },
   {
     question: "Is BirthdayGen free to use?",
-    answer: "Yes, BirthdayGen is 100% free with no hidden charges, registration required, or software download needed."
+    answer: "Yes. The core birthday website is free to create, preview and share, with no signup and no software download. Optional VIP themes and cinematic premium universes are one-time paid extras, starting at ₹29 ($1 outside India)."
   },
   {
     question: "How long does a created birthday page stay active?",
-    answer: "Every generated birthday page stays active for 30 days, plenty of time to celebrate and share it anywhere. Want it kept longer? Tick the free annual reminder while creating, and we'll keep your page alive for next year's birthday too."
+    answer: "Your page stays online for at least 30 days. Photos are kept for 7 days after the birthday; tick the free annual reminder while creating and we'll preserve the page and photos for next year too."
   },
   {
     question: "Can I customize the design themes and add photos?",
-    answer: "Yes! You can select from 8 beautiful free themes (Elegant, Fun & Colorful, Royal Gold, Midnight Stars, Princess, Unicorn Kids, Retro Neon, Minimal) and upload personal photo memories to create a custom photo gallery."
+    answer: "Yes. The free tier includes 2 themes (Fun & Colorful and Classic Ivory) and up to 3 photos. The ₹29 VIP unlock adds 8 more themes, 11 soundtracks and a gallery of up to 12 photos. You can preview every theme before paying."
   },
   {
     question: "Can I make a birthday website for free?",
-    answer: "Yes. Every BirthdayGen birthday website is free: pick a theme, add the name, message and photos, choose music, and share the link. Premium cinematic universes with sealed letters and extra acts start at ₹49."
+    answer: "Yes. You can build and share a birthday website without paying: pick a free theme, add the name, message and up to 3 photos, choose music, and share the link. Optional premium universes with extra themes, sealed letters and a cinematic keepsake start at ₹49."
   },
   {
     question: "Birthday website or birthday card: which is better?",
@@ -166,6 +166,97 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <CinemaShowcase />
         </div>
+
+        {/* ── Pricing ──────────────────────────────────────────────────── */}
+        <section id="pricing" className="scroll-mt-20 py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="max-w-2xl">
+              <span className="text-xs font-bold uppercase tracking-widest text-brand-600">Pricing</span>
+              <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
+                Free to send. Paid only if you want more.
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted">
+                No subscription, no account. The free card is a real card. Premium adds
+                extra themes, a bigger gallery and a cinematic keepsake.
+              </p>
+            </div>
+
+            <div className="mt-10 grid gap-4 lg:grid-cols-5">
+              <div className="rounded-3xl border border-ink/[0.06] bg-white p-7 shadow-soft lg:col-span-2">
+                <h3 className="font-display text-lg font-extrabold tracking-tight">Free</h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted">
+                  Everything you need to send one unforgettable card.
+                </p>
+                <p className="mt-5 font-display text-4xl font-extrabold tracking-tight">₹0</p>
+                <p className="mt-1 text-xs font-semibold text-muted">No signup. No card details.</p>
+                <ul className="mt-6 space-y-2.5 text-sm text-muted">
+                  {[
+                    '2 themes: Fun & Colorful, Classic Ivory',
+                    'Up to 3 photos',
+                    'Mic-powered candle blowing',
+                    'Background music and WhatsApp share',
+                    'Page live for at least 30 days',
+                  ].map((item) => (
+                    <li key={item} className="flex gap-2.5">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" strokeWidth={1.75} />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href="#create"
+                  className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+                >
+                  <Gift className="h-4 w-4" strokeWidth={1.75} />
+                  Create a free card
+                </a>
+              </div>
+
+              <div className="relative rounded-3xl border border-brand-200 bg-brand-50/50 p-7 lg:col-span-3">
+                <span className="absolute right-5 top-5 rounded-full bg-brand-600 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white">
+                  One-time
+                </span>
+                <h3 className="font-display text-lg font-extrabold tracking-tight">Premium</h3>
+                <p className="mt-1 max-w-md text-sm leading-relaxed text-muted">
+                  For the birthdays that deserve a full production — and a link that never expires.
+                </p>
+                <div className="mt-5 flex items-end gap-2">
+                  <p className="font-display text-4xl font-extrabold tracking-tight">₹49</p>
+                  <p className="pb-1 text-sm font-semibold text-muted">/ $1 one-time</p>
+                </div>
+                <p className="mt-1 text-xs font-semibold text-muted">No subscription. No account.</p>
+                <ul className="mt-6 grid gap-2.5 text-sm text-muted sm:grid-cols-2">
+                  {[
+                    'Cinematic multi-act universe',
+                    '5 cinematic looks and 8 soundtracks',
+                    'Wax-sealed letter reveal',
+                    'Memory album of up to 12 photos',
+                    'Keepsake image they can save',
+                    'Permanent magic link, no expiry',
+                  ].map((item) => (
+                    <li key={item} className="flex gap-2.5">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" strokeWidth={1.75} />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <Link
+                    href="/premium"
+                    prefetch={false}
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-brand-700"
+                  >
+                    <Crown className="h-4 w-4" strokeWidth={1.75} />
+                    See premium
+                  </Link>
+                  <p className="text-xs font-semibold text-muted">
+                    Just want extra themes on one card? VIP unlock is ₹29 / $1.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* ── Features bento ───────────────────────────────────────────── */}
         <section id="features" className="scroll-mt-20 py-20">
@@ -343,7 +434,7 @@ export default function Home() {
                     <td className="p-4 font-semibold text-ink">
                       <span className="inline-flex items-center gap-1.5">
                         <Check className="h-4 w-4 text-brand-600" strokeWidth={1.75} />
-                        Yes (multi-photo)
+                        Yes — 3 free, up to 12 on premium
                       </span>
                     </td>
                     <td className="p-4 text-muted">Static single image</td>
@@ -365,7 +456,7 @@ export default function Home() {
                     <td className="p-4 font-semibold text-ink">
                       <span className="inline-flex items-center gap-1.5">
                         <Check className="h-4 w-4 text-brand-600" strokeWidth={1.75} />
-                        100% free / instant
+                        Free core / instant
                       </span>
                     </td>
                     <td className="p-4 text-muted">Free or subscription</td>
@@ -476,7 +567,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
           <p className="flex items-center justify-center gap-2 text-center text-xs text-muted">
             <Heart className="h-3.5 w-3.5 text-brand-600" strokeWidth={1.75} />
-            Every card is free forever. Premium universes are optional.
+            Free to create and share. Premium upgrades are optional.
           </p>
         </div>
       </main>
