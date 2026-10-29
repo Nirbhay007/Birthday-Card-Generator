@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import crypto from 'crypto';
 import prisma from '@/lib/prisma';
+import { mergeBuyerContacts, sendReceiptForOrder } from '@/lib/email';
 
 /**
  * POST /api/premium/webhook — Razorpay event webhook (reconciliation).
@@ -55,13 +56,33 @@ export async function POST(request) {
             const paymentId = payment.id;
             if (orderId && paymentId) {
                 const existing = await prisma.premiumOrder
-                    .findUnique({ where: { orderId }, select: { unlockToken: true, status: true, pageId: true, tier: true } })
+                    .findUnique({ where: { orderId }, select: { unlockToken: true, status: true, pageId: true, tier: true, buyerContact: true } })
                     .catch(() => null);
                 const unlockToken = existing?.unlockToken || `unlock_${crypto.randomBytes(24).toString('hex')}`;
-                const buyerContact = [payment.contact, payment.email].filter((v) => v && v !== 'void@razorpay.com').join(' / ') || null;
+                // Razorpay often reports only a phone (or void@razorpay.com).
+                // Keep the buyer-supplied email from checkout when we have one.
+                const razorpayContact = [payment.contact, payment.email].filter((v) => v && v !== 'void@razorpay.com').join(' / ') || null;
+                const buyerContact = mergeBuyerContacts(existing?.buyerContact, razorpayContact);
+                // Razorpay notes carry the tier/page chosen at checkout. They
+                // are the only recovery path when the local order row was
+                // never written (e.g. the checkout-create DB write failed).
+                const notePageId = typeof payment?.notes?.pageId === 'string' ? payment.notes.pageId.trim().slice(0, 60) : '';
+                const noteProduct = typeof payment?.notes?.product === 'string' ? payment.notes.product : '';
+                const noteTier = noteProduct === 'birthday-vip-card'
+                    ? 'card_vip'
+                    : noteProduct === 'birthday-premium-universe' ? 'universe' : null;
+                const targetPageId = existing?.pageId || notePageId || null;
                 await prisma.premiumOrder.upsert({
                     where: { orderId },
-                    update: { paymentId, status: 'paid', paidAt: new Date(), unlockToken, ...(buyerContact ? { buyerContact } : {}) },
+                    update: {
+                        paymentId,
+                        status: 'paid',
+                        paidAt: new Date(),
+                        unlockToken,
+                        ...(buyerContact ? { buyerContact } : {}),
+                        ...(targetPageId ? { pageId: targetPageId } : {}),
+                        ...(noteTier && !existing?.tier ? { tier: noteTier } : {}),
+                    },
                     create: {
                         orderId,
                         paymentId,
@@ -70,18 +91,27 @@ export async function POST(request) {
                         status: 'paid',
                         paidAt: new Date(),
                         unlockToken,
-                        ...(existing?.pageId ? { pageId: existing.pageId } : {}),
+                        ...(targetPageId ? { pageId: targetPageId } : {}),
+                        ...(noteTier ? { tier: noteTier } : {}),
                         ...(buyerContact ? { buyerContact } : {}),
                     },
                 });
 
-                const targetPageId = existing?.pageId || payment?.notes?.pageId;
-                if (typeof targetPageId === 'string' && targetPageId.trim()) {
+                // Receipt after the HTTP response; idempotent with /verify.
+                try {
+                    after(() => sendReceiptForOrder(orderId).catch((err) => {
+                        console.error('Receipt send failed (webhook):', err?.message || err);
+                    }));
+                } catch (err) {
+                    console.error('Receipt scheduling failed (webhook):', err?.message || err);
+                }
+
+                if (targetPageId) {
                     await prisma.birthdayPage.update({
-                        where: { id: targetPageId.trim() },
+                        where: { id: targetPageId },
                         data: { isVip: true, isVipPro: true },
                     }).catch((e) => console.error('Failed to mark page as VIP via webhook:', e?.message || e));
-                    try { revalidatePath(`/b/${targetPageId.trim()}`); } catch {}
+                    try { revalidatePath(`/b/${targetPageId}`); } catch {}
                 }
             }
         }

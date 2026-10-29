@@ -24,6 +24,13 @@ model BirthdayPage {
   createdAt    DateTime @default(now())
   ipAddress    String?
   reminderEmail String?
+  // Year of the birthday for which a reminder was sent (e.g. 2026). Null means
+  // no reminder has gone out yet. One email per birthday, never per cron run.
+  reminderSentFor Int?
+  // Set when the creator clicks unsubscribe. The email is kept as a
+  // suppression record and reminderEmail stays non-null so the cleanup cron
+  // continues preserving their page/photos.
+  reminderOptOutAt DateTime?
   age          Int?
   senderName   String?
   relationship String?
@@ -84,6 +91,10 @@ model PremiumOrder {
   snapshotUrl  String?
   // Buyer phone/email from Razorpay — for support outreach without checking the dashboard.
   buyerContact String?
+  // Set after a payment-confirmation email is successfully sent. Guards
+  // against duplicate receipts when both /verify and the Razorpay webhook
+  // confirm the same payment.
+  receiptSentAt DateTime?
   // Why a checkout did not complete. Populated by the client (payment.failed /
   // dismissed modal) and the Razorpay webhook. Null means "no failure recorded"
   // — never treat a null on a paid row as a failure.

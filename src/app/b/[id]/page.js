@@ -156,18 +156,23 @@ export default async function BirthdayPage({ params }) {
     const visiblePhotos = (isVip || isVipPro) ? allPhotos.slice(0, photoCap) : allPhotos.slice(0, 3);
     const lockedPhotosCount = (isVip || isVipPro) ? Math.max(0, allPhotos.length - photoCap) : Math.max(0, allPhotos.length - 3);
 
-    // Never ship the ownership secret to the browser as page data — the
-    // creator's own browser holds it in localStorage (kept there at creation).
-    const { editToken: _editToken, ...publicPage } = page;
-
+    // Never ship ownership or contact data to the browser. Only these fields
+    // are rendered, so pass an explicit allowlist instead of spreading the row
+    // (reminderEmail, ipAddress, source, editToken must never reach recipients).
     const experiencePage = {
-        ...publicPage,
+        id: page.id,
+        recipientName: page.recipientName,
+        message: page.message,
+        age: page.age,
+        senderName: page.senderName,
         theme: activeTheme,
         music: activeMusic,
         originalTheme: page.theme,
         originalMusic: page.music,
         isVip: isVip || isVipPro,
         isVipPro,
+        loves: page.loves,
+        viewCount: page.viewCount,
         lockedPhotosCount,
     };
 

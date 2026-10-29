@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import prisma from '@/lib/prisma';
 import { pollTokenFor, safeEqual } from '@/lib/premiumTokens';
+import { sendReceiptForOrder } from '@/lib/email';
 
 /**
  * GET /api/premium/order/status?orderId=order_...&token=<pollToken>
@@ -34,10 +35,22 @@ export async function GET(request) {
 
         const row = await prisma.premiumOrder.findUnique({
             where: { orderId },
-            select: { status: true, unlockToken: true, pageId: true },
+            select: { status: true, unlockToken: true, pageId: true, receiptSentAt: true },
         });
 
         if (row?.status === 'paid' && row.unlockToken) {
+            // UPI recovery path: the webhook may have marked this paid after
+            // the browser was killed. Send the receipt here too, but only if
+            // no trigger has claimed it yet.
+            if (!row.receiptSentAt) {
+                try {
+                    after(() => sendReceiptForOrder(orderId).catch((err) => {
+                        console.error('Receipt send failed (poll):', err?.message || err);
+                    }));
+                } catch (err) {
+                    console.error('Receipt scheduling failed (poll):', err?.message || err);
+                }
+            }
             return NextResponse.json({
                 paid: true,
                 unlockKey: row.unlockToken,

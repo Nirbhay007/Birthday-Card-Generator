@@ -40,4 +40,42 @@ If you want to run my project locally:
 4. Open [http://localhost:3000](http://localhost:3000) to see it in action.
 
 I hope you enjoy using this tool as much as I enjoyed building it!
+
+## Email & reminders
+
+Payment receipts and the annual birthday reminder use the same Resend account
+as the internal alerts. Add these to the deployment environment:
+
+| Variable | Needed for | Notes |
+| --- | --- | --- |
+| `RESEND_API_KEY` | all email | Already used by admin alerts |
+| `EMAIL_FROM` | all email | Verified sender, e.g. `BirthdayGen <hello@yourdomain.com>`. Falls back to `ALERT_FROM_EMAIL`. `onboarding@resend.dev` only delivers to the Resend account owner. |
+| `EMAIL_REPLY_TO` | reminders | Optional. Replies to reminder emails go here. |
+| `EMAIL_TOKEN_SECRET` | unsubscribe links | Signs one-click unsubscribe tokens. Falls back to `CRON_SECRET`, then `RAZORPAY_KEY_SECRET`, so existing deployments work without a new secret. |
+| `CRON_SECRET` | reminder cron | Vercel Cron sends it automatically. In production `/api/cron/reminders` refuses to run without it, so the endpoint can never be triggered by strangers. |
+| `NEXT_PUBLIC_SITE_URL` | email links | Absolute card / unsubscribe URLs. Defaults to `https://birthday.nirbhay.online`. |
+
+The reminder sweep runs daily at 05:00 UTC via `vercel.json`. A card gets one
+email per birthday, inside the 7-day window before it. Cards without a
+birthday date, and cards created fewer than 30 days before the birthday, are
+skipped. Unsubscribing sets `reminderOptOutAt`; the card and its photos stay
+saved.
+
+Apply the additive database migration before deploying (run this SQL file in
+your database, or use `prisma db push` in a disposable environment):
+
+```bash
+prisma/migrations/20261027000000_email_delivery/migration.sql
+```
+
+Preview the reminder queue locally without sending anything:
+
+```bash
+curl "http://localhost:3000/api/cron/reminders?dryRun=1"
+
+# If CRON_SECRET is also set in your local .env:
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  "http://localhost:3000/api/cron/reminders?dryRun=1"
+```
+
 # Birthday-Card-Generator

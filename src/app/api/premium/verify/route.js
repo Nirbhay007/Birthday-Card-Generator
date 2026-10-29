@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import crypto from 'crypto';
 import prisma from '@/lib/prisma';
+import { sendReceiptForOrder } from '@/lib/email';
 
 /**
  * POST /api/premium/verify — confirm a premium payment, unlock the universe.
@@ -79,6 +80,16 @@ export async function POST(request) {
                 });
             } catch {}
 
+            // Payment receipt, sent after the response so checkout never waits
+            // on Resend. Idempotent per order (`receiptSentAt` claim).
+            try {
+                after(() => sendReceiptForOrder(orderId).catch((err) => {
+                    console.error('Receipt send failed (verify):', err?.message || err);
+                }));
+            } catch (err) {
+                console.error('Receipt scheduling failed (verify):', err?.message || err);
+            }
+
             return NextResponse.json({
                 success: true,
                 testMode: false,
@@ -98,11 +109,26 @@ export async function POST(request) {
                 return NextResponse.json({ success: false, error: 'This link doesn’t look right.' }, { status: 200 });
             }
             try {
-                const row = await prisma.premiumOrder.findUnique({ where: { unlockToken: key }, select: { status: true } });
+                const row = await prisma.premiumOrder.findUnique({
+                    where: { unlockToken: key },
+                    select: { orderId: true, status: true, receiptSentAt: true },
+                });
                 // Tokens are minted only on successful payment, so a matching
                 // row means paid. Status check keeps future states (refunded…)
                 // honest without a second migration.
                 if (row && row.status === 'paid') {
+                    // Safety net: if the webhook/verify trigger never ran, a
+                    // later magic-link open still sends the receipt. The
+                    // `receiptSentAt` claim keeps this idempotent.
+                    if (!row.receiptSentAt) {
+                        try {
+                            after(() => sendReceiptForOrder(row.orderId).catch((err) => {
+                                console.error('Receipt send failed (key verify):', err?.message || err);
+                            }));
+                        } catch (err) {
+                            console.error('Receipt scheduling failed (key verify):', err?.message || err);
+                        }
+                    }
                     return NextResponse.json({ success: true, testMode: false });
                 }
             } catch (dbError) {

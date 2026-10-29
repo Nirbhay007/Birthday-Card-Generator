@@ -12,7 +12,7 @@ import JourneyPin from '@/components/site/JourneyPin';
 import ThemesRail from '@/components/site/ThemesRail';
 import {
   Sparkles, Heart, Music, Mic, Timer, Wind, Smartphone, Crown,
-  ShieldCheck, Zap, HelpCircle, ArrowRight, BookOpen, Gift, ChevronDown, Check,
+  ShieldCheck, Zap, HelpCircle, ArrowRight, BookOpen, Gift, ChevronDown, Check, Bell,
 } from 'lucide-react';
 import { getSoftwareApplicationSchema, getFAQSchema, getHowToSchema, getVideoObjectSchema, serializeJsonLd } from '@/lib/seo';
 import { WISH_CATEGORIES } from '@/lib/wishesData';
@@ -36,6 +36,10 @@ const FAQS = [
   {
     question: "How long does a created birthday page stay active?",
     answer: "Your page stays online for at least 30 days. Photos are kept for 7 days after the birthday; tick the free annual reminder while creating and we'll preserve the page and photos for next year too."
+  },
+  {
+    question: "Does BirthdayGen remind me before the next birthday?",
+    answer: "Yes. When you create a card, tick 'Remind me next year' and add your email. We send one email in the week before their birthday, every year — no account, no subscription. You can unsubscribe with one click from any reminder email."
   },
   {
     question: "Can I customize the design themes and add photos?",
@@ -329,6 +333,15 @@ export default function Home() {
                 </p>
               </div>
 
+              {/* Annual reminder */}
+              <div className="rounded-3xl border border-brand-100 bg-brand-50/40 p-6 lg:col-span-2">
+                <Bell className="h-5 w-5 text-brand-600" strokeWidth={1.75} />
+                <h3 className="mt-3 font-display text-base font-extrabold tracking-tight">Free annual birthday reminder</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted">
+                  Tick one checkbox while creating. We email you a week before their next birthday — every year, automatically.
+                </p>
+              </div>
+
               {/* VIP keepsake */}
               <div className="rounded-3xl border border-gold/40 bg-gold-soft p-6 lg:col-span-2">
                 <Crown className="h-5 w-5 text-amber-700" strokeWidth={1.75} />
@@ -492,7 +505,7 @@ export default function Home() {
               <p className="mt-4 text-sm leading-relaxed text-muted">
                 Created by web experience specialists dedicated to replacing generic greetings with meaningful digital
                 moments. Every page runs over HTTPS, uploads use standard web security best practices, and we never sell
-                your data.
+                your data. Reminder emails are one-click unsubscribable and never shared with third parties.
               </p>
             </div>
           </div>

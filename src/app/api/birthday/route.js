@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendEmailAlert } from '@/lib/alerts';
 import { warmOgImage } from '@/lib/og-warm';
+import { isValidEmail } from '@/lib/utils';
 
 // Cap per-IP creations per hour. High enough for shared networks (family wifi,
 // CGNAT mobile carriers) but low enough to stop scripted abuse of storage.
@@ -58,9 +59,9 @@ export async function POST(request) {
             return NextResponse.json({ success: false, error: 'Recipient name is required' }, { status: 400 });
         }
 
-        const validReminderEmail = (remindNextYear && typeof reminderEmail === 'string' && reminderEmail.includes('@'))
+        const validReminderEmail = remindNextYear === true && typeof reminderEmail === 'string'
             ? reminderEmail.trim().slice(0, 255)
-            : null;
+            : '';
 
         const parsedAge = typeof age === 'number' ? Math.trunc(age) : parseInt(age, 10);
         const validAge = Number.isFinite(parsedAge) && parsedAge >= 1 && parsedAge <= 120 ? parsedAge : null;
@@ -87,6 +88,25 @@ export async function POST(request) {
             }
         }
 
+        // A reminder without a date or a real address is a promise we cannot
+        // keep. Reject it instead of silently dropping the opt-in.
+        let reminderEmailToStore = null;
+        if (remindNextYear === true) {
+            if (!validBirthdayDate) {
+                return NextResponse.json(
+                    { success: false, error: 'Add the birthday date so we know when to send your reminder.' },
+                    { status: 400 }
+                );
+            }
+            if (!isValidEmail(validReminderEmail)) {
+                return NextResponse.json(
+                    { success: false, error: 'Enter a valid email for your birthday reminder.' },
+                    { status: 400 }
+                );
+            }
+            reminderEmailToStore = validReminderEmail;
+        }
+
         // Ownership secret: whoever holds this token may edit the card later
         // (theme/music/message via PATCH). Returned once to the creator and
         // kept in their browser's localStorage — never rendered on the page.
@@ -101,7 +121,7 @@ export async function POST(request) {
                 message: typeof message === 'string' ? message.slice(0, 2000) : null,
                 theme: theme || 'elegant',
                 ipAddress: ip,
-                reminderEmail: validReminderEmail,
+                reminderEmail: reminderEmailToStore,
                 age: validAge,
                 senderName: validSender,
                 relationship: validRelationship,

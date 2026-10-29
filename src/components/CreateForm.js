@@ -10,7 +10,7 @@ import {
     Loader2, Sparkles, Bell, ArrowLeft, ArrowRight, Check,
     User, Palette, Camera, Heart, Laugh, Scissors, Music, Crown, Play, Square,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, isValidEmail } from '@/lib/utils';
 import { getAttributionSource } from '@/lib/attribution';
 import { track } from '@/lib/track';
 import { FREE_TRACKS, VIP_TRACKS, PRO_TRACKS, ALL_TRACKS, getTrackName, playAudioPreview, stopAllAudioPreviews } from '@/lib/music';
@@ -128,6 +128,7 @@ export default function CreateForm({ formData, setFormData }) {
     const [step, setStep] = useState(1);
     const [nameError, setNameError] = useState('');
     const [dateError, setDateError] = useState('');
+    const [emailError, setEmailError] = useState('');
     const [toneMsg, setToneMsg] = useState('');
     const [successModalOpen, setSuccessModalOpen] = useState(false);
     const [createdCard, setCreatedCard] = useState(null);
@@ -316,6 +317,16 @@ export default function CreateForm({ formData, setFormData }) {
                     return;
                 }
             }
+            if (formData.remindNextYear) {
+                if (!formData.birthdayDate) {
+                    setDateError('Add the birthday date so we can email your reminder in the week before.');
+                    return;
+                }
+                if (!isValidEmail(formData.reminderEmail || '')) {
+                    setEmailError('Enter a valid email for your free reminder.');
+                    return;
+                }
+            }
         }
         setNameError('');
         setDateError('');
@@ -368,6 +379,19 @@ export default function CreateForm({ formData, setFormData }) {
                 return;
             }
         }
+        if (formData.remindNextYear) {
+            if (!formData.birthdayDate) {
+                setStep(1);
+                setDateError('Add the birthday date so we can email your reminder in the week before.');
+                return;
+            }
+            if (!isValidEmail(formData.reminderEmail || '')) {
+                setStep(1);
+                setEmailError('Enter a valid email for your free reminder.');
+                return;
+            }
+        }
+        setEmailError('');
         markStarted();
         markStep(3);
         track('create_submit');
@@ -573,7 +597,7 @@ export default function CreateForm({ formData, setFormData }) {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="birthdayDate" className="block text-sm font-semibold text-gray-800 mb-1">
-                                    Birthday date <span className="text-gray-400 text-xs font-normal">(free annual reminder 🎂)</span>
+                                    Birthday date <span className="text-gray-400 text-xs font-normal">(needed for the free reminder 🎂)</span>
                                 </label>
                                 <input
                                     id="birthdayDate"
@@ -864,24 +888,53 @@ export default function CreateForm({ formData, setFormData }) {
                                 <input
                                     type="checkbox"
                                     checked={formData.remindNextYear || false}
-                                    onChange={(e) => set({ remindNextYear: e.target.checked })}
+                                    onChange={(e) => {
+                                        set({ remindNextYear: e.target.checked });
+                                        if (!e.target.checked) setEmailError('');
+                                    }}
                                     className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500 cursor-pointer"
                                 />
                                 <span className="text-xs font-semibold text-gray-800 flex items-center gap-1.5">
-                                    <Bell className="w-3.5 h-3.5 text-purple-600" /> Remind me next year, 7 days before
+                                    <Bell className="w-3.5 h-3.5 text-purple-600" /> Remind me in the week before their next birthday
                                 </span>
                             </label>
                             <p className="text-[11px] text-gray-500 pl-6">
-                                Photos stay active 7 days after the birthday. Tick below to keep them for next year 💜
+                                One email a year for this card, in the week before. Your photos stay saved too. Unsubscribe anytime.
                             </p>
                             {formData.remindNextYear && (
-                                <input
-                                    type="email"
-                                    placeholder="Your email for the free reminder..."
-                                    value={formData.reminderEmail || ''}
-                                    onChange={(e) => set({ reminderEmail: e.target.value })}
-                                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-purple-200 bg-white text-gray-900 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all"
-                                />
+                                <div className="pl-6">
+                                    {!formData.birthdayDate && (
+                                        <p className="text-[11px] text-amber-700 font-medium mb-1.5">
+                                            Add their birthday date in step 1 so we know when to send it.
+                                        </p>
+                                    )}
+                                    <input
+                                        id="reminderEmail"
+                                        type="email"
+                                        inputMode="email"
+                                        autoComplete="email"
+                                        placeholder="Your email for the free reminder..."
+                                        value={formData.reminderEmail || ''}
+                                        onChange={(e) => {
+                                            set({ reminderEmail: e.target.value });
+                                            if (emailError) setEmailError('');
+                                        }}
+                                        aria-invalid={!!emailError}
+                                        aria-describedby={emailError ? 'reminderEmailError' : undefined}
+                                        required={!!formData.remindNextYear}
+                                        className={cn(
+                                            'w-full px-3.5 py-2.5 text-xs rounded-xl border bg-white text-gray-900 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all',
+                                            emailError ? 'border-red-400 ring-2 ring-red-100' : 'border-purple-200'
+                                        )}
+                                    />
+                                    {emailError ? (
+                                        <p id="reminderEmailError" className="text-[11px] text-red-600 font-semibold mt-1.5">
+                                            {emailError}
+                                        </p>
+                                    ) : (
+                                        <p className="text-[10px] text-gray-400 mt-1">Used only for this reminder. No newsletters.</p>
+                                    )}
+                                </div>
                             )}
                         </div>
 

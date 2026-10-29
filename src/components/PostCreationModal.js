@@ -11,8 +11,10 @@ import {
     verifyPremiumPayment,
     pollOrderStatus,
     loadBuyerContact,
+    saveBuyerContact,
     formatBuyerContact,
 } from '@/lib/payments';
+import { isValidEmail } from '@/lib/utils';
 import { track } from '@/lib/track';
 import { trackShare } from '@/lib/shareTracking';
 
@@ -25,6 +27,7 @@ export default function PostCreationModal({
     const [region] = useState(() => (typeof window !== 'undefined' ? detectRegion() : 'IN'));
     const [status, setStatus] = useState({ phase: 'idle', message: '' });
     const [upgraded, setUpgraded] = useState(false);
+    const [receiptExpected, setReceiptExpected] = useState(false);
     const [buyerContact, setBuyerContact] = useState({ name: '', email: '', phone: '' });
     // Origin resolves after mount so team/server share links and the first
     // client render agree (no hydration mismatch on dev or preview hosts).
@@ -90,6 +93,7 @@ export default function PostCreationModal({
 
     const celebrateVip = () => {
         setUpgraded(true);
+        if (String(buyerContact.email || '').trim()) setReceiptExpected(true);
         try { localStorage.setItem(`bgen_owner_${card.id}`, '1'); } catch {}
         setStatus({ phase: 'success', message: 'VIP Activated!' });
         track('upgrade_success');
@@ -109,10 +113,20 @@ export default function PostCreationModal({
     };
 
     const handleUpgrade = async () => {
+        // Validate the optional receipt address before opening checkout, so a
+        // typo cannot cost the buyer their payment confirmation.
+        const receiptEmail = String(buyerContact.email || '').trim();
+        if (receiptEmail && !isValidEmail(receiptEmail)) {
+            setStatus({ phase: 'error', message: 'Enter a valid email for your receipt, or leave it blank.' });
+            return;
+        }
+        const contact = { ...buyerContact, email: receiptEmail };
+        try { saveBuyerContact(contact); } catch {}
+
         track('upgrade_click');
         setStatus({ phase: 'loading', message: 'Connecting to checkout…' });
         try {
-            const order = await createPremiumOrder(region, { tier: 'card_vip', pageId: card.id, buyerContact: formatBuyerContact(buyerContact) });
+            const order = await createPremiumOrder(region, { tier: 'card_vip', pageId: card.id, buyerContact: formatBuyerContact(contact) });
             setStatus({ phase: 'checkout', message: 'Opening secure checkout…' });
 
             // Background poll for UPI recovery (browser may lose the Razorpay
@@ -122,7 +136,7 @@ export default function PostCreationModal({
 
             let callbackOk = false;
             try {
-                const savedContact = buyerContact;
+                const savedContact = contact;
                 const resp = await openRazorpayCheckout({
                     order,
                     keyId: order.keyId,
@@ -314,6 +328,11 @@ export default function PostCreationModal({
                             <p className="text-xs text-purple-200/90 leading-relaxed">
                                 {card.recipientName}&apos;s card now shines with the Golden Crown, illuminated atmosphere, and clean ad-free keepsake.
                             </p>
+                            {receiptExpected && (
+                                <p className="text-[11px] text-amber-200/80">
+                                    We&apos;ll email your payment receipt to <strong>{buyerContact.email.trim()}</strong>.
+                                </p>
+                            )}
                             <div className="p-3 rounded-xl bg-black/40 border border-amber-400/30 text-left space-y-2 text-xs text-amber-200/90">
                                 <p className="flex items-start gap-1.5">
                                     <span>🎨</span>
@@ -402,6 +421,29 @@ export default function PostCreationModal({
                             <p className="text-[11px] text-purple-200/70 mb-3 leading-relaxed">
                                 Everything you have already made stays exactly as it is. VIP only adds shine.
                             </p>
+
+                            <div className="mb-3">
+                                <label htmlFor="vip-receipt-email" className="block text-[11px] font-bold uppercase tracking-wider text-purple-300/80 mb-1.5">
+                                    Receipt email <span className="normal-case font-normal text-purple-300/60">(optional)</span>
+                                </label>
+                                <input
+                                    id="vip-receipt-email"
+                                    type="email"
+                                    inputMode="email"
+                                    autoComplete="email"
+                                    placeholder="you@example.com"
+                                    value={buyerContact.email || ''}
+                                    onChange={(e) => setBuyerContact((c) => ({ ...c, email: e.target.value }))}
+                                    onBlur={() => {
+                                        const email = String(buyerContact.email || '').trim();
+                                        if (!email || isValidEmail(email)) saveBuyerContact({ ...buyerContact, email });
+                                    }}
+                                    className="w-full px-3 py-2.5 rounded-xl bg-black/40 border border-white/15 text-white text-xs placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-amber-400/60"
+                                />
+                                <p className="text-[10px] text-purple-300/60 mt-1">
+                                    We&apos;ll email the payment confirmation here. No newsletters.
+                                </p>
+                            </div>
 
                             {status.phase === 'error' && (
                                 <p className="text-xs text-rose-400 mb-3 font-medium">{status.message}</p>
