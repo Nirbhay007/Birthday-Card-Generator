@@ -26,6 +26,8 @@
   "vars": {
     "NEXT_PUBLIC_SITE_URL": "https://birthday.nirbhay.online",
     "NEXT_PUBLIC_SUPPORT_WHATSAPP": "7004191931",
+    "NEXT_PUBLIC_RAZORPAY_KEY_ID": "rzp_test_TZESihLNLuI8VW",
+    "NEXT_PUBLIC_DEMO_VIDEO_URL": "https://www.youtube.com/watch?v=NFSeOKFHcJ4",
     "R2_ACCOUNT_ID": "cfe5684943956b8ee2578462784a5b56",
     "R2_BUCKET_NAME": "birthday-card-assets",
     "R2_PUBLIC_DOMAIN": "https://pub-eeb46e39205c429a834ca24da0e5e4e7.r2.dev",
