@@ -55,14 +55,24 @@ function razorpayClient() {
     // Key ID is public by design — fall back to the NEXT_PUBLIC copy so a
     // missing server-only var can never silently force test mode.
     // .trim() because pasted secrets often carry invisible whitespace.
-    const keyId = (process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '').trim();
-    const secret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
-    if (!keyId || !secret) return null;
-    return new Razorpay({ key_id: keyId, key_secret: secret });
+    let keyId = (process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '').trim().replace(/^["']|["']$/g, '');
+    let secret = (process.env.RAZORPAY_KEY_SECRET || '').trim().replace(/^["']|["']$/g, '');
+    if (!keyId || !secret) return { client: null, keyId: null };
+
+    // Guard against accidental live/test mismatch:
+    if (secret === '9MUcEKDWyr2xCYsTli7zEWcE' && keyId.startsWith('rzp_test_')) {
+        console.warn('[Razorpay] Secret is LIVE but keyId is TEST. Auto-switching keyId to live.');
+        keyId = 'rzp_live_TZEDJBWypci6ht';
+    } else if (secret === 'iXxGduiSQ5wEXbbyV0hjE8OC' && keyId.startsWith('rzp_live_')) {
+        console.warn('[Razorpay] Secret is TEST but keyId is LIVE. Auto-switching keyId to test.');
+        keyId = 'rzp_test_TZESihLNLuI8VW';
+    }
+
+    return { client: new Razorpay({ key_id: keyId, key_secret: secret }), keyId };
 }
 
 export async function POST(request) {
-    const rzp = razorpayClient();
+    const { client: rzp, keyId } = razorpayClient();
     if (!rzp) {
         return NextResponse.json(
             { success: false, testMode: true, error: 'Live payments are not connected yet (missing RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET).' },
@@ -105,7 +115,7 @@ export async function POST(request) {
             orderId: order.id,
             amount,
             currency,
-            keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID,
+            keyId: keyId,
             pollToken: pollTokenFor(order.id),
         });
     } catch (error) {

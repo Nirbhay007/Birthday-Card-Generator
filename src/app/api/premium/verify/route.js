@@ -26,7 +26,7 @@ export async function POST(request) {
         const { provider, orderId, paymentId, signature, pageId, snapshotUrl } = body || {};
 
         if (provider === 'razorpay') {
-            const secret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
+            const secret = (process.env.RAZORPAY_KEY_SECRET || '').trim().replace(/^["']|["']$/g, '');
             if (!secret) return bad('Card verification is not connected yet (missing RAZORPAY_KEY_SECRET).', 503);
             if (!orderId || !paymentId || !signature) return bad('Incomplete payment details.');
 
@@ -138,7 +138,7 @@ export async function POST(request) {
         }
 
         if (provider === 'test') {
-            const secret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
+            const secret = (process.env.RAZORPAY_KEY_SECRET || '').trim().replace(/^["']|["']$/g, '');
             if (secret && process.env.NODE_ENV === 'production') {
                 return bad('Test mode is disabled.', 403);
             }
