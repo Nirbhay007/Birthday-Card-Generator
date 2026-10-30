@@ -1,0 +1,37 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "birthday-generator",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-04-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Your existing R2 bucket — direct binding for native access (optional)
+  "r2_buckets": [
+    {
+      "binding": "BIRTHDAY_ASSETS",
+      "bucket_name": "birthday-card-assets"
+    }
+  ],
+  // Cron triggers replace Vercel Cron (vercel.json)
+  "triggers": {
+    "crons": [
+      "0 4 * * *",
+      "0 5 * * *"
+    ]
+  },
+  // Public (non-secret) env vars — secrets are set via `wrangler secret put`
+  "vars": {
+    "NEXT_PUBLIC_SITE_URL": "https://birthday.nirbhay.online",
+    "NEXT_PUBLIC_SUPPORT_WHATSAPP": "7004191931",
+    "R2_ACCOUNT_ID": "cfe5684943956b8ee2578462784a5b56",
+    "R2_BUCKET_NAME": "birthday-card-assets",
+    "R2_PUBLIC_DOMAIN": "https://pub-eeb46e39205c429a834ca24da0e5e4e7.r2.dev",
+    "ALERT_FROM_EMAIL": "alerts@nirbhay.online",
+    "ALERT_TO_EMAIL": "nirbhaysinghbe1@gmail.com",
+    "EMAIL_FROM": "celebrate@nirbhay.online"
+  }
+}
+

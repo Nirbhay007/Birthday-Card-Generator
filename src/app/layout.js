@@ -3,8 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 import "./themes.css";
 import { getWebSiteSchema, getOrganizationSchema, getWebApplicationSchema, getProductSchema, serializeJsonLd } from "@/lib/seo";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/react";
+
 import HydrationMarker from "@/components/HydrationMarker";
 import AttributionCapture from "@/components/AttributionCapture";
 
@@ -146,7 +145,7 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
-        <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
+
         {/* Application identity */}
         <meta name="application-name" content="BirthdayGen" />
         <meta name="generator" content="BirthdayGen" />
@@ -172,8 +171,7 @@ export default function RootLayout({ children }) {
         <HydrationMarker />
         <AttributionCapture />
         {children}
-        <Analytics />
-        <SpeedInsights />
+
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>
             <Script

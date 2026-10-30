@@ -11,14 +11,6 @@ const nextConfig = {
         remotePatterns: [
             {
                 protocol: 'https',
-                hostname: '**.public.blob.vercel-storage.com',
-            },
-            {
-                protocol: 'https',
-                hostname: '*.public.blob.vercel-storage.com',
-            },
-            {
-                protocol: 'https',
                 hostname: '**.r2.dev',
             },
             {
@@ -37,8 +29,8 @@ const nextConfig = {
         //   which compiles WASM and spawns a blob worker for client-side HEIC
         //   conversion. Without them, HEIC photo uploads break silently.
         // - img/media allow `https:` broadly because user media lives on
-        //   Cloudflare R2 (custom domain varies per environment) and Vercel
-        //   Blob; scripts/frames/connections stay narrowly allow-listed.
+        //   Cloudflare R2 (custom domain varies per environment);
+        //   scripts/frames/connections stay narrowly allow-listed.
         const isDev = process.env.NODE_ENV !== 'production';
         const csp = [
             "default-src 'self'",
@@ -48,13 +40,13 @@ const nextConfig = {
             // cdn.razorpay.com serves the risk-detection bundle loaded by
             // Razorpay's checkout script; without it the checkout logs a CSP
             // error and loses device-risk signals.
-            `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} 'wasm-unsafe-eval' https://checkout.razorpay.com https://cdn.razorpay.com https://va.vercel-scripts.com https://www.googletagmanager.com`,
+            `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} 'wasm-unsafe-eval' https://checkout.razorpay.com https://cdn.razorpay.com https://www.googletagmanager.com`,
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "img-src 'self' data: blob: https:",
             "font-src 'self' data: https://fonts.gstatic.com",
             "media-src 'self' blob: https:",
             "worker-src 'self' blob:",
-            "connect-src 'self' https://api.razorpay.com https://cdn.razorpay.com https://lumberjack.razorpay.com https://vitals.vercel-insights.com https://www.google-analytics.com https://region1.google-analytics.com",
+            "connect-src 'self' https://api.razorpay.com https://cdn.razorpay.com https://lumberjack.razorpay.com https://www.google-analytics.com https://region1.google-analytics.com",
             "frame-src https://api.razorpay.com https://checkout.razorpay.com",
             "object-src 'none'",
             "base-uri 'self'",

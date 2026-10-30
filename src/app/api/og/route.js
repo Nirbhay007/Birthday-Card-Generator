@@ -1,6 +1,5 @@
 import { THEME_BG, normalizeOgInput, ogStorageKey, ogPublicUrl } from '@/lib/og';
 
-export const runtime = 'edge';
 
 const IMMUTABLE_CACHE = 'public, immutable, no-transform, max-age=31536000, s-maxage=31536000';
 

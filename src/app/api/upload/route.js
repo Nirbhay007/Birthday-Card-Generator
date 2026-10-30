@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { uploadFileToR2 } from '@/lib/r2';
-import { put } from '@vercel/blob';
 import { sendEmailAlert } from '@/lib/alerts';
 
 // In-memory sliding-window rate limiting (40 uploads per hour per IP)
@@ -142,23 +141,13 @@ export async function POST(request) {
             });
             url = r2Url;
         } catch (r2Error) {
-            console.warn('[Upload] Primary R2 upload failed, attempting Vercel Blob fallback:', r2Error?.message || r2Error);
+            console.error('[Upload] R2 upload failed:', r2Error?.message || r2Error);
             sendEmailAlert({
-                title: 'R2 Upload Failed (Fallback Engaged)',
-                message: `Cloudflare R2 failed (${r2Error?.name || 'Error'}: ${r2Error?.message || 'AccessDenied'}). Switched to Vercel Blob fallback automatically.`,
-                level: 'warning',
+                title: 'R2 Upload Failed',
+                message: `Cloudflare R2 failed (${r2Error?.name || 'Error'}: ${r2Error?.message || 'AccessDenied'}). No fallback available.`,
+                level: 'critical',
             }).catch(console.error);
-
-            if (process.env.BLOB_READ_WRITE_TOKEN) {
-                const blob = await put(pathname, buffer, {
-                    access: 'public',
-                    contentType,
-                });
-                url = blob.url;
-                storageProvider = 'vercel-blob';
-            } else {
-                throw r2Error;
-            }
+            throw r2Error;
         }
 
         return NextResponse.json({
