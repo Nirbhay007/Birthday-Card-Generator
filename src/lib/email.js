@@ -20,7 +20,9 @@
 import crypto from 'crypto';
 import { Resend } from 'resend';
 import prisma from '@/lib/prisma';
-import { renderReceiptEmail } from '@/lib/emailTemplates';
+import { renderReceiptEmail, renderRecoveryEmail } from '@/lib/emailTemplates';
+import { isBirthdayRelevant } from '@/lib/cardDates';
+import { pollTokenFor } from '@/lib/premiumTokens';
 import { isValidEmail } from '@/lib/utils';
 
 const DEFAULT_SITE_URL = 'https://birthday.nirbhay.online';
@@ -281,7 +283,7 @@ export async function sendReceiptForOrder(orderId) {
         } catch { }
     }
 
-    const isCard = order.tier === 'card_vip';
+    const isCard = order.tier === 'card_vip' || order.tier === 'group_card';
     const { subject, html, text } = renderReceiptEmail({
         tier: order.tier,
         recipientName,
@@ -328,6 +330,126 @@ export async function sendReceiptForOrder(orderId) {
             });
         } catch (err) {
             console.error(`[Email] receipt release failed for ${orderId}:`, err?.message || err);
+        }
+        return { sent: false, reason: result.reason || 'send_failed' };
+    }
+
+    return { sent: true, id: result.id };
+}
+
+/**
+ * One abandoned-checkout nudge per order, ever.
+ *
+ * Claims `recoverySentAt` atomically before sending, exactly like receipts.
+ * The resume link carries the order id plus its poll token, so the buyer can
+ * finish the exact checkout from the email without exposing an unlock key.
+ */
+export async function sendRecoveryForOrder(orderId) {
+    if (typeof orderId !== 'string' || !orderId) {
+        return { sent: false, reason: 'missing_order' };
+    }
+
+    let order = null;
+    try {
+        order = await prisma.premiumOrder.findUnique({
+            where: { orderId },
+            select: {
+                orderId: true,
+                status: true,
+                amount: true,
+                currency: true,
+                pageId: true,
+                tier: true,
+                buyerContact: true,
+                recoverySentAt: true,
+            },
+        });
+    } catch (err) {
+        console.error(`[Email] recovery lookup failed for ${orderId}:`, err?.message || err);
+        return { sent: false, reason: 'db_error' };
+    }
+
+    if (!order) return { sent: false, reason: 'order_not_found' };
+    if (order.status === 'paid') return { sent: false, reason: 'already_paid' };
+    if (order.recoverySentAt) return { sent: false, reason: 'already_sent' };
+
+    const email = parseBuyerEmail(order.buyerContact);
+    if (!email) return { sent: false, reason: 'no_email' };
+
+    // Resolve the card before claiming the order: a nudge sent after the
+    // birthday has passed is worse than no nudge, and it should never consume
+    // the one-shot claim.
+    let recipientName = '';
+    let birthdayDate = null;
+    if (order.pageId) {
+        try {
+            const page = await prisma.birthdayPage.findUnique({
+                where: { id: order.pageId },
+                select: { recipientName: true, birthdayDate: true },
+            });
+            recipientName = page?.recipientName || '';
+            birthdayDate = page?.birthdayDate || null;
+        } catch { }
+    }
+    if (!isBirthdayRelevant(birthdayDate)) {
+        return { sent: false, reason: 'birthday_passed' };
+    }
+
+    const claimAt = new Date();
+    try {
+        const claim = await prisma.premiumOrder.updateMany({
+            where: { orderId, status: { not: 'paid' }, recoverySentAt: null },
+            data: { recoverySentAt: claimAt },
+        });
+        if (claim.count === 0) return { sent: false, reason: 'claimed_elsewhere' };
+    } catch (err) {
+        console.error(`[Email] recovery claim failed for ${orderId}:`, err?.message || err);
+        return { sent: false, reason: 'db_error' };
+    }
+
+    const token = pollTokenFor(orderId);
+    const resumeUrl = order.pageId
+        ? `${siteUrl()}/b/${order.pageId}?resume=${encodeURIComponent(orderId)}&rt=${encodeURIComponent(token)}`
+        : `${siteUrl()}/premium?resume=${encodeURIComponent(orderId)}&rt=${encodeURIComponent(token)}`;
+
+    const { subject, html, text } = renderRecoveryEmail({
+        recipientName,
+        tier: order.tier || 'universe',
+        amount: order.amount,
+        currency: order.currency,
+        resumeUrl,
+        supportUrl: supportUrl(),
+    });
+
+    let result = await sendEmail({
+        to: email,
+        subject,
+        html,
+        text,
+        kind: 'recovery',
+        reference: orderId,
+    });
+
+    if (!result.ok && (result.reason === 'send_failed' || result.reason === 'provider_error')) {
+        await new Promise((resolve) => setTimeout(resolve, 700));
+        result = await sendEmail({
+            to: email,
+            subject,
+            html,
+            text,
+            kind: 'recovery',
+            reference: orderId,
+        });
+    }
+
+    if (!result.ok) {
+        try {
+            await prisma.premiumOrder.updateMany({
+                where: { orderId, recoverySentAt: claimAt },
+                data: { recoverySentAt: null },
+            });
+        } catch (err) {
+            console.error(`[Email] recovery release failed for ${orderId}:`, err?.message || err);
         }
         return { sent: false, reason: result.reason || 'send_failed' };
     }

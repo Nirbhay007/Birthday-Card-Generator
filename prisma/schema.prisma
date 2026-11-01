@@ -6,50 +6,57 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("PRISMA_DATABASE_URL") //  Accelerate for the app (pooling & caching)
-  directUrl = env("POSTGRES_URL")       //  Direct connection for migrations
+  provider  = "postgresql"
+  url       = env("PRISMA_DATABASE_URL") //  Accelerate for the app (pooling & caching)
+  directUrl = env("POSTGRES_URL") //  Direct connection for migrations
 }
 
 model BirthdayPage {
-  id           String   @id @default(cuid())
+  id               String        @id @default(cuid())
   // Ownership secret (192-bit hex). Required to edit the card via PATCH.
   // Nullable: cards created before this column exist stay editable (legacy).
-  editToken    String?  @unique
-  recipientName String
-  birthdayDate DateTime?
-  message      String?
-  theme        String   @default("elegant")
-  audioEnabled Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  ipAddress    String?
-  reminderEmail String?
+  editToken        String?       @unique
+  recipientName    String
+  birthdayDate     DateTime?
+  message          String?
+  theme            String        @default("elegant")
+  audioEnabled     Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  ipAddress        String?
+  reminderEmail    String?
+  // Optional WhatsApp number captured after creation. No WhatsApp provider is
+  // configured yet, so this is used only for assisted reminders/delivery.
+  reminderPhone    String?
   // Year of the birthday for which a reminder was sent (e.g. 2026). Null means
   // no reminder has gone out yet. One email per birthday, never per cron run.
-  reminderSentFor Int?
+  reminderSentFor  Int?
   // Set when the creator clicks unsubscribe. The email is kept as a
   // suppression record and reminderEmail stays non-null so the cleanup cron
   // continues preserving their page/photos.
   reminderOptOutAt DateTime?
-  age          Int?
-  senderName   String?
-  relationship String?
-  music        String?  @default("classic")
-  viewCount    Int      @default(0)
-  loves        Int      @default(0)
-  shares       Int      @default(0)
-  source       String?
-  isVip        Boolean  @default(false)
-  isVipPro     Boolean  @default(false)
-  photos       Photo[]
+  age              Int?
+  senderName       String?
+  relationship     String?
+  music            String?       @default("classic")
+  viewCount        Int           @default(0)
+  loves            Int           @default(0)
+  shares           Int           @default(0)
+  source           String?
+  isVip            Boolean       @default(false)
+  isVipPro         Boolean       @default(false)
+  // Group cards: a paid shared card that anyone can add a wish to.
+  isGroup          Boolean       @default(false)
+  photos           Photo[]
+  delivery         CardDelivery?
+  groupWishes      GroupWish[]
 }
 
 model Photo {
-  id        String       @id @default(cuid())
-  url       String
-  order     Int          @default(0)
-  pageId    String
-  page      BirthdayPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  id     String       @id @default(cuid())
+  url    String
+  order  Int          @default(0)
+  pageId String
+  page   BirthdayPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
 
   // Postgres does not index foreign keys automatically; photo joins/cleanup
   // filter by pageId and grow one row per uploaded photo.
@@ -60,9 +67,9 @@ model Photo {
 // New standalone table — existing tables are untouched by its migration.
 model SupportEvent {
   id        String   @id @default(cuid())
-  event     String   // 'modal_open' | 'pay_click' | 'copy_upi'
-  amount    Int?     // selected rupee amount (pay_click only)
-  path      String?  // page path that drove the click, e.g. '/wishes/mom'
+  event     String // 'modal_open' | 'pay_click' | 'copy_upi'
+  amount    Int? // selected rupee amount (pay_click only)
+  path      String? // page path that drove the click, e.g. '/wishes/mom'
   createdAt DateTime @default(now())
 
   @@index([event, createdAt])
@@ -72,39 +79,81 @@ model SupportEvent {
 // made, marked paid after signature verification. Standalone table —
 // additive migration only, existing data untouched.
 model PremiumOrder {
-  id        String    @id @default(cuid())
-  provider  String    @default("razorpay")
-  orderId   String    @unique // Razorpay order id, e.g. 'order_...'
-  paymentId String?   // Razorpay payment id, filled on success
-  amount    Int       // smallest currency unit (paise / cents)
-  currency  String    // 'INR' | 'USD'
-  status    String    @default("created") // 'created' | 'paid' | 'failed'
-  createdAt DateTime  @default(now())
-  paidAt    DateTime?
-  pageId    String?   // Linked BirthdayPage id for card VIP upgrades
-  tier      String?   @default("universe") // 'card_vip' | 'universe'
+  id             String    @id @default(cuid())
+  provider       String    @default("razorpay")
+  orderId        String    @unique // Razorpay order id, e.g. 'order_...'
+  paymentId      String? // Razorpay payment id, filled on success
+  amount         Int // smallest currency unit (paise / cents)
+  currency       String // 'INR' | 'USD'
+  status         String    @default("created") // 'created' | 'paid' | 'failed'
+  createdAt      DateTime  @default(now())
+  paidAt         DateTime?
+  pageId         String? // Linked BirthdayPage id for card VIP upgrades
+  tier           String?   @default("universe") // 'card_vip' | 'universe'
   // Magic-link token: unlock_<random>. Whoever opens /premium?...&key=<token>
   // is treated as the payer — no accounts needed. Shareable by design
   // (giver pays, recipient opens), unguessable (192-bit random + DB check).
-  unlockToken String?  @unique
+  unlockToken    String?   @unique
   // Full URL snapshot (e.g. /premium?to=Ahmad&from=...&key=unlock_...) for support recovery.
-  snapshotUrl  String?
+  snapshotUrl    String?
   // Buyer phone/email from Razorpay — for support outreach without checking the dashboard.
-  buyerContact String?
+  buyerContact   String?
   // Set after a payment-confirmation email is successfully sent. Guards
   // against duplicate receipts when both /verify and the Razorpay webhook
   // confirm the same payment.
-  receiptSentAt DateTime?
+  receiptSentAt  DateTime?
   // Why a checkout did not complete. Populated by the client (payment.failed /
   // dismissed modal) and the Razorpay webhook. Null means "no failure recorded"
   // — never treat a null on a paid row as a failure.
-  failureCode   String? // Razorpay error.code, or 'DISMISSED' when the modal closed
-  failureReason String? // Human-readable error.description from Razorpay
-  failureMethod String? // Attempted instrument, e.g. 'card' | 'upi'
-  failedAt      DateTime?
+  failureCode    String? // Razorpay error.code, or 'DISMISSED' when the modal closed
+  failureReason  String? // Human-readable error.description from Razorpay
+  failureMethod  String? // Attempted instrument, e.g. 'card' | 'upi'
+  failedAt       DateTime?
+  // Abandoned-checkout recovery: claimed atomically before the email is sent,
+  // so a cron re-run can never send the same nudge twice.
+  recoverySentAt DateTime?
 
   @@index([status, createdAt])
   @@index([pageId])
+  @@index([status, recoverySentAt, createdAt])
+}
+
+// Scheduled delivery for a card. One row per card: rescheduling updates the
+// existing row instead of stacking reminders. The cron claims a due row by
+// flipping it to 'sending', then marks it 'sent' or releases it for a retry.
+model CardDelivery {
+  id             String       @id @default(cuid())
+  pageId         String       @unique
+  page           BirthdayPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  scheduledAt    DateTime
+  timezone       String       @default("Asia/Kolkata")
+  recipientEmail String?
+  recipientName  String?
+  creatorEmail   String?
+  // 'email' sends the card to the recipient. 'whatsapp_assist' emails the
+  // creator a ready-to-send WhatsApp link when no recipient email is known.
+  channel        String       @default("email")
+  status         String       @default("scheduled") // scheduled | sending | sent | failed | cancelled
+  attempts       Int          @default(0)
+  sentAt         DateTime?
+  error          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([status, scheduledAt])
+}
+
+// One wish on a group card. Public, append-only, rate-limited at the API.
+model GroupWish {
+  id        String       @id @default(cuid())
+  pageId    String
+  page      BirthdayPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  name      String
+  message   String
+  emoji     String?
+  createdAt DateTime     @default(now())
+
+  @@index([pageId, createdAt])
 }
 
 // Append-only share intents (ADDITIVE ONLY). One row per real share action,

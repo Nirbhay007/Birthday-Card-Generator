@@ -75,7 +75,10 @@ export default function CinemaCanvas({ className = '', heartBurstTrigger = 0, in
     const heartsRef = useRef([]);
     const apiRef = useRef(null);
     const interactiveRef = useRef(interactive);
-    interactiveRef.current = interactive;
+
+    useEffect(() => {
+        interactiveRef.current = interactive;
+    }, [interactive]);
 
     // External heart burst trigger (scene transitions, love button).
     useEffect(() => {

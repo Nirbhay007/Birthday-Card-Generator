@@ -378,6 +378,7 @@ export default function KeepsakeCard({
 
     useEffect(() => {
         try {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setCanShare(typeof navigator !== 'undefined' && !!navigator.share && !!navigator.canShare);
         } catch {}
     }, []);
@@ -406,6 +407,7 @@ export default function KeepsakeCard({
     }, [to, from, photoUrl, dedication, occasionLabel, dateLabel, unlocked, theme]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (autoRender) paint();
     }, [autoRender, paint]);
 

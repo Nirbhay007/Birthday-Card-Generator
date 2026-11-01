@@ -70,7 +70,10 @@ export async function POST(request) {
                 const noteProduct = typeof payment?.notes?.product === 'string' ? payment.notes.product : '';
                 const noteTier = noteProduct === 'birthday-vip-card'
                     ? 'card_vip'
-                    : noteProduct === 'birthday-premium-universe' ? 'universe' : null;
+                    : noteProduct === 'birthday-group-card'
+                        ? 'group_card'
+                        : noteProduct === 'birthday-premium-universe' ? 'universe' : null;
+                const effectiveTier = existing?.tier || noteTier || 'universe';
                 const targetPageId = existing?.pageId || notePageId || null;
                 await prisma.premiumOrder.upsert({
                     where: { orderId },
@@ -109,7 +112,11 @@ export async function POST(request) {
                 if (targetPageId) {
                     await prisma.birthdayPage.update({
                         where: { id: targetPageId },
-                        data: { isVip: true, isVipPro: true },
+                        data: {
+                            isVip: true,
+                            isVipPro: true,
+                            ...(effectiveTier === 'group_card' ? { isGroup: true } : {}),
+                        },
                     }).catch((e) => console.error('Failed to mark page as VIP via webhook:', e?.message || e));
                     try { revalidatePath(`/b/${targetPageId}`); } catch {}
                 }

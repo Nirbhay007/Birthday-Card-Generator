@@ -41,7 +41,7 @@ export default function LivePreview({ data }) {
                 >
                     <Sparkles className="w-3.5 h-3.5 text-[#f2c14e]" />
                     <span>⚡ Instant Cinema</span>
-                    <span className="text-[10px] opacity-85 font-black">₹49</span>
+                    <span className="text-[10px] opacity-85 font-black">₹99</span>
                 </button>
             </div>
 

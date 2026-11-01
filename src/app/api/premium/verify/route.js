@@ -23,7 +23,8 @@ function bad(msg, status = 400) {
 export async function POST(request) {
     try {
         const body = await request.json().catch(() => ({}));
-        const { provider, orderId, paymentId, signature, pageId, snapshotUrl } = body || {};
+        const { provider, orderId, paymentId, signature, pageId, snapshotUrl, tier } = body || {};
+        const requestedTier = ['card_vip', 'universe', 'group_card'].includes(tier) ? tier : null;
 
         if (provider === 'razorpay') {
             const secret = (process.env.RAZORPAY_KEY_SECRET || '').trim().replace(/^["']|["']$/g, '');
@@ -45,28 +46,56 @@ export async function POST(request) {
             let currency = null;
             let unlockKey = null;
             let effectivePageId = pageId || null;
+            let effectiveTier = requestedTier || 'universe';
             try {
                 const existing = await prisma.premiumOrder.findUnique({ where: { orderId }, select: { unlockToken: true, pageId: true, tier: true } }).catch(() => null);
                 if (!effectivePageId && existing?.pageId) effectivePageId = existing.pageId;
+                if (existing?.tier) effectiveTier = existing.tier;
                 const token = existing?.unlockToken || `unlock_${crypto.randomBytes(24).toString('hex')}`;
                 const safeSnapshot = typeof snapshotUrl === 'string' && snapshotUrl.trim() ? snapshotUrl.trim().slice(0, 2000) : undefined;
                 const row = await prisma.premiumOrder.upsert({
                     where: { orderId },
-                    update: { paymentId, status: 'paid', paidAt: new Date(), unlockToken: token, ...(effectivePageId ? { pageId: effectivePageId } : {}), ...(safeSnapshot ? { snapshotUrl: safeSnapshot } : {}) },
-                    create: { orderId, paymentId, amount: 0, currency: 'INR', status: 'paid', paidAt: new Date(), unlockToken: token, pageId: effectivePageId, ...(safeSnapshot ? { snapshotUrl: safeSnapshot } : {}) },
-                    select: { amount: true, currency: true },
+                    update: {
+                        paymentId,
+                        status: 'paid',
+                        paidAt: new Date(),
+                        unlockToken: token,
+                        ...(effectivePageId ? { pageId: effectivePageId } : {}),
+                        ...(safeSnapshot ? { snapshotUrl: safeSnapshot } : {}),
+                        ...(requestedTier && !existing?.tier ? { tier: requestedTier } : {}),
+                    },
+                    create: {
+                        orderId,
+                        paymentId,
+                        amount: 0,
+                        currency: 'INR',
+                        status: 'paid',
+                        paidAt: new Date(),
+                        unlockToken: token,
+                        pageId: effectivePageId,
+                        tier: effectiveTier,
+                        ...(safeSnapshot ? { snapshotUrl: safeSnapshot } : {}),
+                    },
+                    select: { amount: true, currency: true, tier: true },
                 });
                 unlockKey = token;
                 amount = row.amount;
                 currency = row.currency;
+                if (row.tier) effectiveTier = row.tier;
 
-                // Unlock VIP status on the card if this is a card VIP upgrade
+                // Unlock VIP status on the card if this is a card VIP upgrade.
+                // A group card includes the VIP finish and also opens the public
+                // contributor page.
                 if (effectivePageId) {
                     await prisma.birthdayPage.update({
                         where: { id: effectivePageId },
-                        data: { isVip: true, isVipPro: true },
+                        data: {
+                            isVip: true,
+                            isVipPro: true,
+                            ...(effectiveTier === 'group_card' ? { isGroup: true } : {}),
+                        },
                     }).catch((e) => console.error('Failed to mark page as VIP:', e?.message || e));
-                    try { revalidatePath(`/b/${effectivePageId}`); } catch {}
+                    try { revalidatePath(`/b/${effectivePageId}`); } catch { }
                 }
             } catch (dbError) {
                 console.error('PremiumOrder mark-paid failed (pending migration?):', dbError?.message || dbError);
@@ -78,7 +107,7 @@ export async function POST(request) {
                 await prisma.supportEvent.create({
                     data: { event: 'premium_paid', amount: rupees, path: effectivePageId ? `/b/${effectivePageId}` : `/premium (order ${String(orderId).slice(0, 24)})` },
                 });
-            } catch {}
+            } catch { }
 
             // Payment receipt, sent after the response so checkout never waits
             // on Resend. Idempotent per order (`receiptSentAt` claim).
@@ -143,16 +172,21 @@ export async function POST(request) {
                 return bad('Test mode is disabled.', 403);
             }
             const testPageId = body?.pageId;
+            const testTier = ['card_vip', 'universe', 'group_card'].includes(body?.tier) ? body.tier : 'card_vip';
             if (testPageId) {
                 try {
                     await prisma.birthdayPage.update({
                         where: { id: testPageId },
-                        data: { isVip: true, isVipPro: true },
+                        data: {
+                            isVip: true,
+                            isVipPro: true,
+                            ...(testTier === 'group_card' ? { isGroup: true } : {}),
+                        },
                     });
-                    try { revalidatePath(`/b/${testPageId}`); } catch {}
-                } catch {}
+                    try { revalidatePath(`/b/${testPageId}`); } catch { }
+                } catch { }
             }
-            return NextResponse.json({ success: true, testMode: true, isVip: !!testPageId, pageId: testPageId });
+            return NextResponse.json({ success: true, testMode: true, isVip: !!testPageId, pageId: testPageId, tier: testTier });
         }
 
         return bad('Unknown provider.');

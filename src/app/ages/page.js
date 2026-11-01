@@ -1,7 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { Sparkles, ArrowRight, Gift, Cake } from 'lucide-react';
-import SupportButton from '@/components/SupportButton';
 import WhatsNew from '@/components/WhatsNew';
 import { getAllAgePages } from '@/lib/ageWishesData';
 import { getAllCategories } from '@/lib/wishesData';
@@ -142,7 +141,6 @@ export default function AgesIndexPage() {
               <Link href="/" className="hover:text-white transition-colors">Card Generator</Link>
               <Link href="/wishes" className="hover:text-white transition-colors">Wishes Hub</Link>
               <Link href="/ages" className="hover:text-white transition-colors">Wishes by Age</Link>
-              <SupportButton variant="link" />
             </div>
           </div>
         </footer>

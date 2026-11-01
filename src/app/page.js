@@ -31,7 +31,7 @@ const FAQS = [
   },
   {
     question: "Is BirthdayGen free to use?",
-    answer: "Yes. The core birthday website is free to create, preview and share, with no signup and no software download. Optional VIP themes and cinematic premium universes are one-time paid extras, starting at ₹29 ($1 outside India)."
+    answer: "Yes. The core birthday website is free to create, preview and share, with no signup and no software download. Optional VIP themes and cinematic premium universes are one-time paid extras, starting at ₹49 ($1 outside India)."
   },
   {
     question: "How long does a created birthday page stay active?",
@@ -43,11 +43,11 @@ const FAQS = [
   },
   {
     question: "Can I customize the design themes and add photos?",
-    answer: "Yes. The free tier includes 2 themes (Fun & Colorful and Classic Ivory) and up to 3 photos. The ₹29 VIP unlock adds 8 more themes, 11 soundtracks and a gallery of up to 12 photos. You can preview every theme before paying."
+    answer: "Yes. The free tier includes 2 themes (Fun & Colorful and Classic Ivory) and up to 3 photos. The ₹49 VIP unlock adds 8 more themes, 11 soundtracks and a gallery of up to 12 photos. You can preview every theme before paying."
   },
   {
     question: "Can I make a birthday website for free?",
-    answer: "Yes. You can build and share a birthday website without paying: pick a free theme, add the name, message and up to 3 photos, choose music, and share the link. Optional premium universes with extra themes, sealed letters and a cinematic keepsake start at ₹49."
+    answer: "Yes. You can build and share a birthday website without paying: pick a free theme, add the name, message and up to 3 photos, choose music, and share the link. Optional premium universes with extra themes, sealed letters and a cinematic keepsake start at ₹99."
   },
   {
     question: "Birthday website or birthday card: which is better?",
@@ -225,7 +225,7 @@ export default function Home() {
                   For the birthdays that deserve a full production — and a link that never expires.
                 </p>
                 <div className="mt-5 flex items-end gap-2">
-                  <p className="font-display text-4xl font-extrabold tracking-tight">₹49</p>
+                  <p className="font-display text-4xl font-extrabold tracking-tight">₹99</p>
                   <p className="pb-1 text-sm font-semibold text-muted">/ $1 one-time</p>
                 </div>
                 <p className="mt-1 text-xs font-semibold text-muted">No subscription. No account.</p>
@@ -254,7 +254,7 @@ export default function Home() {
                     See premium
                   </Link>
                   <p className="text-xs font-semibold text-muted">
-                    Just want extra themes on one card? VIP unlock is ₹29 / $1.
+                    Just want extra themes on one card? VIP unlock is ₹49 / $1.
                   </p>
                 </div>
               </div>

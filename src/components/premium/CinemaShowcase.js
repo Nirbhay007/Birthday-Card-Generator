@@ -57,7 +57,7 @@ export default function CinemaShowcase() {
                 <div className="flex items-center justify-center">
                     <div className="inline-flex items-center gap-2 rounded-full border border-[#f2c14e]/40 bg-[#f2c14e]/10 px-4 py-1.5 text-xs font-extrabold text-[#f7dc9a] backdrop-blur-md shadow-inner mb-6">
                         <Sparkles className="w-3.5 h-3.5 text-[#f2c14e]" />
-                        <span>The Private Cinema Keepsake · ₹49 ($1 worldwide)</span>
+                        <span>The Private Cinema Keepsake · ₹99 ($1 worldwide)</span>
                     </div>
                 </div>
 

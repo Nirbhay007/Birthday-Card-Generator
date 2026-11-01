@@ -96,7 +96,7 @@ a {
 }
 
 /* ── Free vs VIP mini card mocks (PostCreationModal) ─────────────────────
-   The ₹29 upgrade is sold visually: two tiny cards side by side, one dull
+   The ₹49 upgrade is sold visually: two tiny cards side by side, one dull
    and one alive. Pure CSS on purpose — it renders on any page, instantly. */
 .vipmock {
   position: relative;

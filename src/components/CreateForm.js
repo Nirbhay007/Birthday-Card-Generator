@@ -5,12 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import PhotoUploader from './PhotoUploader';
 import CinemaTeaserCard from './premium/CinemaTeaserCard';
 import WishInspirationModal from './WishInspirationModal';
-import SupportButton from './SupportButton';
 import {
-    Loader2, Sparkles, Bell, ArrowLeft, ArrowRight, Check,
+    Loader2, Sparkles, ArrowLeft, ArrowRight, Check,
     User, Palette, Camera, Heart, Laugh, Scissors, Music, Crown, Play, Square,
 } from 'lucide-react';
-import { cn, isValidEmail } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { getAttributionSource } from '@/lib/attribution';
 import { track } from '@/lib/track';
 import { FREE_TRACKS, VIP_TRACKS, PRO_TRACKS, ALL_TRACKS, getTrackName, playAudioPreview, stopAllAudioPreviews } from '@/lib/music';
@@ -21,7 +20,7 @@ const THEMES = [
     // 2 Free Themes
     { id: 'fun', name: 'Fun & Colorful', color: '#ff69b4', bg: '#fff0f5', textColor: '#262626', badge: 'Free' },
     { id: 'elegant', name: 'Classic Ivory', color: '#d4af37', bg: '#fdfbf7', textColor: '#2c2c2c', badge: 'Free' },
-    // VIP Themes (unlocked with paid ₹29 upgrade)
+    // VIP Themes (unlocked with paid ₹49 upgrade)
     { id: 'royal', name: 'Royal Gold', color: '#f5c518', bg: '#120722', textColor: '#fff9e6', vip: true },
     { id: 'neon', name: 'Cyber Neon', color: '#00f2fe', bg: '#070814', textColor: '#ffffff', vip: true },
     { id: 'midnight', name: 'Cosmic Galaxy', color: '#818cf8', bg: '#060919', textColor: '#f1f5f9', vip: true },
@@ -128,7 +127,6 @@ export default function CreateForm({ formData, setFormData }) {
     const [step, setStep] = useState(1);
     const [nameError, setNameError] = useState('');
     const [dateError, setDateError] = useState('');
-    const [emailError, setEmailError] = useState('');
     const [toneMsg, setToneMsg] = useState('');
     const [successModalOpen, setSuccessModalOpen] = useState(false);
     const [createdCard, setCreatedCard] = useState(null);
@@ -140,6 +138,8 @@ export default function CreateForm({ formData, setFormData }) {
     // counts once per page load so back-and-forth navigation cannot inflate it.
     const startedRef = useRef(false);
     const completedStepsRef = useRef(new Set());
+    const photoCapTrackedRef = useRef(false);
+    const remixAppliedRef = useRef(false);
 
     const toggleAudioPreview = (e, trackId) => {
         e.stopPropagation();
@@ -301,6 +301,38 @@ export default function CreateForm({ formData, setFormData }) {
         }
     }, [searchParams, setFormData]);
 
+    // Recipient remix: a card that just made someone feel something can send
+    // them back into the generator with the relationship/theme already chosen.
+    useEffect(() => {
+        if (remixAppliedRef.current) return;
+        if (!searchParams.get('remix')) return;
+        remixAppliedRef.current = true;
+
+        const relationship = searchParams.get('relationship');
+        const theme = searchParams.get('theme');
+        const patch = {};
+        if (relationship && RELATIONSHIPS.includes(relationship)) patch.relationship = relationship;
+        if (theme && THEMES.some((t) => t.id === theme)) patch.theme = theme;
+        if (Object.keys(patch).length > 0) {
+            setFormData((prev) => ({ ...prev, ...patch }));
+        }
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setWishLoadedNotice('✨ Remix mode: the look is ready. Just add their name and make it yours.');
+        setTimeout(() => {
+            const el = document.getElementById('create');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    }, [searchParams, setFormData]);
+
+    // The strongest free-to-paid signal in the product: a creator who adds a
+    // 4th photo has already decided this card is worth effort. Count it once.
+    useEffect(() => {
+        if (photoCapTrackedRef.current) return;
+        if ((formData.photos || []).length < 4) return;
+        photoCapTrackedRef.current = true;
+        track('photo_cap_hit');
+    }, [formData.photos]);
+
     const goNext = () => {
         if (step === 1) {
             if (!formData.recipientName.trim()) {
@@ -314,16 +346,6 @@ export default function CreateForm({ formData, setFormData }) {
                 }
                 if (formData.birthdayDate > maxDate) {
                     setDateError('Please select a birthday within the next 12 months');
-                    return;
-                }
-            }
-            if (formData.remindNextYear) {
-                if (!formData.birthdayDate) {
-                    setDateError('Add the birthday date so we can email your reminder in the week before.');
-                    return;
-                }
-                if (!isValidEmail(formData.reminderEmail || '')) {
-                    setEmailError('Enter a valid email for your free reminder.');
                     return;
                 }
             }
@@ -379,85 +401,111 @@ export default function CreateForm({ formData, setFormData }) {
                 return;
             }
         }
-        if (formData.remindNextYear) {
-            if (!formData.birthdayDate) {
-                setStep(1);
-                setDateError('Add the birthday date so we can email your reminder in the week before.');
-                return;
-            }
-            if (!isValidEmail(formData.reminderEmail || '')) {
-                setStep(1);
-                setEmailError('Enter a valid email for your free reminder.');
-                return;
-            }
-        }
-        setEmailError('');
         markStarted();
         markStep(3);
         track('create_submit');
         setLoading(true);
         setLoadingMessage('Uploading photos...');
         try {
-            const finalPhotoUrls = [];
             const rawPhotos = formData.photos || [];
-            for (let i = 0; i < rawPhotos.length; i++) {
-                const item = rawPhotos[i];
-                if (typeof item === 'string') {
-                    finalPhotoUrls.push(item);
-                } else if (item && item.file) {
-                    setLoadingMessage(`Uploading photo ${i + 1} of ${rawPhotos.length}...`);
-                    let uploadData = null;
-                    for (let attempt = 1; attempt <= 2; attempt++) {
-                        try {
-                            const fd = new FormData();
-                            fd.append('file', item.file);
-                            const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
-                            if (!uploadRes.ok) {
-                                let errMsg = `Upload failed with status ${uploadRes.status}`;
-                                try {
-                                    const errJson = await uploadRes.json();
-                                    errMsg = errJson.error || errMsg;
-                                } catch {
-                                    if (uploadRes.status === 413) {
-                                        errMsg = `Photo ${i + 1} is too large. Please select a smaller photo.`;
-                                    }
-                                }
-                                throw new Error(errMsg);
-                            }
-                            uploadData = await uploadRes.json();
-                            if (uploadData && uploadData.success && uploadData.url) {
-                                break;
-                            } else {
-                                throw new Error(uploadData?.error || 'Failed to upload photo');
-                            }
-                        } catch (uploadErr) {
-                            if (attempt === 2) throw uploadErr;
-                            await new Promise((r) => setTimeout(r, 600));
-                        }
-                    }
+            const results = new Array(rawPhotos.length).fill(null);
+            const jobs = [];
 
-                    if (uploadData && uploadData.url) {
-                        finalPhotoUrls.push(uploadData.url);
-                    } else {
-                        throw new Error(`Failed to upload photo ${i + 1}. Please try again.`);
+            rawPhotos.forEach((item, index) => {
+                if (typeof item === 'string') {
+                    results[index] = item;
+                } else if (item && item.file) {
+                    jobs.push({ item, index });
+                }
+            });
+
+            // Bounded parallel uploads. Sequential uploads were the biggest
+            // create-funnel leak: one slow/failed photo aborted the entire card.
+            // Three at a time keeps R2 + the upload route comfortable while
+            // cutting the wall-clock wait for a 6-photo card roughly in half.
+            const uploadPhoto = async (item) => {
+                let lastError = null;
+                for (let attempt = 1; attempt <= 2; attempt++) {
+                    try {
+                        const fd = new FormData();
+                        fd.append('file', item.file);
+                        const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
+                        if (!uploadRes.ok) {
+                            let errMsg = `Upload failed with status ${uploadRes.status}`;
+                            try {
+                                const errJson = await uploadRes.json();
+                                errMsg = errJson.error || errMsg;
+                            } catch {
+                                if (uploadRes.status === 413) {
+                                    errMsg = 'That photo is too large. Please select a smaller photo.';
+                                }
+                            }
+                            throw new Error(errMsg);
+                        }
+                        const uploadData = await uploadRes.json();
+                        if (uploadData?.success && uploadData.url) return uploadData.url;
+                        throw new Error(uploadData?.error || 'Failed to upload photo');
+                    } catch (uploadErr) {
+                        lastError = uploadErr;
+                        if (attempt < 2) await new Promise((r) => setTimeout(r, 600));
                     }
                 }
+                throw lastError || new Error('Failed to upload photo');
+            };
+
+            let cursor = 0;
+            let completed = 0;
+            const total = jobs.length;
+            const worker = async () => {
+                while (cursor < jobs.length) {
+                    const job = jobs[cursor++];
+                    try {
+                        results[job.index] = await uploadPhoto(job.item);
+                    } catch (uploadErr) {
+                        // Keep the original file in state so a retry only
+                        // re-uploads what failed, not the whole gallery.
+                        results[job.index] = job.item;
+                        console.warn(`Photo ${job.index + 1} upload failed:`, uploadErr?.message || uploadErr);
+                    }
+                    completed += 1;
+                    setLoadingMessage(`Uploading photos… ${completed} of ${total}`);
+                }
+            };
+            await Promise.all(Array.from({ length: Math.min(3, jobs.length) }, worker));
+
+            const finalPhotoUrls = results.filter((value) => typeof value === 'string');
+            const failedCount = results.filter((value) => value && typeof value === 'object' && value.file).length;
+            const remainingPhotos = results.filter(Boolean);
+
+            if (jobs.length > 0 && finalPhotoUrls.length === 0) {
+                track('create_failed');
+                setFormData((prev) => ({ ...prev, photos: remainingPhotos }));
+                alert('We could not upload your photos. Please check your connection and try again — your words and theme are still saved.');
+                return;
+            }
+            if (failedCount > 0) {
+                track('create_partial_upload');
+                setFormData((prev) => ({ ...prev, photos: remainingPhotos }));
             }
 
             setLoadingMessage('Wrapping your surprise...');
             // First-touch campaign/referrer attribution when no internal
             // wish/age page already claimed the source. Server allowlists it.
             const source = formData.source || getAttributionSource();
+            // Reminder capture now happens after creation, in the success
+            // modal. Strip any stale draft fields so an old draft can never
+            // silently subscribe someone.
+            const { remindNextYear: _remind, reminderEmail: _email, reminderPhone: _phone, ...cardData } = formData;
             const res = await fetch('/api/birthday', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    ...formData,
+                    ...cardData,
                     ...(source ? { source } : {}),
                     photos: finalPhotoUrls,
                 }),
             });
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
             if (data.success) {
                 try {
                     localStorage.removeItem(DRAFT_KEY);
@@ -469,15 +517,18 @@ export default function CreateForm({ formData, setFormData }) {
                     }
                 } catch { }
                 track('card_created');
-                router.push(`/b/${data.id}?created=1`);
+                const warning = failedCount > 0 ? `&uploadWarning=${failedCount}` : '';
+                router.push(`/b/${data.id}?created=1${warning}`);
             } else {
-                alert('Failed to create page: ' + data.error);
+                track('create_failed');
+                alert('Failed to create page: ' + (data.error || 'Please try again.'));
             }
         } catch (error) {
             console.error('Error creating page:', error);
+            track('create_failed');
             const isNetworkErr = error?.message === 'Failed to fetch' || error?.name === 'TypeError';
             const userMsg = isNetworkErr
-                ? 'Network connection was interrupted while uploading photos. Please check your internet connection and try again.'
+                ? 'Network connection was interrupted while creating your page. Your draft is saved — please try again.'
                 : (error.message || 'An error occurred. Please try again.');
             alert(userMsg);
         } finally {
@@ -876,66 +927,41 @@ export default function CreateForm({ formData, setFormData }) {
                                 maxPhotos={12}
                             />
                             {(formData.photos || []).length > 3 && (
-                                <div className="mt-2.5 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2 pop-in">
-                                    <Crown className="w-4 h-4 text-amber-600 shrink-0" />
-                                    <span>{(formData.photos || []).length} photos added! Photos 4 to 12 unlock with VIP ($1 / ₹29) on creation, or keep first 3 in free mode.</span>
+                                <div className="mt-2.5 p-3.5 rounded-2xl bg-gradient-to-br from-amber-50 to-pink-50 border border-amber-300/80 text-amber-950 pop-in shadow-xs">
+                                    <div className="flex items-start gap-2.5">
+                                        <div className="w-8 h-8 rounded-xl bg-amber-400/30 border border-amber-400/50 flex items-center justify-center shrink-0">
+                                            <Crown className="w-4 h-4 text-amber-700" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-extrabold">
+                                                {(formData.photos || []).length} photos added — only 3 show on the free card.
+                                            </p>
+                                            <p className="text-[11px] text-amber-900/80 mt-0.5 leading-relaxed">
+                                                They stay saved. Create free now, then unlock the full gallery (and the VIP finish) for ₹49 / $1.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            track('photo_cap_upsell_click');
+                                            document.getElementById('generate-btn')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            document.getElementById('generate-btn')?.focus?.();
+                                        }}
+                                        className="mt-2.5 w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-gray-950 text-amber-300 px-3 py-2 text-[11px] font-extrabold hover:bg-gray-900 transition-colors cursor-pointer"
+                                    >
+                                        <Sparkles className="w-3.5 h-3.5" />
+                                        Keep all {(formData.photos || []).length} photos
+                                    </button>
                                 </div>
                             )}
                         </div>
 
-                        <div className="p-4 bg-purple-50/60 rounded-2xl border border-purple-100 space-y-2.5">
-                            <label className="flex items-center gap-2 cursor-pointer select-none">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.remindNextYear || false}
-                                    onChange={(e) => {
-                                        set({ remindNextYear: e.target.checked });
-                                        if (!e.target.checked) setEmailError('');
-                                    }}
-                                    className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500 cursor-pointer"
-                                />
-                                <span className="text-xs font-semibold text-gray-800 flex items-center gap-1.5">
-                                    <Bell className="w-3.5 h-3.5 text-purple-600" /> Remind me in the week before their next birthday
-                                </span>
-                            </label>
-                            <p className="text-[11px] text-gray-500 pl-6">
-                                One email a year for this card, in the week before. Your photos stay saved too. Unsubscribe anytime.
+                        <div className="p-3.5 rounded-2xl bg-purple-50/70 border border-purple-100 flex items-start gap-2.5">
+                            <span className="text-base leading-none mt-0.5" aria-hidden="true">🔔</span>
+                            <p className="text-[11px] text-purple-900/80 leading-relaxed">
+                                <strong className="font-bold text-purple-900">Never miss next year:</strong> after your card is ready, add your email in one tap and we&apos;ll remind you in the week before their birthday. Your photos stay saved.
                             </p>
-                            {formData.remindNextYear && (
-                                <div className="pl-6">
-                                    {!formData.birthdayDate && (
-                                        <p className="text-[11px] text-amber-700 font-medium mb-1.5">
-                                            Add their birthday date in step 1 so we know when to send it.
-                                        </p>
-                                    )}
-                                    <input
-                                        id="reminderEmail"
-                                        type="email"
-                                        inputMode="email"
-                                        autoComplete="email"
-                                        placeholder="Your email for the free reminder..."
-                                        value={formData.reminderEmail || ''}
-                                        onChange={(e) => {
-                                            set({ reminderEmail: e.target.value });
-                                            if (emailError) setEmailError('');
-                                        }}
-                                        aria-invalid={!!emailError}
-                                        aria-describedby={emailError ? 'reminderEmailError' : undefined}
-                                        required={!!formData.remindNextYear}
-                                        className={cn(
-                                            'w-full px-3.5 py-2.5 text-xs rounded-xl border bg-white text-gray-900 focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-all',
-                                            emailError ? 'border-red-400 ring-2 ring-red-100' : 'border-purple-200'
-                                        )}
-                                    />
-                                    {emailError ? (
-                                        <p id="reminderEmailError" className="text-[11px] text-red-600 font-semibold mt-1.5">
-                                            {emailError}
-                                        </p>
-                                    ) : (
-                                        <p className="text-[10px] text-gray-400 mt-1">Used only for this reminder. No newsletters.</p>
-                                    )}
-                                </div>
-                            )}
                         </div>
 
                         {/* Summary */}
@@ -994,6 +1020,7 @@ export default function CreateForm({ formData, setFormData }) {
                         </button>
                     ) : (
                         <button
+                            id="generate-btn"
                             type="submit"
                             disabled={loading}
                             aria-busy={loading}
@@ -1010,7 +1037,7 @@ export default function CreateForm({ formData, setFormData }) {
                 </div>
 
                 <p className="text-center text-xs text-gray-500 mt-5">
-                    Free to create, no signup 💜 · <SupportButton variant="inline" />
+                    Free to create, no signup 💜
                 </p>
             </form>
 

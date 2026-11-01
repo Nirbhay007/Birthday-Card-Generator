@@ -1,7 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { Sparkles, Heart, Laugh, Users, Award, MessageCircle, ArrowRight, CheckCircle, Gift, HeartHandshake, Star, Flower2, Gamepad2, Crown, Gem, Flame, Smile, Rocket, Rainbow, Cake, Coffee, Briefcase, GraduationCap, Clock, Languages, Camera, Quote } from 'lucide-react';
-import SupportButton from '@/components/SupportButton';
 import WhatsNew from '@/components/WhatsNew';
 import { getAllCategories } from '@/lib/wishesData';
 import { getBreadcrumbSchema, serializeJsonLd } from '@/lib/seo';
@@ -306,7 +305,6 @@ export default function WishesIndexPage() {
               <div>
                 <h4 className="text-white font-bold text-sm mb-3">About BirthdayGen</h4>
                 <p className="text-sm text-gray-400 mb-2">Free online birthday website & greeting card generator.</p>
-                <p className="text-sm text-gray-400 mb-2"><SupportButton variant="link" /></p>
                 <p className="text-xs text-gray-500">© {new Date().getFullYear()} BirthdayGen. All rights reserved.</p>
               </div>
             </div>

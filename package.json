@@ -5,9 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate --no-engine && next build",
-    "build:worker": "npm run build && opennextjs-cloudflare build",
+    "build:worker": "NEXT_PRIVATE_STANDALONE=true npm run build && opennextjs-cloudflare build --skipNextBuild",
     "preview": "npm run build:worker && opennextjs-cloudflare preview",
     "deploy:cf": "npm run build:worker && opennextjs-cloudflare deploy",
+    "deploy:dev": "NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_TZESihLNLuI8VW npm run build:worker && opennextjs-cloudflare deploy -e dev",
     "start": "next start",
     "lint": "eslint",
     "analytics": "node scripts/analytics.js",

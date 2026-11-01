@@ -23,7 +23,7 @@ export default function VipCustomizerModal({ isOpen, onClose, page, onUpdated })
     const [prevPage, setPrevPage] = useState(page);
     const [saving, setSaving] = useState(false);
     const [previewTrackId, setPreviewTrackId] = useState(null);
-    const [vipPrice, setVipPrice] = useState(() => (typeof window !== 'undefined' ? getVipCardPrice(detectRegion()) : { label: '₹29' }));
+    const [vipPrice, setVipPrice] = useState(() => (typeof window !== 'undefined' ? getVipCardPrice(detectRegion()) : { label: '₹49' }));
     const audioControllerRef = useRef(null);
 
     if (page !== prevPage) {

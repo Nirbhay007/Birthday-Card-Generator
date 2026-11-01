@@ -123,6 +123,7 @@ export default function PremiumExperience({
     useEffect(() => {
         try {
             if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setVeil(false);
             }
         } catch { }

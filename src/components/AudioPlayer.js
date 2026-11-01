@@ -189,11 +189,7 @@ export default function AudioPlayer({ track = 'classic', src = null, autoPlay = 
         }
     });
 
-    if (activeTrack === 'off') return null;
-
-    const displayName = getTrackName(activeTrack, customName);
-
-    const togglePlay = async () => {
+    const togglePlay = useCallback(async () => {
         if (playing) {
             wantSound.current = false;
             if (!isSynth) audioRef.current?.pause();
@@ -203,9 +199,16 @@ export default function AudioPlayer({ track = 'classic', src = null, autoPlay = 
             wantSound.current = true;
             startPlayback();
         }
-    };
+    }, [playing, isSynth, startPlayback, stopSynth]);
+
     // Cinema (or any overlay) can ask for a mute toggle without owning the audio.
-    audioToggleRef.current = togglePlay;
+    useEffect(() => {
+        audioToggleRef.current = togglePlay;
+    }, [togglePlay]);
+
+    if (activeTrack === 'off') return null;
+
+    const displayName = getTrackName(activeTrack, customName);
 
     return (
         <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-1.5">

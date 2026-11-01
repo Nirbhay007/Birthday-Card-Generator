@@ -92,7 +92,7 @@ const WINK_MESSAGES = [
     'Almost. This one opens after payment.',
 ];
 
-export default function PremiumLocker({ to = 'them', priceLabel = '₹49', giftMode = false, onUnlock }) {
+export default function PremiumLocker({ to = 'them', priceLabel = '₹99', giftMode = false, onUnlock }) {
     const [tab, setTab] = useState(0);
     const [tries, setTries] = useState(0);
     const cardRef = useRef(null);
@@ -258,7 +258,7 @@ export default function PremiumLocker({ to = 'them', priceLabel = '₹49', giftM
                         <div className="mb-6 p-4 rounded-2xl border border-[#f2c14e]/20 bg-[#f2c14e]/5 text-left">
                             <p className="text-sm italic text-[#f7dc9a] font-serif leading-relaxed">
                                 &ldquo;She called me crying. Said no one had ever taken this much time
-                                just to make her feel seen. That was worth a thousand times ₹49.&rdquo;
+                                just to make her feel seen. That was worth a thousand times ₹99.&rdquo;
                             </p>
                             <div className="flex items-center gap-1.5 mt-2.5">
                                 <div className="flex gap-0.5">

@@ -6,7 +6,6 @@ import { WISH_CATEGORIES, getCategoryBySlug, getAllCategories } from '@/lib/wish
 import { getBreadcrumbSchema, getItemListSchema, getCollectionSchema, getFAQSchema, serializeJsonLd } from '@/lib/seo';
 import WishCard from './WishCard';
 import MonetizationSlot from '@/components/MonetizationSlot';
-import SupportButton from '@/components/SupportButton';
 import WhatsNew from '@/components/WhatsNew';
 import PremiumComparisonBanner from '@/components/PremiumComparisonBanner';
 
@@ -249,7 +248,6 @@ export default async function CategoryWishesPage({ params }) {
             <div className="flex gap-4">
               <Link href="/" className="hover:text-white transition-colors">Card Generator</Link>
               <Link href="/wishes" className="hover:text-white transition-colors">Wishes Hub</Link>
-              <SupportButton variant="link" />
             </div>
           </div>
         </footer>

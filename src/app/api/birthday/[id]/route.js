@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 import { warmOgImage } from '@/lib/og-warm';
+import { isValidEmail } from '@/lib/utils';
 
 const VALID_THEMES = ['fun', 'elegant', 'royal', 'neon', 'midnight', 'princess', 'retro', 'sunset', 'unicorn', 'minimal', 'holo', 'aurora'];
 const VALID_TRACKS = ['classic', 'rock', 'off', 'musicbox', 'strings', 'party', 'piano', 'retro', 'acoustic', 'reggae', 'techno', 'beats', 'waltz', 'lullaby', 'fanfare', 'chamber', 'marching'];
@@ -26,7 +27,10 @@ export async function PATCH(request, { params }) {
         }
 
         const body = await request.json();
-        const { theme, music, message, cleanFree, photos, editToken } = body;
+        const {
+            theme, music, message, cleanFree, photos, editToken,
+            birthdayDate, reminderEmail, reminderPhone, remindNextYear,
+        } = body;
 
         // For cleanFree we need to read existing values — single select query
         if (cleanFree) {
@@ -56,7 +60,7 @@ export async function PATCH(request, { params }) {
         // open-edit behavior so existing owners don't lose access.
         const ownership = await prisma.birthdayPage.findUnique({
             where: { id },
-            select: { editToken: true },
+            select: { editToken: true, birthdayDate: true, reminderEmail: true },
         });
         if (!ownership) {
             return NextResponse.json({ success: false, error: 'Card not found' }, { status: 404 });
@@ -91,6 +95,69 @@ export async function PATCH(request, { params }) {
             };
         }
 
+        // Reminder capture happens after creation, in the success modal. The
+        // same ownership token that protects theme/music edits protects this,
+        // so a public card link can never sign someone else up for reminders.
+        let effectiveBirthdayDate = ownership.birthdayDate;
+        if (birthdayDate !== undefined) {
+            if (birthdayDate === null || birthdayDate === '') {
+                effectiveBirthdayDate = null;
+                updateData.birthdayDate = null;
+            } else {
+                const parsed = new Date(birthdayDate);
+                if (Number.isNaN(parsed.getTime())) {
+                    return NextResponse.json({ success: false, error: 'That birthday date is not valid.' }, { status: 400 });
+                }
+                const now = Date.now();
+                if (parsed.getTime() < now - 35 * 24 * 60 * 60 * 1000 || parsed.getTime() > now + 370 * 24 * 60 * 60 * 1000) {
+                    return NextResponse.json({ success: false, error: 'Choose a birthday within the next 12 months.' }, { status: 400 });
+                }
+                effectiveBirthdayDate = parsed;
+                updateData.birthdayDate = parsed;
+            }
+        }
+
+        if (reminderPhone !== undefined) {
+            const rawPhone = typeof reminderPhone === 'string' ? reminderPhone.trim() : '';
+            if (rawPhone) {
+                const digits = rawPhone.replace(/[^\d+]/g, '');
+                if (!/^\+?\d{7,15}$/.test(digits)) {
+                    return NextResponse.json({ success: false, error: 'Enter a valid phone number, or leave it blank.' }, { status: 400 });
+                }
+                updateData.reminderPhone = digits.slice(0, 20);
+            } else {
+                updateData.reminderPhone = null;
+            }
+        }
+
+        if (remindNextYear === false) {
+            updateData.reminderOptOutAt = new Date();
+        }
+
+        if (remindNextYear === true) {
+            const email = typeof reminderEmail === 'string' ? reminderEmail.trim().toLowerCase().slice(0, 255) : '';
+            if (!isValidEmail(email)) {
+                return NextResponse.json({ success: false, error: 'Enter a valid email for your reminder.' }, { status: 400 });
+            }
+            if (!effectiveBirthdayDate) {
+                return NextResponse.json({ success: false, error: 'Add the birthday date so we know when to send the reminder.' }, { status: 400 });
+            }
+            updateData.reminderEmail = email;
+            updateData.reminderOptOutAt = null;
+            // A new address is a new promise: allow this year's reminder to go
+            // out again. Re-saving the same address must not duplicate it.
+            if (ownership.reminderEmail && ownership.reminderEmail.toLowerCase() !== email) {
+                updateData.reminderSentFor = null;
+            }
+        } else if (reminderEmail !== undefined) {
+            const email = typeof reminderEmail === 'string' ? reminderEmail.trim().toLowerCase().slice(0, 255) : '';
+            if (email && !isValidEmail(email)) {
+                return NextResponse.json({ success: false, error: 'Enter a valid email for your reminder.' }, { status: 400 });
+            }
+            updateData.reminderEmail = email || null;
+            if (email) updateData.reminderOptOutAt = null;
+        }
+
         if (Object.keys(updateData).length === 0) {
             return NextResponse.json({ success: false, error: 'No valid fields to update' }, { status: 400 });
         }
@@ -116,6 +183,8 @@ export async function PATCH(request, { params }) {
                 music: updated.music,
                 isVip: updated.isVip,
                 photosCount: updated.photos?.length || 0,
+                hasReminder: !!updated.reminderEmail,
+                birthdayDate: updated.birthdayDate,
             },
         });
     } catch (error) {

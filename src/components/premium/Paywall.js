@@ -1,10 +1,15 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Zap, Loader2, FlaskConical, Globe2, MapPin, Mail, Images, Film, Link2, ShieldCheck, Check, Lock } from 'lucide-react';
+import {
+    Zap, Loader2, FlaskConical, Globe2, MapPin, Mail, Phone, Images, Film, Link2,
+    ShieldCheck, Check, Lock, Crown, Sparkles, RotateCcw,
+} from 'lucide-react';
 import {
     detectRegion,
     getPremiumPrice,
+    PREMIUM_PRICE_INR,
+    PREMIUM_PRICE_INTL,
     createPremiumOrder,
     openRazorpayCheckout,
     verifyPremiumPayment,
@@ -31,15 +36,13 @@ function validPhone(value) {
 /**
  * One-button checkout. Server creates a tamper-proof order, Razorpay collects
  * UPI/cards/netbanking, server verifies the signature, universe unlocks.
- * Test mode appears only when server keys are missing.
  *
- * Conversion notes (measured, not guessed): 238 paywall opens a week produce
- * ~4 checkout taps, so the decision point itself is the leak. This wall now
- * shows exactly what is inside (comparison + inclusions), keeps the price
- * honest, and re-offers the same button in a sticky mobile bar the moment the
- * main button scrolls out of view.
+ * The wall sells the outcome visually: free card vs premium card side by side,
+ * a keepsake sample, and one honest price. Contact details are inline (not
+ * hidden behind an "optional" link) because they are what lets us recover an
+ * interrupted UPI checkout — the single biggest leak in the funnel.
  */
-export default function Paywall({ onUnlocked }) {
+export default function Paywall({ onUnlocked, recipientName = '' }) {
     // Lazy init keeps SSR deterministic (server TZ → INTL, i.e. $1 for
     // crawlers); suppressHydrationWarning below lets the client region win.
     const [region, setRegion] = useState(() => detectRegion());
@@ -47,13 +50,17 @@ export default function Paywall({ onUnlocked }) {
     const [testMode, setTestMode] = useState(false);
     const [showStickyCta, setShowStickyCta] = useState(false);
     const [contact, setContact] = useState({ name: '', email: '', phone: '' });
-    const [contactOpen, setContactOpen] = useState(false);
     const [contactError, setContactError] = useState('');
+    const [resume, setResume] = useState(null);
+    const [resumeLoading, setResumeLoading] = useState(false);
     const opened = useRef(false);
+    const contactTracked = useRef(false);
     const sectionRef = useRef(null);
     const ctaRef = useRef(null);
     const price = getPremiumPrice(region);
     const verifying = status.phase === 'verifying';
+    const name = String(recipientName || '').trim();
+    const who = name || 'them';
 
     useEffect(() => {
         const saved = loadBuyerContact();
@@ -68,10 +75,36 @@ export default function Paywall({ onUnlocked }) {
         track('paywall_open');
     }, []);
 
+    // ---- SIGNED RECOVERY LINK ----
+    // The abandoned-checkout email links back here with the exact order id and
+    // its poll token. We re-open that same order instead of creating a new one.
+    const resumeCheckedRef = useRef(false);
+    useEffect(() => {
+        if (resumeCheckedRef.current) return;
+        resumeCheckedRef.current = true;
+        let q;
+        try { q = new URLSearchParams(window.location.search); } catch { return; }
+        const orderId = q.get('resume');
+        const rt = q.get('rt');
+        if (!orderId || !rt) return;
+
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setResumeLoading(true);
+        fetch(`/api/premium/order/resume?orderId=${encodeURIComponent(orderId)}&rt=${encodeURIComponent(rt)}`)
+            .then((r) => r.json())
+            .then((data) => {
+                if (!data?.success || data.paid || !data.keyId) return;
+                setResume({ ...data.order, keyId: data.keyId, pollToken: rt });
+                track('paywall_resume_shown');
+            })
+            .catch(() => { })
+            .finally(() => setResumeLoading(false));
+    }, []);
+
     // ---- UPI RECOVERY ----
     // If the browser died during a UPI app switch, the pending order is still
     // in localStorage. Poll the server to see if the webhook already confirmed
-    // payment, and auto-unlock if so.  Runs only once on mount.
+    // payment, and auto-unlock if so. Runs only once on mount.
     const recoveredRef = useRef(false);
     useEffect(() => {
         if (recoveredRef.current) return;
@@ -81,24 +114,24 @@ export default function Paywall({ onUnlocked }) {
             try { raw = localStorage.getItem(PENDING_ORDER_KEY); } catch { return; }
             if (!raw) return;
             let pending;
-            try { pending = JSON.parse(raw); } catch { try { localStorage.removeItem(PENDING_ORDER_KEY); } catch {} return; }
+            try { pending = JSON.parse(raw); } catch { try { localStorage.removeItem(PENDING_ORDER_KEY); } catch { } return; }
             const { orderId, pollToken, ts } = pending || {};
             if (!orderId || !pollToken || Date.now() - (ts || 0) > 10 * 60 * 1000) {
-                try { localStorage.removeItem(PENDING_ORDER_KEY); } catch {}
+                try { localStorage.removeItem(PENDING_ORDER_KEY); } catch { }
                 return;
             }
             setStatus({ phase: 'verifying', message: 'Checking your previous payment…' });
             const result = await pollOrderStatus(orderId, { token: pollToken, maxAttempts: 10, intervalMs: 2000 });
             if (result?.unlockKey) {
-                try { localStorage.removeItem(PENDING_ORDER_KEY); } catch {}
+                try { localStorage.removeItem(PENDING_ORDER_KEY); } catch { }
                 track('premium_unlock');
                 onUnlocked?.({ testMode: false, unlockKey: result.unlockKey, receiptKept: true });
             } else {
-                try { localStorage.removeItem(PENDING_ORDER_KEY); } catch {}
+                try { localStorage.removeItem(PENDING_ORDER_KEY); } catch { }
                 setStatus({ phase: 'idle', message: '' });
             }
         })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // ---- Sticky mobile CTA ----
@@ -132,35 +165,50 @@ export default function Paywall({ onUnlocked }) {
     useEffect(() => {
         try {
             window.dispatchEvent(new CustomEvent('bgen:paywall_sticky', { detail: { visible: showStickyCta } }));
-        } catch {}
+        } catch { }
         return () => {
             try {
                 window.dispatchEvent(new CustomEvent('bgen:paywall_sticky', { detail: { visible: false } }));
-            } catch {}
+            } catch { }
         };
     }, [showStickyCta]);
 
     const fail = (message) => setStatus({ phase: 'error', message });
+
+    const validateContact = () => {
+        const email = contact.email.trim();
+        const phone = contact.phone.trim();
+        if (!validEmail(email)) {
+            setContactError('That email looks incomplete. Fix it or leave it blank.');
+            return null;
+        }
+        if (!validPhone(phone)) {
+            setContactError('That phone number looks incomplete. Fix it or leave it blank.');
+            return null;
+        }
+        setContactError('');
+        const saved = saveBuyerContact({ ...contact, email, phone });
+        if ((email || phone) && !contactTracked.current) {
+            contactTracked.current = true;
+            track('paywall_contact_added');
+        }
+        return saved;
+    };
+
+    const finishUnlock = (receipt) => {
+        try { localStorage.removeItem(PENDING_ORDER_KEY); } catch { }
+        track('premium_unlock');
+        onUnlocked?.({ testMode: false, unlockKey: receipt?.unlockKey || null, receiptKept: !!receipt?.unlockKey });
+    };
+
     const checkout = async () => {
         if (verifying) return;
 
         // This counts every checkout attempt, including the sticky re-offer.
         track('paywall_cta_click');
 
-        const email = contact.email.trim();
-        const phone = contact.phone.trim();
-        if (!validEmail(email)) {
-            setContactOpen(true);
-            setContactError('That email looks incomplete. Fix it or leave it blank.');
-            return;
-        }
-        if (!validPhone(phone)) {
-            setContactOpen(true);
-            setContactError('That phone number looks incomplete. Fix it or leave it blank.');
-            return;
-        }
-        setContactError('');
-        const savedContact = saveBuyerContact({ ...contact, email, phone });
+        const savedContact = validateContact();
+        if (!savedContact) return;
         const buyerContact = formatBuyerContact(savedContact);
 
         setStatus({ phase: 'verifying', message: 'Contacting secure checkout…' });
@@ -174,8 +222,8 @@ export default function Paywall({ onUnlocked }) {
                 throw orderErr;
             }
             // Persist order ID + poll token so we can recover if the browser dies during UPI app switch.
-            try { localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify({ orderId: order.orderId, pollToken: order.pollToken, ts: Date.now() })); } catch {}
-            track('checkout_start', { amount: region === 'IN' ? 49 : 1 });
+            try { localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify({ orderId: order.orderId, pollToken: order.pollToken, ts: Date.now() })); } catch { }
+            track('checkout_start', { amount: price.amount });
             setStatus({ phase: 'verifying', message: 'Opening secure checkout…' });
 
             // Background poll catches payments the Razorpay JS callback misses
@@ -202,9 +250,7 @@ export default function Paywall({ onUnlocked }) {
                     signature: resp.razorpay_signature,
                     snapshotUrl,
                 });
-                try { localStorage.removeItem(PENDING_ORDER_KEY); } catch {}
-                track('premium_unlock');
-                onUnlocked?.({ testMode: false, unlockKey: receipt.unlockKey || null, receiptKept: !!receipt.unlockKey });
+                finishUnlock(receipt);
             } catch (modalErr) {
                 if (callbackOk) { fail(modalErr?.message || 'Verification failed.'); return; }
 
@@ -218,7 +264,7 @@ export default function Paywall({ onUnlocked }) {
                 }
 
                 // Razorpay modal dismissed — the payment may still have gone through
-                // via UPI.  Give the background poll a few more seconds to catch it.
+                // via UPI. Give the background poll a few more seconds to catch it.
                 setStatus({ phase: 'verifying', message: 'Checking payment status…' });
                 const pollResult = await Promise.race([
                     poll,
@@ -226,9 +272,7 @@ export default function Paywall({ onUnlocked }) {
                 ]);
                 abort.abort();
                 if (pollResult?.unlockKey) {
-                    try { localStorage.removeItem(PENDING_ORDER_KEY); } catch {}
-                    track('premium_unlock');
-                    onUnlocked?.({ testMode: false, unlockKey: pollResult.unlockKey, receiptKept: true });
+                    finishUnlock(pollResult);
                 } else {
                     // Keep PENDING_ORDER_KEY for mount-recovery on next visit.
                     fail('Payment window closed. If money was deducted, it will unlock automatically when you revisit this page.');
@@ -241,6 +285,55 @@ export default function Paywall({ onUnlocked }) {
             } else {
                 fail(e?.message || 'Checkout failed. No money moved.');
             }
+        }
+    };
+
+    // Resume the exact unpaid order from the recovery email. Same Razorpay
+    // order id, same amount — no duplicate order, no double charge.
+    const resumeCheckout = async () => {
+        if (!resume || verifying) return;
+        track('paywall_resume_click');
+        const savedContact = validateContact();
+        if (!savedContact) return;
+
+        setStatus({ phase: 'verifying', message: 'Reopening your saved checkout…' });
+        const abort = new AbortController();
+        const poll = pollOrderStatus(resume.orderId, { token: resume.pollToken, signal: abort.signal });
+        let callbackOk = false;
+        try {
+            const resp = await openRazorpayCheckout({
+                order: resume,
+                keyId: resume.keyId,
+                region: resume.currency === 'INR' ? 'IN' : 'INTL',
+                buyerEmail: savedContact.email,
+                buyerPhone: savedContact.phone,
+            });
+            callbackOk = true;
+            abort.abort();
+            setStatus({ phase: 'verifying', message: 'Confirming your payment…' });
+            const receipt = await verifyPremiumPayment({
+                provider: 'razorpay',
+                orderId: resp.razorpay_order_id,
+                paymentId: resp.razorpay_payment_id,
+                signature: resp.razorpay_signature,
+                snapshotUrl: typeof window !== 'undefined' ? window.location.href : '',
+            });
+            finishUnlock(receipt);
+        } catch (modalErr) {
+            if (callbackOk) { fail(modalErr?.message || 'Verification failed.'); return; }
+            if (modalErr?.code && modalErr.code !== 'DISMISSED') {
+                abort.abort();
+                fail(modalErr?.message || 'Payment failed. No money moved.');
+                return;
+            }
+            setStatus({ phase: 'verifying', message: 'Checking payment status…' });
+            const pollResult = await Promise.race([
+                poll,
+                new Promise((r) => setTimeout(r, 15_000)),
+            ]);
+            abort.abort();
+            if (pollResult?.unlockKey) finishUnlock(pollResult);
+            else fail('Payment window closed. Your saved checkout is still here — try again anytime.');
         }
     };
 
@@ -266,20 +359,45 @@ export default function Paywall({ onUnlocked }) {
     return (
         <section ref={sectionRef} id="prm-paywall" className="prm-act relative px-5 sm:px-8 py-24 sm:py-32" aria-label="Unlock premium">
             <div className="max-w-xl mx-auto text-center">
-                <Reveal><p className="prm-eyebrow mb-6">✦ The smallest big decision ✦</p></Reveal>
+                <Reveal><p className="prm-eyebrow mb-6">✦ The version they screenshot ✦</p></Reveal>
                 <Reveal delay={120}>
                     <h2 className="prm-serif prm-h-act mb-4">
-                        <span className="block">Less than a</span>
-                        <span className="block prm-gold-text">pizza slice.</span>
-                        <span className="block">Remembered for years.</span>
+                        <span className="block">Make {who === 'them' ? 'their day' : `${name}'s day`}</span>
+                        <span className="block prm-gold-text">impossible to forget.</span>
                     </h2>
                 </Reveal>
                 <Reveal delay={200}>
                     <p className="prm-lead text-sm sm:text-base mb-8">
-                        You will forget the {price.label} by tomorrow. But they will remember how you
-                        made them feel today, and revisit this surprise whenever they need a reminder
-                        of how much they are loved.
+                        The free card says happy birthday. The premium one makes them feel like the main
+                        character — a letter, a photo album, a little film, and a keepsake they can keep
+                        forever. One payment, no subscription.
                     </p>
+                </Reveal>
+
+                {/* Before / after: show the gap, don't describe it. */}
+                <Reveal delay={240}>
+                    <div className="mx-auto mb-8 grid max-w-sm grid-cols-2 items-end gap-5" aria-hidden="true">
+                        <div className="text-center">
+                            <div className="vipmock vipmock-free mx-auto scale-110">
+                                <div className="vipmock-inner">
+                                    <span className="vipmock-initial">{(name || '♥').trim().charAt(0).toUpperCase() || '♥'}</span>
+                                    <span className="vipmock-chip">Free</span>
+                                </div>
+                            </div>
+                            <p className="vipmock-label">Today&apos;s card</p>
+                        </div>
+                        <div className="text-center">
+                            <div className="vipmock vipmock-vip mx-auto scale-125">
+                                <div className="vipmock-aurora" />
+                                <div className="vipmock-inner">
+                                    <span className="vipmock-initial vipmock-initial-vip">{(name || '♥').trim().charAt(0).toUpperCase() || '♥'}</span>
+                                    <span className="vipmock-crown">👑</span>
+                                    <span className="vipmock-chip vipmock-chip-vip">Premium</span>
+                                </div>
+                            </div>
+                            <p className="vipmock-label vipmock-label-vip">With Premium · {price.label}</p>
+                        </div>
+                    </div>
                 </Reveal>
 
                 <Reveal delay={260}>
@@ -287,8 +405,8 @@ export default function Paywall({ onUnlocked }) {
                         {/* Region toggle */}
                         <div className="inline-flex rounded-full border border-[rgba(242,193,78,0.3)] p-1 mb-7 text-sm font-bold" role="group" aria-label="Billing region">
                             {[
-                                { id: 'IN', label: 'India · ₹49', icon: MapPin },
-                                { id: 'INTL', label: 'Worldwide · $1', icon: Globe2 },
+                                { id: 'IN', label: `India · ${PREMIUM_PRICE_INR.label}`, icon: MapPin },
+                                { id: 'INTL', label: `Worldwide · ${PREMIUM_PRICE_INTL.label}`, icon: Globe2 },
                             ].map((r) => (
                                 <button
                                     key={r.id}
@@ -310,68 +428,84 @@ export default function Paywall({ onUnlocked }) {
                             <span className="prm-off-pill">{price.off}</span>
                         </p>
                         <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#b9aed4] mt-3 mb-1">one-time · theirs forever</p>
-                        <p className="text-sm font-bold text-[#7ee2a8] mb-8">{price.saveLabel} today · less than a pizza slice · less than chai for two</p>
+                        <p className="text-sm font-bold text-[#7ee2a8] mb-6">{price.saveLabel} today · less than a pizza slice</p>
 
-                        {/* Optional receipt details. Collapsed by default so a
-                            first-time buyer sees one button, not a form. When
-                            present, Razorpay skips its mandatory contact step
-                            and support can recover an interrupted checkout. */}
-                        <div className="mb-3 text-left">
-                            {!contactOpen ? (
+                        {/* Keepsake sample: the physical-feeling artifact they get. */}
+                        <div className="mx-auto mb-6 w-full max-w-[230px] -rotate-2 rounded-2xl border border-[#f2c14e]/45 bg-gradient-to-b from-[#241540] to-[#0c0618] p-3 text-left shadow-[0_18px_50px_rgba(0,0,0,0.55)]">
+                            <p className="text-[8px] font-extrabold uppercase tracking-[0.22em] text-[#f7dc9a]">✦ A birthday keepsake ✦</p>
+                            <div className="mt-2 flex h-16 items-center justify-center rounded-lg bg-gradient-to-br from-[#3a1f5c] to-[#120a21] text-3xl">
+                                {(name || '♥').trim().charAt(0).toUpperCase() || '♥'}
+                            </div>
+                            <p className="prm-serif mt-2 text-sm font-extrabold text-[#f7dc9a]">Dear {name || 'You'},</p>
+                            <p className="mt-0.5 text-[9px] leading-relaxed text-[#c4b6db]">
+                                “You make ordinary days feel like celebrations.”
+                            </p>
+                            <p className="mt-1.5 text-[8px] text-[#9f94b8]">with all my heart, someone who loves you</p>
+                        </div>
+
+                        {/* Resume the exact checkout from the recovery email. */}
+                        {resumeLoading && (
+                            <div className="mb-3 flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs font-semibold text-[#b9aed4]">
+                                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Checking your saved checkout…
+                            </div>
+                        )}
+                        {resume && (
+                            <div className="mb-4 rounded-2xl border border-[#f2c14e]/45 bg-[rgba(242,193,78,0.09)] p-3.5 text-left">
+                                <p className="text-xs font-extrabold text-[#f7dc9a]">Your checkout is still saved</p>
+                                <p className="mt-1 text-[11px] leading-relaxed text-[#c4b6db]">
+                                    Nothing was charged. Pick up the same order — the card and your details are waiting.
+                                </p>
                                 <button
                                     type="button"
-                                    onClick={() => { setContactOpen(true); setContactError(''); }}
-                                    className="mx-auto flex items-center justify-center gap-1.5 text-[11px] font-bold text-[#b9aed4] hover:text-white transition-colors"
+                                    onClick={resumeCheckout}
+                                    disabled={verifying}
+                                    className="mt-2.5 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#f2c14e] to-[#fb7185] px-3 py-2.5 text-xs font-extrabold text-[#241031] disabled:opacity-60"
                                 >
-                                    <Mail className="w-3.5 h-3.5" aria-hidden="true" />
-                                    {contact.email || contact.phone
-                                        ? `Receipt to ${contact.email || contact.phone} · Edit`
-                                        : 'Add email for the receipt (optional)'}
+                                    <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" /> Finish my saved checkout
                                 </button>
-                            ) : (
-                                <div className="rounded-2xl border border-white/15 bg-white/[0.04] p-3.5 space-y-2.5">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#b9aed4]">Receipt details · optional</p>
-                                        <button
-                                            type="button"
-                                            onClick={() => { setContactOpen(false); setContactError(''); }}
-                                            className="text-[11px] font-bold text-[#b9aed4] hover:text-white"
-                                        >
-                                            Hide
-                                        </button>
-                                    </div>
-                                    <label className="block">
-                                        <span className="sr-only">Email for receipt</span>
-                                        <input
-                                            type="email"
-                                            value={contact.email}
-                                            onChange={(e) => setContact((c) => ({ ...c, email: e.target.value }))}
-                                            placeholder="you@example.com"
-                                            autoComplete="email"
-                                            inputMode="email"
-                                            className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-[#7f7597] focus:outline-none focus:ring-2 focus:ring-[#f2c14e]/60"
-                                        />
-                                    </label>
-                                    <label className="block">
-                                        <span className="sr-only">Phone for receipt and recovery (optional)</span>
-                                        <input
-                                            type="tel"
-                                            value={contact.phone}
-                                            onChange={(e) => setContact((c) => ({ ...c, phone: e.target.value }))}
-                                            placeholder="Phone with country code (optional)"
-                                            autoComplete="tel"
-                                            inputMode="tel"
-                                            className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-[#7f7597] focus:outline-none focus:ring-2 focus:ring-[#f2c14e]/60"
-                                        />
-                                    </label>
-                                    {contactError && (
-                                        <p role="alert" className="text-[11px] font-semibold text-[#fda4af]">{contactError}</p>
-                                    )}
-                                    <p className="text-[10px] leading-relaxed text-[#9f94b8]">
-                                        Only used for your receipt and to recover this unlock. Never shown on the card.
-                                    </p>
-                                </div>
+                            </div>
+                        )}
+
+                        {/* Inline contact: optional, but visible. This is what
+                            makes receipt + abandoned-checkout recovery possible. */}
+                        <div className="mb-4 text-left">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <label className="block">
+                                    <span className="mb-1 flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#b9aed4]">
+                                        <Mail className="w-3 h-3" aria-hidden="true" /> Email <span className="font-normal normal-case tracking-normal text-[#8f83a8]">(optional)</span>
+                                    </span>
+                                    <input
+                                        type="email"
+                                        value={contact.email}
+                                        onChange={(e) => setContact((c) => ({ ...c, email: e.target.value }))}
+                                        onFocus={() => track('paywall_contact_focus')}
+                                        placeholder="you@example.com"
+                                        autoComplete="email"
+                                        inputMode="email"
+                                        className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-[#7f7597] focus:outline-none focus:ring-2 focus:ring-[#f2c14e]/60"
+                                    />
+                                </label>
+                                <label className="block">
+                                    <span className="mb-1 flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#b9aed4]">
+                                        <Phone className="w-3 h-3" aria-hidden="true" /> Phone <span className="font-normal normal-case tracking-normal text-[#8f83a8]">(optional)</span>
+                                    </span>
+                                    <input
+                                        type="tel"
+                                        value={contact.phone}
+                                        onChange={(e) => setContact((c) => ({ ...c, phone: e.target.value }))}
+                                        placeholder="+91…"
+                                        autoComplete="tel"
+                                        inputMode="tel"
+                                        className="w-full rounded-xl border border-white/15 bg-black/30 px-3 py-2.5 text-sm text-white placeholder:text-[#7f7597] focus:outline-none focus:ring-2 focus:ring-[#f2c14e]/60"
+                                    />
+                                </label>
+                            </div>
+                            {contactError && (
+                                <p role="alert" className="mt-1.5 text-[11px] font-semibold text-[#fda4af]">{contactError}</p>
                             )}
+                            <p className="mt-1.5 text-[10px] leading-relaxed text-[#9f94b8]">
+                                Only for your receipt and to recover this unlock. Never shown on the card.
+                            </p>
                         </div>
 
                         <div className="space-y-3">
@@ -385,10 +519,13 @@ export default function Paywall({ onUnlocked }) {
                                 >
                                     {verifying
                                         ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
-                                        : <Zap className="w-5 h-5" aria-hidden="true" />}
-                                    {`Unlock everything for ${price.label} · ${price.saveLabel.toLowerCase()}`}
+                                        : <Crown className="w-5 h-5" aria-hidden="true" />}
+                                    {`Give ${who} the full universe · ${price.label}`}
                                 </button>
                             </Magnetic>
+                            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#9f94b8]">
+                                Unlocks instantly · One-time · Refund promise
+                            </p>
 
                             {testMode && (
                                 <button
@@ -419,6 +556,7 @@ export default function Paywall({ onUnlocked }) {
                                 <ul className="space-y-1.5 text-xs text-[#b9aed4]">
                                     <li className="flex items-start gap-1.5"><Check className="w-3.5 h-3.5 text-[#7ee2a8] shrink-0 mt-0.5" aria-hidden="true" /> Birthday page + name</li>
                                     <li className="flex items-start gap-1.5"><Check className="w-3.5 h-3.5 text-[#7ee2a8] shrink-0 mt-0.5" aria-hidden="true" /> Candle wish + confetti</li>
+                                    <li className="flex items-start gap-1.5"><Check className="w-3.5 h-3.5 text-[#7ee2a8] shrink-0 mt-0.5" aria-hidden="true" /> First 3 photos</li>
                                 </ul>
                             </div>
                             <div className="rounded-2xl border border-[#f2c14e]/35 bg-[rgba(242,193,78,0.07)] p-4">
@@ -426,7 +564,7 @@ export default function Paywall({ onUnlocked }) {
                                 <ul className="space-y-1.5 text-xs text-[#fbf3e2]">
                                     <li className="flex items-start gap-1.5"><Check className="w-3.5 h-3.5 text-[#f2c14e] shrink-0 mt-0.5" aria-hidden="true" /> Everything above, plus…</li>
                                     <li className="flex items-start gap-1.5"><Check className="w-3.5 h-3.5 text-[#f2c14e] shrink-0 mt-0.5" aria-hidden="true" /> Letter, 6 reasons, 3 vows</li>
-                                    <li className="flex items-start gap-1.5"><Check className="w-3.5 h-3.5 text-[#f2c14e] shrink-0 mt-0.5" aria-hidden="true" /> Photo album (12 memories)</li>
+                                    <li className="flex items-start gap-1.5"><Check className="w-3.5 h-3.5 text-[#f2c14e] shrink-0 mt-0.5" aria-hidden="true" /> Full photo album (12 memories)</li>
                                     <li className="flex items-start gap-1.5"><Check className="w-3.5 h-3.5 text-[#f2c14e] shrink-0 mt-0.5" aria-hidden="true" /> Cinema film + keepsake image</li>
                                 </ul>
                             </div>
@@ -475,12 +613,12 @@ export default function Paywall({ onUnlocked }) {
                 <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[rgba(242,193,78,0.35)] bg-[rgba(7,4,18,0.92)] backdrop-blur-md px-3 pl-4 pr-20 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                     <button
                         type="button"
-                        onClick={checkout}
+                        onClick={resume ? resumeCheckout : checkout}
                         disabled={verifying}
                         className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] font-extrabold text-sm shadow-[0_-8px_30px_rgba(242,193,78,0.25)] disabled:opacity-60"
                     >
-                        {verifying ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Zap className="w-4 h-4" aria-hidden="true" />}
-                        {`Unlock everything · ${price.label}`}
+                        {verifying ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Sparkles className="w-4 h-4" aria-hidden="true" />}
+                        {resume ? `Finish saved checkout · ${price.label}` : `Give ${who} the full universe · ${price.label}`}
                     </button>
                     <p className="mt-1.5 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-[#b9aed4]">
                         One-time · Magic link · Refund promise

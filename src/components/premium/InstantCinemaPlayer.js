@@ -69,11 +69,14 @@ export default function InstantCinemaPlayer({
 
     // Refs mirroring state so event listeners (visibility, keys) never go stale.
     const isPlayingRef = useRef(isPlaying);
-    isPlayingRef.current = isPlaying;
     const endedRef = useRef(ended);
-    endedRef.current = ended;
     const paywallSceneRef = useRef(showPaywallScene);
-    paywallSceneRef.current = showPaywallScene;
+
+    useEffect(() => {
+        isPlayingRef.current = isPlaying;
+        endedRef.current = ended;
+        paywallSceneRef.current = showPaywallScene;
+    }, [isPlaying, ended, showPaywallScene]);
 
     const handleDismiss = useCallback(() => {
         if (onClose) onClose();
@@ -670,7 +673,7 @@ export default function InstantCinemaPlayer({
                                     onClick={onUnlock}
                                     className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-gradient-to-r from-[#f2c14e] via-[#fb7185] to-[#f43f5e] text-[#241031] font-black text-sm sm:text-base shadow-[0_12px_35px_rgba(242,193,78,0.5)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
                                 >
-                                    <Lock className="w-4 h-4" /> Unlock Full Tribute · ₹49
+                                    <Lock className="w-4 h-4" /> Unlock Full Tribute · ₹99
                                 </button>
                             )}
                             <button

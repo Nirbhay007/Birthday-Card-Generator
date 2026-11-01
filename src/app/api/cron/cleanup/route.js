@@ -22,6 +22,10 @@ export async function GET(request) {
         const expiredPages = await prisma.birthdayPage.findMany({
             where: {
                 reminderEmail: null,
+                // Paid cards keep their photos forever, even without a reminder email.
+                isVip: false,
+                isVipPro: false,
+                isGroup: false,
                 createdAt: { lt: sevenDaysAgo },
                 photos: { some: {} },
                 OR: [

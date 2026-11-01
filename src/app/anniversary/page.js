@@ -1,7 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { Sparkles, Heart, Crown, Film, ArrowRight, ShieldCheck, Copy, Check, Gift, HelpCircle, Star } from 'lucide-react';
-import SupportButton from '@/components/SupportButton';
 import WhatsNew from '@/components/WhatsNew';
 import { getBreadcrumbSchema, getFAQSchema, serializeJsonLd } from '@/lib/seo';
 
@@ -69,7 +68,7 @@ const FAQS = [
   },
   {
     question: 'Can I preview the anniversary experience before paying?',
-    answer: 'Yes. You can preview the full interactive surprise on your screen for free. Once you are happy with how it looks, you can unlock the permanent link for ₹49 ($1).'
+    answer: 'Yes. You can preview the full interactive surprise on your screen for free. Once you are happy with how it looks, you can unlock the permanent link for ₹99 ($1).'
   },
   {
     question: 'Does the recipient need to download an app?',
@@ -220,7 +219,7 @@ export default function AnniversaryPage() {
               Give Them Something Special This Year
             </h2>
             <p className="text-rose-100/80 text-sm sm:text-base max-w-xl mx-auto mb-6">
-              Free to customize and preview live. Unlock forever with a permanent link for just <span className="font-bold text-amber-300">₹49 ($1)</span>. No recurring subscriptions.
+              Free to customize and preview live. Unlock forever with a permanent link for just <span className="font-bold text-amber-300">₹99 ($1)</span>. No recurring subscriptions.
             </p>
             <Link
               href="/premium?occasion=anniversary&for=partner"
@@ -262,7 +261,6 @@ export default function AnniversaryPage() {
               <Link href="/" className="hover:text-white transition-colors">Card Generator</Link>
               <Link href="/wishes" className="hover:text-white transition-colors">Wishes Hub</Link>
               <Link href="/premium" prefetch={false} className="hover:text-white transition-colors">Premium</Link>
-              <SupportButton variant="link" />
             </div>
           </div>
         </footer>

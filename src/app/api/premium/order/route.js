@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import prisma from '@/lib/prisma';
 import { pollTokenFor } from '@/lib/premiumTokens';
+import { resolveRazorpayKeys } from '@/lib/razorpayKeys';
 
 /**
  * POST /api/premium/order { region: 'IN' | 'INTL' }
@@ -13,14 +14,20 @@ import { pollTokenFor } from '@/lib/premiumTokens';
 
 const PRICES = {
     card_vip: {
-        IN: { amount: 2900, currency: 'INR' }, // ₹29
-        INTL: { amount: 100, currency: 'USD' }, // $1
-    },
-    universe: {
         IN: { amount: 4900, currency: 'INR' }, // ₹49
         INTL: { amount: 100, currency: 'USD' }, // $1
     },
+    universe: {
+        IN: { amount: 9900, currency: 'INR' }, // ₹99
+        INTL: { amount: 100, currency: 'USD' }, // $1
+    },
+    group_card: {
+        IN: { amount: 9900, currency: 'INR' }, // ₹99
+        INTL: { amount: 200, currency: 'USD' }, // $2
+    },
 };
+
+const TIERS = new Set(['card_vip', 'universe', 'group_card']);
 
 // Best-effort per-IP throttle (mirrors the other counter routes).
 const WINDOW_MS = 60_000;
@@ -52,22 +59,8 @@ function cleanBuyerContact(value) {
 }
 
 function razorpayClient() {
-    // Key ID is public by design — fall back to the NEXT_PUBLIC copy so a
-    // missing server-only var can never silently force test mode.
-    // .trim() because pasted secrets often carry invisible whitespace.
-    let keyId = (process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '').trim().replace(/^["']|["']$/g, '');
-    let secret = (process.env.RAZORPAY_KEY_SECRET || '').trim().replace(/^["']|["']$/g, '');
+    const { keyId, secret } = resolveRazorpayKeys();
     if (!keyId || !secret) return { client: null, keyId: null };
-
-    // Guard against accidental live/test mismatch:
-    if (secret === '9MUcEKDWyr2xCYsTli7zEWcE' && keyId.startsWith('rzp_test_')) {
-        console.warn('[Razorpay] Secret is LIVE but keyId is TEST. Auto-switching keyId to live.');
-        keyId = 'rzp_live_TZEDJBWypci6ht';
-    } else if (secret === 'iXxGduiSQ5wEXbbyV0hjE8OC' && keyId.startsWith('rzp_live_')) {
-        console.warn('[Razorpay] Secret is TEST but keyId is LIVE. Auto-switching keyId to test.');
-        keyId = 'rzp_test_TZESihLNLuI8VW';
-    }
-
     return { client: new Razorpay({ key_id: keyId, key_secret: secret }), keyId };
 }
 
@@ -83,10 +76,17 @@ export async function POST(request) {
     try {
         const body = await request.json().catch(() => ({}));
         const region = body?.region === 'INTL' ? 'INTL' : 'IN';
-        const tier = body?.tier === 'card_vip' ? 'card_vip' : 'universe';
+        const tier = TIERS.has(body?.tier) ? body.tier : 'universe';
         const pageId = typeof body?.pageId === 'string' && body.pageId.trim() ? body.pageId.trim().slice(0, 60) : null;
         const snapshotUrl = typeof body?.snapshotUrl === 'string' && body.snapshotUrl.trim() ? body.snapshotUrl.trim().slice(0, 2000) : null;
         const buyerContact = cleanBuyerContact(body?.buyerContact);
+
+        // A group card is always attached to a card; without one there is
+        // nothing to share with contributors.
+        if (tier === 'group_card' && !pageId) {
+            return NextResponse.json({ success: false, error: 'Create the card first, then turn it into a group card.' }, { status: 400 });
+        }
+
         const { amount, currency } = (PRICES[tier] || PRICES.universe)[region];
 
         const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
@@ -98,7 +98,13 @@ export async function POST(request) {
             amount,
             currency,
             receipt: `prem_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
-            notes: { product: tier === 'card_vip' ? 'birthday-vip-card' : 'birthday-premium-universe', region, ...(pageId ? { pageId } : {}) },
+            notes: {
+                product: tier === 'card_vip'
+                    ? 'birthday-vip-card'
+                    : tier === 'group_card' ? 'birthday-group-card' : 'birthday-premium-universe',
+                region,
+                ...(pageId ? { pageId } : {}),
+            },
         });
 
         // Best-effort receipt (never blocks checkout if the table is missing)

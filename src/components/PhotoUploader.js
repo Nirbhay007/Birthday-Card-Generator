@@ -35,29 +35,33 @@ export default function PhotoUploader({ photos, setPhotos, maxPhotos = 4 }) {
         }
 
         setProcessing(true);
-        const newPhotos = [];
-        for (let i = 0; i < files.length; i++) {
-            const rawFile = files[i];
-            setProgress(`Preparing photo ${i + 1} of ${files.length}...`);
-            try {
-                const compressed = await compressAndNormalizeImage(rawFile);
-                const previewUrl = URL.createObjectURL(compressed);
-                newPhotos.push({
-                    preview: previewUrl,
-                    file: compressed,
-                    name: compressed.name || rawFile.name,
-                });
-            } catch (err) {
-                console.error('Image compression error', err);
-                setErrorMsg(err.message || `Failed to process "${rawFile.name}". Please try another image.`);
+        try {
+            for (let i = 0; i < files.length; i++) {
+                const rawFile = files[i];
+                setProgress(`Preparing photo ${i + 1} of ${files.length}...`);
+                try {
+                    const compressed = await compressAndNormalizeImage(rawFile);
+                    const previewUrl = URL.createObjectURL(compressed);
+                    setPhotos((prev) => {
+                        if (prev.length >= maxPhotos) return prev;
+                        return [
+                            ...prev,
+                            {
+                                preview: previewUrl,
+                                file: compressed,
+                                name: compressed.name || rawFile.name,
+                            },
+                        ];
+                    });
+                } catch (err) {
+                    console.error('Image compression error', err);
+                    setErrorMsg(err.message || `Failed to process "${rawFile.name}". Please try another image.`);
+                }
             }
+        } finally {
+            setProgress('');
+            setProcessing(false);
         }
-
-        if (newPhotos.length > 0) {
-            setPhotos((prev) => [...prev, ...newPhotos]);
-        }
-        setProgress('');
-        setProcessing(false);
     }, [photos, maxPhotos, setPhotos]);
 
     const onDrop = useCallback(async (acceptedFiles) => {
@@ -161,29 +165,40 @@ export default function PhotoUploader({ photos, setPhotos, maxPhotos = 4 }) {
                         {photos.map((item, index) => {
                             const previewSrc = typeof item === 'string' ? item : item.preview;
                             const key = typeof item === 'string' ? `${item}-${index}` : `${item.name || 'photo'}-${index}`;
+                            const displayName = typeof item === 'object' && item?.name ? item.name : `Photo ${index + 1}`;
                             return (
-                                <div key={key} className="relative aspect-square group bg-gray-100 rounded-lg overflow-hidden">
+                                <div key={key} className="relative aspect-square group bg-purple-50 rounded-lg overflow-hidden border border-gray-200">
                                     <img
                                         src={previewSrc}
                                         alt={`Upload ${index + 1}`}
-                                        className="w-full h-full object-cover rounded-lg border border-gray-200"
+                                        className="w-full h-full object-cover rounded-lg"
                                         loading="lazy"
                                         onError={(e) => {
                                             e.currentTarget.style.display = 'none';
+                                            const fallback = e.currentTarget.parentElement?.querySelector('.img-fallback');
+                                            if (fallback) fallback.style.display = 'flex';
                                         }}
                                     />
+                                    <div
+                                        className="img-fallback hidden flex-col items-center justify-center w-full h-full p-2 text-center bg-purple-50 text-purple-700"
+                                        aria-label="Image preview not available in this browser"
+                                    >
+                                        <ImageIcon className="w-7 h-7 text-purple-400 mb-1" />
+                                        <span className="text-[11px] font-semibold truncate max-w-full px-1">{displayName}</span>
+                                        <span className="text-[10px] text-purple-500 font-medium">Ready to upload</span>
+                                    </div>
                                     {index === 0 && (
-                                        <span className="absolute bottom-1 left-1 text-[10px] font-bold bg-purple-600 text-white px-1.5 py-0.5 rounded">Cover</span>
+                                        <span className="absolute bottom-1.5 left-1.5 z-10 text-[10px] font-bold bg-purple-600 text-white px-1.5 py-0.5 rounded shadow-sm">Cover</span>
                                     )}
                                     <button
                                         onClick={() => removePhoto(index)}
-                                        className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-md sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer"
+                                        className="absolute top-1.5 right-1.5 z-20 flex items-center justify-center w-6 h-6 rounded-full bg-black/60 hover:bg-red-600 active:scale-95 text-white shadow-md transition-all cursor-pointer backdrop-blur-sm"
                                         type="button"
                                         aria-label={`Remove photo ${index + 1}`}
                                     >
-                                        <X className="w-3 h-3" />
+                                        <X className="w-3.5 h-3.5" />
                                     </button>
-                                    <div className="absolute bottom-1 right-1 flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                    <div className="absolute bottom-1.5 right-1.5 z-10 flex gap-1 sm:opacity-85 sm:group-hover:opacity-100 transition-opacity">
                                         <button
                                             type="button"
                                             onClick={() => movePhoto(index, -1)}

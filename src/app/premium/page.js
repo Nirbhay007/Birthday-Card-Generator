@@ -14,22 +14,22 @@ const OCC_META = {
     birthday: {
         title: 'Premium Birthday Experience. A Heartfelt Surprise They Will Replay for Years',
         description:
-            'A cinematic birthday surprise from the heart: wax-sealed envelope, personal letter, reasons you cherish them, meaningful promises, and an interactive candle finale. Preview free. Unlock for ₹49 (or $1 worldwide).',
+            'A cinematic birthday surprise from the heart: wax-sealed envelope, personal letter, reasons you cherish them, meaningful promises, and an interactive candle finale. Preview free. Unlock for ₹99 (or $1 worldwide).',
     },
     anniversary: {
         title: 'Premium Anniversary Experience. Celebrate Your Story Together',
         description:
-            'A cinematic anniversary surprise: wax-sealed envelope, heartfelt love letter, shared memories, renewed promises, and a starlit celebration. Preview free. Unlock for ₹49 (or $1 worldwide).',
+            'A cinematic anniversary surprise: wax-sealed envelope, heartfelt love letter, shared memories, renewed promises, and a starlit celebration. Preview free. Unlock for ₹99 (or $1 worldwide).',
     },
     valentine: {
         title: 'Premium Valentine Surprise. For the One Who Holds Your Heart',
         description:
-            'A cinematic Valentine surprise: wax-sealed envelope, tender love letter, reasons you adore them, promises, and a starlit celebration. Preview free. Unlock for ₹49 (or $1 worldwide).',
+            'A cinematic Valentine surprise: wax-sealed envelope, tender love letter, reasons you adore them, promises, and a starlit celebration. Preview free. Unlock for ₹99 (or $1 worldwide).',
     },
     friendship: {
         title: 'Premium Friendship Experience. For the Person Who Has Always Had Your Back',
         description:
-            'A cinematic friendship surprise: wax-sealed envelope, honest letter, unforgettable memories, promises, and a celebration of your bond. Preview free. Unlock for ₹49 (or $1 worldwide).',
+            'A cinematic friendship surprise: wax-sealed envelope, honest letter, unforgettable memories, promises, and a celebration of your bond. Preview free. Unlock for ₹99 (or $1 worldwide).',
     },
 };
 

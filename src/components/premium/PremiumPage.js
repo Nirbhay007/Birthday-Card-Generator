@@ -580,7 +580,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                 />
             )}
 
-            {!unlocked && !giftMode && <Paywall onUnlocked={handleUnlocked} />}
+            {!unlocked && !giftMode && <Paywall onUnlocked={handleUnlocked} recipientName={effTo} />}
 
             {!unlocked && !giftMode && (
                 <div className="max-w-xl mx-auto px-5 sm:px-8 pb-4">
@@ -597,7 +597,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
                         {[
                             { n: '1', t: 'Preview the magic', d: 'Unseal the envelope above. Feel exactly what they will feel in the first ten seconds.' },
-                            { n: '2', t: 'Make it theirs, then unlock', d: 'Add names, write it in your words, pick the look and music. ₹49 / $1, one payment, no account.' },
+                            { n: '2', t: 'Make it theirs, then unlock', d: 'Add names, write it in your words, pick the look and music. ₹99 / $1, one payment, no account.' },
                             { n: '3', t: 'Send the magic link', d: 'You get a private link that opens everything on any device. Then wait for the voice note. There is always a voice note.' },
                         ].map((s, i) => (
                             <Reveal key={s.t} delay={i * 120}>

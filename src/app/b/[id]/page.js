@@ -130,7 +130,7 @@ export default async function BirthdayPage({ params }) {
     const greetingCardSchema = getGreetingCardSchema(baseUrl, page);
 
     const isVip = !!page.isVip;
-    // Pro visuals ship with the standard ₹29 VIP — column kept for future tiers.
+    // Pro visuals ship with the standard ₹49 VIP — column kept for future tiers.
     const isVipPro = isVip || !!page.isVipPro;
     const FREE_THEMES = ['fun', 'elegant'];
     const FREE_TRACKS = ['classic', 'off'];
@@ -171,9 +171,12 @@ export default async function BirthdayPage({ params }) {
         originalMusic: page.music,
         isVip: isVip || isVipPro,
         isVipPro,
+        isGroup: !!page.isGroup,
+        birthdayDate: page.birthdayDate ? new Date(page.birthdayDate).toISOString().slice(0, 10) : null,
         loves: page.loves,
         viewCount: page.viewCount,
         lockedPhotosCount,
+        photosCount: allPhotos.length,
     };
 
     return (
@@ -208,7 +211,7 @@ export default async function BirthdayPage({ params }) {
                     <BirthdayExperience
                         page={experiencePage}
                         photos={visiblePhotos}
-                        gallery={<PhotoGallery photos={visiblePhotos} lockedCount={lockedPhotosCount} />}
+                        gallery={<PhotoGallery photos={visiblePhotos} lockedCount={lockedPhotosCount} pageId={page.id} isVip={isVip || isVipPro} />}
                         audioSlot={activeMusic !== 'off' ? <AudioPlayer track={activeMusic} /> : null}
                         shareSlot={
                             <footer className="text-center pb-24 sm:pb-12 pt-6">

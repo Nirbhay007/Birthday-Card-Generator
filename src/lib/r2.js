@@ -56,6 +56,30 @@ async function getNativeR2Bucket() {
 }
 
 /**
+ * True only inside the real Cloudflare Workers runtime.
+ *
+ * `getCloudflareContext()` also resolves a *local* Miniflare bucket under
+ * `next dev`. Uploading there returns a public r2.dev URL for an object that
+ * exists only on the developer's machine, so every photo 404s in the browser.
+ * Prefer the S3 client whenever we are not actually in workerd and S3
+ * credentials exist; keep the binding for Workers and for credential-less QA
+ * runs (which must never touch live storage).
+ */
+function isCloudflareWorkersRuntime() {
+    try {
+        return typeof navigator !== 'undefined' && /Cloudflare-Workers/i.test(navigator.userAgent || '');
+    } catch {
+        return false;
+    }
+}
+
+function shouldUseNativeBinding() {
+    const config = getR2Config();
+    const hasS3Creds = Boolean(config.accountId && config.accessKeyId && config.secretAccessKey);
+    return isCloudflareWorkersRuntime() || !hasS3Creds;
+}
+
+/**
  * Upload a buffer or Uint8Array to Cloudflare R2 and return its public URL
  */
 export async function uploadFileToR2({ buffer, key, contentType }) {
@@ -66,7 +90,7 @@ export async function uploadFileToR2({ buffer, key, contentType }) {
 
     // Fast path: use native Cloudflare Worker R2 binding (zero network hop, no AWS S3 auth needed)
     try {
-        const nativeBucket = await getNativeR2Bucket();
+        const nativeBucket = shouldUseNativeBinding() ? await getNativeR2Bucket() : null;
         if (nativeBucket) {
             await nativeBucket.put(key, buffer, {
                 httpMetadata: {
@@ -114,7 +138,7 @@ export async function deleteFilesFromR2(keys) {
 
     // Fast path: native Cloudflare R2 binding
     try {
-        const nativeBucket = await getNativeR2Bucket();
+        const nativeBucket = shouldUseNativeBinding() ? await getNativeR2Bucket() : null;
         if (nativeBucket) {
             await nativeBucket.delete(normalizedKeys);
             return normalizedKeys.length;
@@ -164,7 +188,7 @@ export async function listR2Files({ prefix = '', limit = 1000 } = {}) {
 
     // Fast path: native Cloudflare R2 binding
     try {
-        const nativeBucket = await getNativeR2Bucket();
+        const nativeBucket = shouldUseNativeBinding() ? await getNativeR2Bucket() : null;
         if (nativeBucket) {
             const res = await nativeBucket.list({ prefix, limit });
             const objects = res.objects || [];

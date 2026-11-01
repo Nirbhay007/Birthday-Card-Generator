@@ -5,7 +5,7 @@
  * - 'classic': Bundled local MP3 (/happy-birthday.mp3)
  * - 'off': Silent
  * 
- * VIP tier (₹29 upgrade):
+ * VIP tier (₹49 upgrade):
  * - 'rock': Rock & Roll Birthday (High-voltage electric guitars, punchy drums & driving rock energy)
  * - 'party': Electronic Party Pop (Punchy dance beat, bass pulse & bright hooks)
  * - 'retro': Cyber Synthwave 80s (Nostalgic analog detuned synth lead & 80s drum groove)

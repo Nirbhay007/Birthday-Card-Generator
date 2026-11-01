@@ -90,7 +90,7 @@ async function seedPaidPremiumOrder(db, overrides = {}) {
   await db.premiumOrder.create({
     data: {
       orderId,
-      amount: 4900,
+      amount: 9900,
       currency: 'INR',
       status: 'paid',
       paidAt: new Date(),

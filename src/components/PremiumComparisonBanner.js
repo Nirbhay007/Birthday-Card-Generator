@@ -16,7 +16,7 @@ export default function PremiumComparisonBanner({ relationship = 'friend', title
       <div className="relative z-10 text-center max-w-3xl mx-auto mb-8">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-bold uppercase tracking-wider mb-4">
           <Crown className="w-3.5 h-3.5 text-amber-400" />
-          Cinema Upgrade: ₹49 ($0.59)
+          Cinema Upgrade: ₹99 ($1)
         </div>
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-purple-100 to-amber-200 bg-clip-text text-transparent mb-3">
           {title}
@@ -83,7 +83,7 @@ export default function PremiumComparisonBanner({ relationship = 'friend', title
                 <Film className="w-4 h-4 text-amber-400" /> Cinema Experience
               </span>
               <span className="text-xs bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2.5 py-1 rounded-full font-bold">
-                ₹49 / $0.59
+                ₹99 / $1
               </span>
             </div>
             <ul className="space-y-3 text-gray-200">
@@ -134,7 +134,7 @@ export default function PremiumComparisonBanner({ relationship = 'friend', title
         </div>
         <div className="flex items-center gap-1.5">
           <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>One-time ₹49. No recurring subscriptions.</span>
+          <span>One-time ₹99. No recurring subscriptions.</span>
         </div>
         <div className="flex items-center gap-1.5">
           <Heart className="w-4 h-4 text-pink-400" />

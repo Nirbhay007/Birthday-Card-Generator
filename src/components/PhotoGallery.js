@@ -1,11 +1,26 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Crown, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { track } from '@/lib/track';
 
-export default function PhotoGallery({ photos, lockedCount = 0, onUnlockVip = null }) {
+export default function PhotoGallery({ photos, lockedCount = 0, onUnlockVip = null, pageId = null, isVip = false }) {
     const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
+    const [isOwner, setIsOwner] = useState(false);
+
+    // Locked-photo placeholders are creator-only. The recipient should see a
+    // clean, finished gift — never a "3 of 8" reminder or an upsell.
+    useEffect(() => {
+        if (!pageId) return;
+        try {
+            // ?viewer=1 is the creator's "what the recipient sees" preview.
+            // Never show the owner-only locked-photo upsell there.
+            const viewer = new URLSearchParams(window.location.search).get('viewer') === '1';
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setIsOwner(!viewer && !!localStorage.getItem(`bgen_owner_${pageId}`));
+        } catch { }
+    }, [pageId]);
 
     const openLightbox = (index) => setSelectedPhotoIndex(index);
     const closeLightbox = () => setSelectedPhotoIndex(null);
@@ -31,7 +46,14 @@ export default function PhotoGallery({ photos, lockedCount = 0, onUnlockVip = nu
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [selectedPhotoIndex, photos.length]);
 
-    if ((!photos || photos.length === 0) && lockedCount === 0) return null;
+    const showLocked = isOwner && !isVip && lockedCount > 0;
+    if ((!photos || photos.length === 0) && !showLocked) return null;
+
+    const openUpsell = () => {
+        track('photo_cap_upsell_click', { path: '/b/[id]' });
+        if (onUnlockVip) onUnlockVip();
+        else window.dispatchEvent(new CustomEvent('vip:open'));
+    };
 
     return (
         <div className="w-full max-w-4xl mx-auto p-4">
@@ -58,7 +80,37 @@ export default function PhotoGallery({ photos, lockedCount = 0, onUnlockVip = nu
                         />
                     </motion.button>
                 ))}
+
+                {showLocked && (
+                    <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={openUpsell}
+                        className="aspect-square rounded-2xl overflow-hidden shadow-md border-2 border-dashed border-amber-400/70 bg-gradient-to-br from-amber-50 to-pink-50 flex flex-col items-center justify-center gap-1.5 p-3 text-center focus:outline-none focus:ring-4 focus:ring-amber-300 cursor-pointer"
+                        aria-label={`${lockedCount} more photos are hidden. Unlock VIP to reveal them.`}
+                    >
+                        <span className="relative flex items-center justify-center w-9 h-9 rounded-full bg-amber-400/30">
+                            <Lock className="w-4 h-4 text-amber-700" aria-hidden="true" />
+                        </span>
+                        <span className="text-[11px] font-extrabold text-amber-950 leading-tight">
+                            {lockedCount} more photo{lockedCount === 1 ? '' : 's'}
+                        </span>
+                        <span className="text-[10px] text-amber-900/70 leading-tight">
+                            Saved, not showing
+                        </span>
+                        <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-gray-950 text-amber-300 px-2 py-1 text-[10px] font-extrabold">
+                            <Crown className="w-3 h-3" aria-hidden="true" /> Unlock all
+                        </span>
+                    </motion.button>
+                )}
             </div>
+
+            {showLocked && (
+                <p className="mt-3 text-center text-[11px] text-gray-500">
+                    Only you see this: {lockedCount} uploaded photo{lockedCount === 1 ? '' : 's'} {lockedCount === 1 ? 'is' : 'are'} hidden on the free card. VIP reveals {lockedCount === 1 ? 'it' : 'them'} instantly.
+                </p>
+            )}
 
             <AnimatePresence>
                 {selectedPhotoIndex !== null && (

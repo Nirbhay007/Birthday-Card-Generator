@@ -112,7 +112,7 @@ export default function CinemaTeaserCard({
                 {/* Badge */}
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#f2c14e]/40 bg-[#f2c14e]/10 px-3 py-1 text-[11px] font-bold text-[#f7dc9a] mb-4 backdrop-blur-sm shadow-inner">
                     <Sparkles className="w-3 h-3 text-[#f2c14e]" />
-                    <span>Private Cinema Keepsake · ₹49</span>
+                    <span>Private Cinema Keepsake · ₹99</span>
                 </div>
 
                 {/* Emotional Heading */}

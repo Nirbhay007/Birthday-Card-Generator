@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import confetti from 'canvas-confetti';
-import { Gift, Heart, Sparkles, Crown, Palette, Eye, Copy, Check, X } from 'lucide-react';
+import { Gift, Heart, Sparkles, Crown, Palette, Eye, Copy, Check, X, ArrowRight } from 'lucide-react';
 import CandleBlower from '@/components/CandleBlower';
 import CelebrationBackground from '@/components/CelebrationBackground';
 import ProAtmosphere from '@/components/ProAtmosphere';
 import VipCustomizerModal from '@/components/VipCustomizerModal';
 import PostCreationModal from '@/components/PostCreationModal';
+import DeliveryScheduler from '@/components/DeliveryScheduler';
+import GroupWishes from '@/components/GroupWishes';
 import KeepsakeCard from '@/components/premium/KeepsakeCard';
 import { BIRTHDAY_OPENED_EVENT } from '@/lib/music';
 import { trackShare } from '@/lib/shareTracking';
@@ -73,9 +76,20 @@ function isCreatedParam() {
     }
 }
 
+function isResumeParam() {
+    if (typeof window === 'undefined') return false;
+    try {
+        const q = new URLSearchParams(window.location.search);
+        return !!q.get('resume') && !!q.get('rt');
+    } catch {
+        return false;
+    }
+}
+
 export default function BirthdayExperience({ page, photos, gallery, shareSlot, audioSlot, preview = false, autoOpen = false }) {
     const [opened, setOpened] = useState(false);
     const blowTrackedRef = useRef(false);
+    const [candleBlown, setCandleBlown] = useState(false);
     const [hearts, setHearts] = useState([]);
     const [heartCount, setHeartCount] = useState(page.loves || 0);
     const [viewCount, setViewCount] = useState(page.viewCount || 0);
@@ -88,12 +102,13 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     const [isViewerPreview, setIsViewerPreview] = useState(false);
     const [showCreatorNotice, setShowCreatorNotice] = useState(true);
     const [copiedNotice, setCopiedNotice] = useState(false);
-    const [vipPrice, setVipPrice] = useState({ label: '₹29' });
+    const [vipPrice, setVipPrice] = useState({ label: '₹49' });
     // Show a hint pointing to Customize after fresh VIP activation (from ?vip=1 param)
     const [showCustomizeHint, setShowCustomizeHint] = useState(false);
     // Social-proof upsell is dismissible and remembered per card.
     const [proofDismissed, setProofDismissed] = useState(false);
     const proofShownRef = useRef(false);
+    const remixShownRef = useRef(false);
 
     useEffect(() => {
         try {
@@ -104,12 +119,14 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     }, [page.id]);
 
     useEffect(() => {
-        if (isCreatedParam()) setVipModalOpen(true);
+        /* eslint-disable react-hooks/set-state-in-effect */
+        if (isCreatedParam() || isResumeParam()) setVipModalOpen(true);
         setIsOwner(checkIsOwner(page.id, preview));
         setIsViewerPreview(isViewerParam());
         try {
             setVipPrice(getVipCardPrice(detectRegion()));
         } catch { }
+        /* eslint-enable react-hooks/set-state-in-effect */
         if (page.isVip) {
             try {
                 const q = new URLSearchParams(window.location.search);
@@ -117,6 +134,23 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
             } catch { }
         }
     }, [page.id, page.isVip, preview]);
+
+    // Just paid, but the HTML arrived from a cache entry rendered before the
+    // upgrade (ISR/CDN propagation). Reload once instead of showing the free
+    // card and making the buyer refresh manually.
+    useEffect(() => {
+        if (page.isVip) return;
+        let q;
+        try { q = new URLSearchParams(window.location.search); } catch { return; }
+        if (!q.has('vip')) return;
+        const key = `bgen_vip_reload_${page.id}`;
+        try {
+            if (sessionStorage.getItem(key)) return;
+            sessionStorage.setItem(key, '1');
+        } catch { return; }
+        const t = setTimeout(() => window.location.reload(), 700);
+        return () => clearTimeout(t);
+    }, [page.id, page.isVip]);
     // Auto-dismiss the customize hint after 6 seconds
     useEffect(() => {
         if (!showCustomizeHint) return;
@@ -127,7 +161,10 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     // Applying the URL check after mount keeps hydration deterministic.
     const [previewMode, setPreviewMode] = useState(!!preview);
     useEffect(() => {
-        if (!preview && isPreviewUrl()) setPreviewMode(true);
+        if (!preview && isPreviewUrl()) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setPreviewMode(true);
+        }
     }, [preview]);
     const typedName = useTypewriter(page.recipientName || 'Friend', opened, 90);
 
@@ -157,7 +194,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
 
         const onPopState = () => {
             const q = new URLSearchParams(window.location.search);
-            if (q.has('created') || q.has('new') || q.has('manage')) {
+            if (q.has('created') || q.has('new') || q.has('manage') || (q.get('resume') && q.get('rt'))) {
                 setVipModalOpen(true);
             } else {
                 setVipModalOpen(false);
@@ -175,8 +212,13 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
         setVipModalOpen(false);
         try {
             const q = new URLSearchParams(window.location.search);
-            if (q.has('created') || q.has('new') || q.has('manage')) {
-                window.history.pushState({}, '', `/b/${page.id}`);
+            if (
+                q.has('created') || q.has('new') || q.has('manage') ||
+                q.has('resume') || q.has('rt') || q.has('uploadWarning')
+            ) {
+                ['created', 'new', 'manage', 'resume', 'rt', 'uploadWarning'].forEach((key) => q.delete(key));
+                const search = q.toString();
+                window.history.pushState({}, '', `/b/${page.id}${search ? `?${search}` : ''}`);
             }
         } catch { }
     };
@@ -274,10 +316,21 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
         track('proof_upsell_shown');
     }, [opened, showProofBanner]);
 
+    useEffect(() => {
+        if (!candleBlown || remixShownRef.current) return;
+        remixShownRef.current = true;
+        track('recipient_remix_shown', { path: '/b/[id]' });
+    }, [candleBlown]);
+
     // Recipient activation: the candles going out is the product's "aha"
     // moment. Count it once per card view, and never for the creator's own
     // previews (?created, ?preview, ?viewer, or the owner's browser).
     const handleCandleBlown = () => {
+        // The recipient's "aha" moment. The CTA appears only for them, after
+        // the candles are out — the emotional peak, not a mid-gift upsell.
+        if (!isOwner && !previewMode && !isViewerPreview && !isViewerParam() && !checkIsOwner(page.id, preview)) {
+            setCandleBlown(true);
+        }
         if (blowTrackedRef.current) return;
         blowTrackedRef.current = true;
         if (isOwner || previewMode || isViewerPreview || isCreatedParam() || isViewerParam() || checkIsOwner(page.id, preview)) return;
@@ -472,14 +525,75 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                         <CandleBlower age={page.age} recipientName={page.recipientName} onBlow={handleCandleBlown} />
                     </div>
 
+                    {/* The emotional peak is right after the candles go out.
+                        This is the only recipient-facing CTA, and it gives
+                        rather than asks: make someone else feel this. */}
+                    {candleBlown && !isOwner && (
+                        <section className="mb-14 -mt-4" aria-label="Create a birthday card">
+                            <div className="mx-auto max-w-xl rounded-3xl border border-purple-200/80 bg-white/85 backdrop-blur-sm p-5 sm:p-6 text-center shadow-lg pop-in">
+                                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-purple-600">That feeling?</p>
+                                <h3 className="mt-1.5 text-xl sm:text-2xl font-extrabold text-gray-900">
+                                    Give it back to someone you love
+                                </h3>
+                                <p className="mt-1.5 text-sm text-gray-600 leading-relaxed">
+                                    Make them a card like this — photos, music, and candles they can blow out. Free, no signup, 30 seconds.
+                                </p>
+                                <Link
+                                    href={`/?remix=1&theme=${encodeURIComponent(page.originalTheme || page.theme || 'fun')}&utm_source=recipient&utm_medium=remix&utm_campaign=post_candle#create`}
+                                    onClick={() => {
+                                        track('recipient_remix_click', { path: '/b/[id]' });
+                                        track('recipient_create_click', { path: '/b/[id]' });
+                                    }}
+                                    className="mt-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:brightness-110 text-white px-6 py-3 text-sm font-extrabold shadow-lg transition-all"
+                                >
+                                    <Sparkles className="w-4 h-4" aria-hidden="true" />
+                                    Make their card free
+                                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                                </Link>
+                                <p className="mt-2 text-[10.5px] text-gray-400">
+                                    Same look pre-selected. Just add their name.
+                                </p>
+                            </div>
+                        </section>
+                    )}
+
                     {photos?.length > 0 && (
                         <section className="mb-14 space-y-5" aria-label="Photo Memories">
+                            {isOwner && !isViewerPreview && !page.isVip && page.lockedPhotosCount > 0 && (
+                                <div className="mx-auto max-w-2xl rounded-2xl border border-amber-300/70 bg-gradient-to-br from-amber-50 to-pink-50 px-4 py-3 shadow-sm">
+                                    <div className="flex items-start gap-2.5">
+                                        <span className="w-8 h-8 rounded-xl bg-amber-400/30 text-amber-800 flex items-center justify-center shrink-0" aria-hidden="true">📸</span>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-extrabold text-amber-950">
+                                                {page.photosCount || (photos.length + page.lockedPhotosCount)} photos added — {photos.length} showing.
+                                            </p>
+                                            <p className="text-[11px] text-amber-900/75 mt-0.5 leading-relaxed">
+                                                Only you can see this. The rest are saved and appear the moment you unlock VIP.
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => openVip()}
+                                            className="shrink-0 rounded-xl bg-gray-950 text-amber-300 px-3 py-2 text-[11px] font-extrabold hover:bg-gray-900 transition-colors cursor-pointer"
+                                        >
+                                            Unlock all
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                             <h3 className="text-2xl font-bold text-center opacity-90">Cherished Memories 📸</h3>
                             {gallery}
                         </section>
                     )}
 
-                    {/* VIP keepsake: the export that makes the ₹29 feel earned */}
+                    <GroupWishes
+                        pageId={page.id}
+                        recipientName={page.recipientName}
+                        isOwner={isOwner && !isViewerPreview}
+                        isGroup={!!page.isGroup}
+                    />
+
+                    {/* VIP keepsake: the export that makes the ₹49 feel earned */}
                     {(page.isVip || page.isVipPro) && (
                         <section className="mb-14" aria-label="VIP keepsake card">
                             <h3 className="text-2xl font-bold text-center opacity-90 mb-2">VIP Keepsake 🖼️</h3>
@@ -497,6 +611,16 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                                 unlocked
                             />
                         </section>
+                    )}
+
+                    {/* Delivery scheduling is owner-only; the component gates on
+                        VIP and reads the edit token itself. */}
+                    {isOwner && !isViewerPreview && (
+                        <DeliveryScheduler
+                            pageId={page.id}
+                            isVip={!!(page.isVip || page.isVipPro)}
+                            birthdayDate={page.birthdayDate || null}
+                        />
                     )}
 
                     {/* Reactions */}

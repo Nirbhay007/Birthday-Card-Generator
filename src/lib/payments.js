@@ -1,7 +1,7 @@
 /**
  * Premium paywall — pricing, geo-detection & checkout entry points.
  *
- * Model: ₹49 in India · $1 everywhere else, both via Razorpay Checkout
+ * Model: ₹99 in India · $1 everywhere else, both via Razorpay Checkout
  * (UPI + cards + netbanking, auto FX settlement to your Indian bank).
  * Needs RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET (server) + NEXT_PUBLIC_RAZORPAY_KEY_ID
  * (client); without them checkout degrades to clearly-labelled test mode.
@@ -13,15 +13,15 @@ export const PREMIUM_PRODUCT = {
 };
 
 export const PREMIUM_PRICE_INR = {
-    amount: 49,
+    amount: 99,
     currency: 'INR',
-    label: '₹49',
+    label: '₹99',
     method: 'upi',
     // Display-only anchoring (server charges `amount` — never the MRP).
-    mrp: 199,
-    mrpLabel: '₹199',
+    mrp: 399,
+    mrpLabel: '₹399',
     off: '75% OFF',
-    saveLabel: 'Save ₹150',
+    saveLabel: 'Save ₹300',
 };
 export const PREMIUM_PRICE_INTL = {
     amount: 1,
@@ -36,14 +36,14 @@ export const PREMIUM_PRICE_INTL = {
 };
 
 export const VIP_CARD_PRICE_INR = {
-    amount: 29,
+    amount: 49,
     currency: 'INR',
-    label: '₹29',
+    label: '₹49',
     method: 'upi',
-    mrp: 99,
-    mrpLabel: '₹99',
-    off: '70% OFF',
-    saveLabel: 'Save ₹70',
+    mrp: 199,
+    mrpLabel: '₹199',
+    off: '75% OFF',
+    saveLabel: 'Save ₹150',
 };
 
 export const VIP_CARD_PRICE_INTL = {
@@ -55,6 +55,31 @@ export const VIP_CARD_PRICE_INTL = {
     mrpLabel: '$3',
     off: '67% OFF',
     saveLabel: 'Save $2',
+};
+
+// Group card: one shared card, unlimited contributors, a wishes wall for the
+// recipient, plus the full VIP finish. Priced above card VIP because it is a
+// different job-to-be-done (a collective gift, not a single giver's upgrade).
+export const GROUP_CARD_PRICE_INR = {
+    amount: 99,
+    currency: 'INR',
+    label: '₹99',
+    method: 'upi',
+    mrp: 399,
+    mrpLabel: '₹399',
+    off: '75% OFF',
+    saveLabel: 'Save ₹300',
+};
+
+export const GROUP_CARD_PRICE_INTL = {
+    amount: 2,
+    currency: 'USD',
+    label: '$2',
+    method: 'card',
+    mrp: 6,
+    mrpLabel: '$6',
+    off: '67% OFF',
+    saveLabel: 'Save $4',
 };
 
 /**
@@ -76,6 +101,10 @@ export function getPremiumPrice(region) {
 
 export function getVipCardPrice(region) {
     return region === 'IN' ? VIP_CARD_PRICE_INR : VIP_CARD_PRICE_INTL;
+}
+
+export function getGroupCardPrice(region) {
+    return region === 'IN' ? GROUP_CARD_PRICE_INR : GROUP_CARD_PRICE_INTL;
 }
 
 /**

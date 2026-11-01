@@ -106,7 +106,7 @@ export function getSoftwareApplicationSchema(siteUrl) {
       price: '0.00',
       priceCurrency: 'USD',
       availability: 'https://schema.org/InStock',
-      description: 'Free to create and share personalized birthday websites. Premium cinematic experiences start at ₹49.',
+      description: 'Free to create and share personalized birthday websites. Premium cinematic experiences start at ₹99.',
     },
     featureList: [
       'Interactive Virtual Candle Blowing via Microphone',
@@ -157,7 +157,7 @@ export function getProductSchema(siteUrl) {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: 'BirthdayGen Premium: Cinematic Birthday Universe',
-    description: 'Multi-act cinematic birthday and anniversary experience with sealed letters, photo acts, and immersive storytelling. Starting at ₹49.',
+    description: 'Multi-act cinematic birthday and anniversary experience with sealed letters, photo acts, and immersive storytelling. Starting at ₹99.',
     url: `${siteUrl}/premium`,
     brand: {
       '@type': 'Brand',
