@@ -11,8 +11,13 @@ import { buildOgPath, normalizeOgInput, ogStorageKey } from '@/lib/og';
  * single largest line item in the project's Fluid Active CPU usage.
  *
  * Runs after the response has been sent. Every failure is swallowed on
- * purpose: if the image is not stored, /api/og renders it on demand exactly
- * as it did before this optimisation existed.
+ * purpose: if the image is not stored, /api/og falls back to the generic
+ * default preview exactly as it did before this optimisation existed.
+ *
+ * The fetch must never follow a redirect. /api/og answers ordinary callers
+ * with a 302 (to the stored PNG, or to the default one), and following one
+ * would upload that generic image under the card's own immutable key. The
+ * `warm=1` + Bearer secret pair is what makes the route render instead.
  *
  * Kept out of `@/lib/og` because it pulls in the AWS SDK, and that module is
  * imported by the edge-runtime OG route.
@@ -27,11 +32,19 @@ export function warmOgImage(request, page) {
 
     after(async () => {
         try {
+            const secret = (process.env.CRON_SECRET || '').trim();
+            if (!secret) return;
+
             const origin = new URL(request.url).origin;
             const absoluteUrl = `${origin}${ogPath}`;
+            const warmUrl = `${absoluteUrl}${absoluteUrl.includes('?') ? '&' : '?'}warm=1`;
 
-            const response = await fetch(absoluteUrl);
-            if (!response.ok) return;
+            const response = await fetch(warmUrl, {
+                redirect: 'manual',
+                headers: { authorization: `Bearer ${secret}` },
+            });
+            if (response.status !== 200) return;
+            if (!(response.headers.get('content-type') || '').startsWith('image/png')) return;
 
             const buffer = Buffer.from(await response.arrayBuffer());
             const key = ogStorageKey(normalizeOgInput(new URL(absoluteUrl).searchParams));

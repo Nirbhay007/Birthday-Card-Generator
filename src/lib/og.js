@@ -43,6 +43,21 @@ export const THEME_BG = {
 // text agree for absurdly long names.
 const MAX_FIELD_LENGTH = 24;
 
+// Satori's font shaper throws while processing Arabic GSUB ligatures
+// ("lookupType: 5 - substFormat: 3 is not yet supported"), which surfaced as a
+// 500 and left those cards with no usable preview. Drop Arabic code points
+// before rendering; if nothing readable remains, fall back to a Latin label.
+// The page itself still shows the real name — only the PNG is affected.
+const ARABIC_RANGE = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g;
+
+function stripUnsupportedScript(value, fallback = '') {
+    const cleaned = String(value || '')
+        .replace(ARABIC_RANGE, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    return cleaned || fallback;
+}
+
 /**
  * Build the /api/og path for a card.
  *
@@ -62,10 +77,10 @@ export function buildOgPath({ recipientName, age, theme, senderName }) {
  */
 export function normalizeOgInput(searchParams) {
     return {
-        name: (searchParams.get('name') || 'Friend').slice(0, MAX_FIELD_LENGTH),
+        name: stripUnsupportedScript(searchParams.get('name'), 'Friend').slice(0, MAX_FIELD_LENGTH),
         age: searchParams.get('age') || '',
         theme: searchParams.get('theme') || 'fun',
-        sender: (searchParams.get('sender') || '').slice(0, MAX_FIELD_LENGTH),
+        sender: stripUnsupportedScript(searchParams.get('sender'), '').slice(0, MAX_FIELD_LENGTH),
     };
 }
 

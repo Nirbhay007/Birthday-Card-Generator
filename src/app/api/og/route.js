@@ -13,46 +13,59 @@ export async function GET(request) {
         const input = normalizeOgInput(searchParams);
         const [bg1, bg2, fg] = THEME_BG[input.theme] || THEME_BG.fun;
 
-        // Fast path. Cards are rendered once and stored in R2; every later
-        // unfurl (from any region) is served that static object by
-        // Cloudflare's CDN. Redirecting avoids booting Satori + resvg here,
-        // which is where ~1.2s of CPU per cold render was going.
-        const storedUrl = ogPublicUrl(ogStorageKey(input));
-        if (storedUrl) {
-            try {
-                const probe = await fetch(storedUrl, {
-                    method: 'HEAD',
-                    signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
-                });
-                if (probe.ok) {
-                    return new Response(null, {
-                        status: 302,
-                        headers: {
-                            Location: storedUrl,
-                            'Cache-Control': IMMUTABLE_CACHE,
-                        },
+        // Internal pre-render hook, used by src/lib/og-warm.js. Only an
+        // authorised warm request is allowed to boot Satori + resvg; every
+        // other caller gets a redirect to a PNG that is already in R2.
+        // Without this the warmer would follow the redirect below and store
+        // the generic default image under a card's own key, permanently.
+        const warmSecret = (process.env.CRON_SECRET || '').trim();
+        const isWarmRender =
+            searchParams.get('warm') === '1' &&
+            warmSecret.length > 0 &&
+            request.headers.get('authorization') === `Bearer ${warmSecret}`;
+
+        if (!isWarmRender) {
+            // Fast path. Cards are rendered once and stored in R2; every later
+            // unfurl (from any region) is served that static object by
+            // Cloudflare's CDN. Redirecting avoids booting Satori + resvg here,
+            // which is where ~1.2s of CPU per cold render was going.
+            const storedUrl = ogPublicUrl(ogStorageKey(input));
+            if (storedUrl) {
+                try {
+                    const probe = await fetch(storedUrl, {
+                        method: 'HEAD',
+                        signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
                     });
+                    if (probe.ok) {
+                        return new Response(null, {
+                            status: 302,
+                            headers: {
+                                Location: storedUrl,
+                                'Cache-Control': IMMUTABLE_CACHE,
+                            },
+                        });
+                    }
+                } catch {
+                    // Fall through to fallback
                 }
-            } catch {
-                // Fall through to fallback
+            }
+
+            // Fast fallback path: When a custom card image has not been pre-rendered into R2,
+            // redirect to the pre-rendered default preview image.
+            // Booting Satori / resvg WASM on Cloudflare Workers Free exceeds the 10ms CPU limit.
+            const defaultOgUrl = ogPublicUrl('og/v1/default.png');
+            if (defaultOgUrl) {
+                return new Response(null, {
+                    status: 302,
+                    headers: {
+                        Location: defaultOgUrl,
+                        'Cache-Control': IMMUTABLE_CACHE,
+                    },
+                });
             }
         }
 
-        // Fast fallback path: When a custom card image has not been pre-rendered into R2,
-        // redirect to the pre-rendered default preview image.
-        // Booting Satori / resvg WASM on Cloudflare Workers Free exceeds the 10ms CPU limit.
-        const defaultOgUrl = ogPublicUrl('og/v1/default.png');
-        if (defaultOgUrl) {
-            return new Response(null, {
-                status: 302,
-                headers: {
-                    Location: defaultOgUrl,
-                    'Cache-Control': IMMUTABLE_CACHE,
-                },
-            });
-        }
-
-        // Emergency fallback if R2 is not configured (e.g. local preview)
+        // Slow path: an authorised warm request, or local dev without R2.
         const { ImageResponse } = await import('next/og');
 
         const senderBadge = input.sender
