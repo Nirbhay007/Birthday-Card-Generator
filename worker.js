@@ -15,6 +15,7 @@ const CRON_ROUTES = {
  * safety net.
  */
 const CARD_EDGE_TTL_SECONDS = 60;
+const CACHE_VERSION = "bgen_20261103_v2";
 
 /**
  * Builds a unique cache key Request URL distinguishing standard HTML document requests
@@ -29,6 +30,8 @@ function getCacheKey(request) {
     if (isRsc && !url.searchParams.has("__cf_rsc")) {
         url.searchParams.set("__cf_rsc", "1");
     }
+    // Namespace edge cache by deployment version so HTML chunk hashes never mismatch after deploy
+    url.searchParams.set("__cf_v", CACHE_VERSION);
 
     return new Request(url.toString(), {
         method: "GET",
@@ -144,8 +147,8 @@ export default {
             }
         }
 
-        // 5. Cache eligible responses in Cloudflare Edge Cache
-        if (isGet && !isBypass && !isApi && response.status === 200) {
+        // 5. Cache eligible card responses in Cloudflare Edge Cache
+        if (isGet && !isBypass && !isApi && response.status === 200 && url.pathname.startsWith("/b/")) {
             const cacheControl = response.headers.get("Cache-Control") || "";
             const isCacheable = (cacheControl.includes("s-maxage") || cacheControl.includes("max-age")) &&
                                 !cacheControl.includes("no-store") &&
@@ -155,9 +158,7 @@ export default {
             if (isCacheable) {
                 const cacheKey = getCacheKey(request);
                 const cached = response.clone();
-                const edgeResponse = url.pathname.startsWith("/b/")
-                    ? withEdgeTtl(cached, CARD_EDGE_TTL_SECONDS)
-                    : cached;
+                const edgeResponse = withEdgeTtl(cached, CARD_EDGE_TTL_SECONDS);
                 ctx.waitUntil(cache.put(cacheKey, edgeResponse).catch(() => {}));
             }
         }

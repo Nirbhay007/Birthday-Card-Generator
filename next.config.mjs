@@ -40,13 +40,13 @@ const nextConfig = {
             // cdn.razorpay.com serves the risk-detection bundle loaded by
             // Razorpay's checkout script; without it the checkout logs a CSP
             // error and loses device-risk signals.
-            `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} 'wasm-unsafe-eval' https://checkout.razorpay.com https://cdn.razorpay.com https://www.googletagmanager.com`,
+            `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} 'wasm-unsafe-eval' https://checkout.razorpay.com https://cdn.razorpay.com https://www.googletagmanager.com https://static.cloudflareinsights.com`,
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "img-src 'self' data: blob: https:",
             "font-src 'self' data: https://fonts.gstatic.com",
             "media-src 'self' blob: https:",
             "worker-src 'self' blob:",
-            "connect-src 'self' https://api.razorpay.com https://cdn.razorpay.com https://lumberjack.razorpay.com https://www.google-analytics.com https://region1.google-analytics.com",
+            "connect-src 'self' https://api.razorpay.com https://cdn.razorpay.com https://lumberjack.razorpay.com https://www.google-analytics.com https://region1.google-analytics.com https://cloudflareinsights.com",
             "frame-src https://api.razorpay.com https://checkout.razorpay.com",
             "object-src 'none'",
             "base-uri 'self'",
