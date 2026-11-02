@@ -177,6 +177,7 @@ main[data-ptheme='sunset'] .prm-gold-text { color: #fbbf24; -webkit-text-fill-co
 
 /* Heavy acts render lazily without layout shift */
 .prm-act { content-visibility: auto; contain-intrinsic-size: auto 80vh; }
+#prm-paywall { content-visibility: visible; }
 
 /* ---------- Wax seal gate ---------- */
 .prm-seal {

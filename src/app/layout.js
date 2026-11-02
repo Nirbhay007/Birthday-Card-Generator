@@ -190,6 +190,13 @@ export default function RootLayout({ children }) {
             </Script>
           </>
         )}
+
+        {/* Cloudflare Web Analytics */}
+        <Script
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          strategy="afterInteractive"
+          data-cf-beacon='{"token": "59ceaa3fbfc34f339c861188d2d6a2a7"}'
+        />
       </body>
     </html>
   );

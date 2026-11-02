@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import {
     Zap, Loader2, FlaskConical, Globe2, MapPin, Mail, Phone, Images, Film, Link2,
     ShieldCheck, Check, Lock, Crown, Sparkles, RotateCcw,
@@ -24,6 +25,8 @@ import Magnetic from './Magnetic';
 
 /** localStorage key for surviving browser-kill during UPI app switch. */
 const PENDING_ORDER_KEY = 'bgen-premium-pending-v1';
+
+const emptySubscribe = () => () => {};
 
 function validEmail(value) {
     return !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -49,6 +52,7 @@ export default function Paywall({ onUnlocked, recipientName = '' }) {
     const [status, setStatus] = useState({ phase: 'idle', message: '' });
     const [testMode, setTestMode] = useState(false);
     const [showStickyCta, setShowStickyCta] = useState(false);
+    const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
     const [contact, setContact] = useState({ name: '', email: '', phone: '' });
     const [contactError, setContactError] = useState('');
     const [resume, setResume] = useState(null);
@@ -60,7 +64,8 @@ export default function Paywall({ onUnlocked, recipientName = '' }) {
     const price = getPremiumPrice(region);
     const verifying = status.phase === 'verifying';
     const name = String(recipientName || '').trim();
-    const who = name || 'them';
+    const shortName = name && name.length > 12 ? `${name.slice(0, 10)}…` : name;
+    const who = shortName || 'them';
 
     useEffect(() => {
         const saved = loadBuyerContact();
@@ -376,18 +381,18 @@ export default function Paywall({ onUnlocked, recipientName = '' }) {
 
                 {/* Before / after: show the gap, don't describe it. */}
                 <Reveal delay={240}>
-                    <div className="mx-auto mb-8 grid max-w-sm grid-cols-2 items-end gap-5" aria-hidden="true">
-                        <div className="text-center">
-                            <div className="vipmock vipmock-free mx-auto scale-110">
+                    <div className="mx-auto mb-10 pt-4 grid max-w-sm grid-cols-2 items-end gap-5" aria-hidden="true">
+                        <div className="text-center flex flex-col items-center">
+                            <div className="vipmock vipmock-free scale-105 origin-bottom">
                                 <div className="vipmock-inner">
                                     <span className="vipmock-initial">{(name || '♥').trim().charAt(0).toUpperCase() || '♥'}</span>
                                     <span className="vipmock-chip">Free</span>
                                 </div>
                             </div>
-                            <p className="vipmock-label">Today&apos;s card</p>
+                            <p className="vipmock-label mt-3.5">Today&apos;s card</p>
                         </div>
-                        <div className="text-center">
-                            <div className="vipmock vipmock-vip mx-auto scale-125">
+                        <div className="text-center flex flex-col items-center">
+                            <div className="vipmock vipmock-vip scale-125 origin-bottom">
                                 <div className="vipmock-aurora" />
                                 <div className="vipmock-inner">
                                     <span className="vipmock-initial vipmock-initial-vip">{(name || '♥').trim().charAt(0).toUpperCase() || '♥'}</span>
@@ -395,7 +400,7 @@ export default function Paywall({ onUnlocked, recipientName = '' }) {
                                     <span className="vipmock-chip vipmock-chip-vip">Premium</span>
                                 </div>
                             </div>
-                            <p className="vipmock-label vipmock-label-vip">With Premium · {price.label}</p>
+                            <p className="vipmock-label vipmock-label-vip mt-3.5">With Premium · {price.label}</p>
                         </div>
                     </div>
                 </Reveal>
@@ -515,12 +520,14 @@ export default function Paywall({ onUnlocked, recipientName = '' }) {
                                     type="button"
                                     onClick={checkout}
                                     disabled={verifying}
-                                    className="prm-shimmer-btn w-full inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] font-extrabold text-base transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
+                                    className="prm-shimmer-btn w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] font-extrabold text-[13px] sm:text-base transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60 whitespace-nowrap"
                                 >
-                                    {verifying
-                                        ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
-                                        : <Crown className="w-5 h-5" aria-hidden="true" />}
-                                    {`Give ${who} the full universe · ${price.label}`}
+                                    {verifying ? (
+                                        <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin shrink-0" aria-hidden="true" />
+                                    ) : (
+                                        <Crown className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" aria-hidden="true" />
+                                    )}
+                                    <span>{`Give ${who} the full universe · ${price.label}`}</span>
                                 </button>
                             </Magnetic>
                             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#9f94b8]">
@@ -608,22 +615,29 @@ export default function Paywall({ onUnlocked, recipientName = '' }) {
             </div>
 
             {/* Sticky mobile re-offer: same checkout, reachable with a thumb.
-                Right padding keeps it clear of the floating mute button. */}
-            {showStickyCta && (
-                <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[rgba(242,193,78,0.35)] bg-[rgba(7,4,18,0.92)] backdrop-blur-md px-3 pl-4 pr-20 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                Portaled to <body> so no ancestor container/content-visibility can trap or misplace it. */}
+            {mounted && showStickyCta && createPortal(
+                <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[rgba(242,193,78,0.35)] bg-[rgba(7,4,18,0.95)] backdrop-blur-md px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-12px_36px_rgba(0,0,0,0.8)]">
                     <button
                         type="button"
                         onClick={resume ? resumeCheckout : checkout}
                         disabled={verifying}
-                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] font-extrabold text-sm shadow-[0_-8px_30px_rgba(242,193,78,0.25)] disabled:opacity-60"
+                        className="w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 py-3.5 rounded-2xl bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] font-extrabold text-xs sm:text-sm shadow-[0_-8px_30px_rgba(242,193,78,0.25)] disabled:opacity-60 transition-transform active:scale-95 whitespace-nowrap"
                     >
-                        {verifying ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Sparkles className="w-4 h-4" aria-hidden="true" />}
-                        {resume ? `Finish saved checkout · ${price.label}` : `Give ${who} the full universe · ${price.label}`}
+                        {verifying ? (
+                            <Loader2 className="w-4 h-4 animate-spin shrink-0" aria-hidden="true" />
+                        ) : (
+                            <Sparkles className="w-4 h-4 shrink-0 text-[#241031]" aria-hidden="true" />
+                        )}
+                        <span>
+                            {resume ? `Finish saved checkout · ${price.label}` : `Give ${who} the full universe · ${price.label}`}
+                        </span>
                     </button>
                     <p className="mt-1.5 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-[#b9aed4]">
                         One-time · Magic link · Refund promise
                     </p>
-                </div>
+                </div>,
+                document.body
             )}
         </section>
     );

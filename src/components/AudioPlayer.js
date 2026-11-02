@@ -12,6 +12,7 @@ import {
 
 export default function AudioPlayer({ track = 'classic', src = null, autoPlay = true, customName = null }) {
     const [playing, setPlaying] = useState(false);
+    const [stickyCta, setStickyCta] = useState(false);
     const activeTrack = resolveTrackId(track);
     const resolvedSrc = src || getTrackSrc(activeTrack);
     const isSynth = !resolvedSrc && activeTrack !== 'off';
@@ -201,6 +202,13 @@ export default function AudioPlayer({ track = 'classic', src = null, autoPlay = 
         }
     }, [playing, isSynth, startPlayback, stopSynth]);
 
+    // Listen for sticky CTA on mobile so the mute button glides up and never clashes.
+    useEffect(() => {
+        const onSticky = (e) => setStickyCta(Boolean(e.detail?.visible));
+        window.addEventListener('bgen:paywall_sticky', onSticky);
+        return () => window.removeEventListener('bgen:paywall_sticky', onSticky);
+    }, []);
+
     // Cinema (or any overlay) can ask for a mute toggle without owning the audio.
     useEffect(() => {
         audioToggleRef.current = togglePlay;
@@ -211,7 +219,7 @@ export default function AudioPlayer({ track = 'classic', src = null, autoPlay = 
     const displayName = getTrackName(activeTrack, customName);
 
     return (
-        <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-1.5">
+        <div className={`fixed right-4 z-50 flex flex-col items-end gap-1.5 transition-all duration-300 ${stickyCta ? 'bottom-24 sm:bottom-4' : 'bottom-4'}`}>
             {activeTrack !== 'classic' && (
                 <span className="text-[10px] font-bold bg-gray-900/85 text-amber-300 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg max-w-[200px] truncate border border-amber-400/30">
                     <Music className="w-3 h-3 shrink-0 text-amber-400" /> <span className="truncate">{displayName}</span>
