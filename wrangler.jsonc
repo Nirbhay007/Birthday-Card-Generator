@@ -16,6 +16,19 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true
+    },
+  },
   // Your existing R2 bucket — direct binding for native access (optional)
   "r2_buckets": [
     {
