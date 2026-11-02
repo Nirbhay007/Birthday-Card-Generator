@@ -1,10 +1,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "birthday-generator",
-  "main": ".open-next/worker.js",
+  "main": "worker.js",
   "compatibility_date": "2025-04-01",
   "compatibility_flags": [
-    "nodejs_compat"
+    "nodejs_compat",
+    "global_fetch_strictly_public"
   ],
   "routes": [
     {
@@ -16,24 +17,29 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "birthday-generator"
+    }
+  ],
   "observability": {
     "logs": {
       "enabled": true,
       "head_sampling_rate": 1,
       "invocation_logs": true,
       "persist": true
-    },
-    "traces": {
-      "enabled": true,
-      "head_sampling_rate": 1,
-      "persist": true
-    },
+    }
   },
-  // Your existing R2 bucket — direct binding for native access (optional)
+  // R2 buckets — card media assets and OpenNext Incremental Cache
   "r2_buckets": [
     {
       "binding": "BIRTHDAY_ASSETS",
       "bucket_name": "birthday-card-assets"
+    },
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "birthday-generator-cache"
     }
   ],
   // Cron triggers replace Vercel Cron (vercel.json)
@@ -66,6 +72,22 @@
       "triggers": {
         "crons": []
       },
+      "services": [
+        {
+          "binding": "WORKER_SELF_REFERENCE",
+          "service": "birthday-generator-dev"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "BIRTHDAY_ASSETS",
+          "bucket_name": "birthday-card-assets"
+        },
+        {
+          "binding": "NEXT_INC_CACHE_R2_BUCKET",
+          "bucket_name": "birthday-generator-cache"
+        }
+      ],
       "vars": {
         "NEXT_PUBLIC_SITE_URL": "https://birthday.nirbhay.online",
         "NEXT_PUBLIC_SUPPORT_WHATSAPP": "7004191931",

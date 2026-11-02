@@ -12,6 +12,8 @@ import PremiumComparisonBanner from '@/components/PremiumComparisonBanner';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
+export const revalidate = 86400;
+
 export async function generateStaticParams() {
   return AGE_PAGES.map((a) => ({
     age: a.age,

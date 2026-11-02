@@ -1,5 +1,6 @@
 import './premium.css';
 import PremiumPage from '@/components/premium/PremiumPage';
+import ClientOnly from '@/components/ClientOnly';
 
 // Cache premium page for 1 hour — no DB queries here, pure searchParams rendering
 export const revalidate = 3600;
@@ -148,7 +149,16 @@ export default async function PremiumRoute({ searchParams }) {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbs) }} />
-            <PremiumPage to={to} from={from} message={message} age={age} occasion={occasion} unlockKey={unlockKey} customReasons={customReasons} customVows={customVows} initialPTheme={initialPTheme} initialMusic={initialMusic} initialMusicUrl={initialMusicUrl} initialMusicName={initialMusicName} initialRel={initialRel} initialPhotoUrl={initialPhotoUrl} initialPics={initialPics} giftPreview={giftPreview} initialMode={initialMode} fromBuilder={fromBuilder} />
+            <ClientOnly
+                fallback={
+                    <div className="flex flex-col items-center justify-center min-h-[60vh] py-16 text-center animate-pulse text-white">
+                        <div className="w-16 h-16 rounded-full border-4 border-amber-400/30 border-t-amber-400 animate-spin mb-4" />
+                        <p className="text-sm font-semibold opacity-75">Loading cinematic universe... ✨</p>
+                    </div>
+                }
+            >
+                <PremiumPage to={to} from={from} message={message} age={age} occasion={occasion} unlockKey={unlockKey} customReasons={customReasons} customVows={customVows} initialPTheme={initialPTheme} initialMusic={initialMusic} initialMusicUrl={initialMusicUrl} initialMusicName={initialMusicName} initialRel={initialRel} initialPhotoUrl={initialPhotoUrl} initialPics={initialPics} giftPreview={giftPreview} initialMode={initialMode} fromBuilder={fromBuilder} />
+            </ClientOnly>
         </>
     );
 }

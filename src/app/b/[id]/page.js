@@ -7,6 +7,7 @@ import AudioPlayer from '@/components/AudioPlayer';
 import ShareButtons from '@/components/ShareButtons';
 import MonetizationSlot from '@/components/MonetizationSlot';
 import BirthdayExperience from '@/components/BirthdayExperience';
+import ClientOnly from '@/components/ClientOnly';
 import { getBreadcrumbSchema, getGreetingCardSchema, serializeJsonLd } from '@/lib/seo';
 import { buildOgPath } from '@/lib/og';
 import TrackedLink from '@/components/site/TrackedLink';
@@ -208,58 +209,69 @@ export default async function BirthdayPage({ params }) {
                 </nav>
 
                 <div className="container mx-auto px-4 py-6 max-w-4xl relative z-10">
-                    <BirthdayExperience
-                        page={experiencePage}
-                        photos={visiblePhotos}
-                        gallery={<PhotoGallery photos={visiblePhotos} lockedCount={lockedPhotosCount} pageId={page.id} isVip={isVip || isVipPro} />}
-                        audioSlot={activeMusic !== 'off' ? <AudioPlayer track={activeMusic} /> : null}
-                        shareSlot={
-                            <footer className="text-center pb-24 sm:pb-12 pt-6">
-                                <p className="text-sm opacity-70 mb-4 font-medium">
-                                    Made with ❤️ using{' '}
-                                    <Link href="/" className="font-bold underline hover:text-purple-600 transition-colors" title="BirthdayGen - Free Birthday Website Maker">
-                                        BirthdayGen
-                                    </Link>
-                                    {page.senderName ? ` by ${page.senderName}` : ''}
-                                </p>
-                                <ShareButtons
-                                    pageId={page.id}
-                                    title={`Happy Birthday ${page.recipientName}! 🎂`}
-                                    text="Open this on your phone and blow out the candles! ✨"
-                                />
-
-                                {page.isVip && (
-                                    <div className="my-4 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-xs font-bold text-amber-900 shadow-xs">
-                                        <span>👑 Specially handcrafted with love for {page.recipientName}{page.senderName ? ` by ${page.senderName}` : ''}</span>
-                                    </div>
-                                )}
-
-                                <div className="max-w-xl mx-auto my-6">
-                                    <MonetizationSlot slotId={`card-footer-${page.id}`} />
+                    <ClientOnly
+                        fallback={
+                            <div className="flex flex-col items-center justify-center min-h-[50vh] py-16 text-center animate-pulse">
+                                <div className="w-16 h-16 rounded-3xl bg-purple-100 flex items-center justify-center text-3xl shadow-sm mb-4">
+                                    🎁
                                 </div>
-
-                                <div className="mt-8 sticky bottom-4 z-30 bg-white/85 backdrop-blur-md border border-purple-100 rounded-2xl p-4 shadow-xl">
-                                    <p className="text-sm font-bold text-gray-900 mb-3">💜 Loved this surprise? Create yours free in 30 seconds</p>
-                                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                                        <TrackedLink
-                                            href="/?utm_source=recipient&utm_medium=card&utm_campaign=post_card_cta#create"
-                                            event="recipient_create_click"
-                                            eventData={{ path: '/b/[id]' }}
-                                            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white transition-all text-sm font-bold shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-purple-300"
-                                        >
-                                            <span>🎉 Create your own free card</span>
-                                        </TrackedLink>
-                                        <Link
-                                            href="/wishes"
-                                            className="inline-flex items-center gap-1.5 px-5 py-3 rounded-full bg-white hover:bg-purple-50 text-purple-700 transition-all text-sm font-semibold border border-purple-200 shadow-xs"
-                                        >
-                                            <span>Browse Birthday Wishes</span>
-                                        </Link>
-                                    </div>
-                                </div>
-                            </footer>
+                                <p className="text-sm font-semibold opacity-75">Opening your birthday surprise... ✨</p>
+                            </div>
                         }
-                    />
+                    >
+                        <BirthdayExperience
+                            page={experiencePage}
+                            photos={visiblePhotos}
+                            gallery={<PhotoGallery photos={visiblePhotos} lockedCount={lockedPhotosCount} pageId={page.id} isVip={isVip || isVipPro} />}
+                            audioSlot={activeMusic !== 'off' ? <AudioPlayer track={activeMusic} /> : null}
+                            shareSlot={
+                                <footer className="text-center pb-24 sm:pb-12 pt-6">
+                                    <p className="text-sm opacity-70 mb-4 font-medium">
+                                        Made with ❤️ using{' '}
+                                        <Link href="/" className="font-bold underline hover:text-purple-600 transition-colors" title="BirthdayGen - Free Birthday Website Maker">
+                                            BirthdayGen
+                                        </Link>
+                                        {page.senderName ? ` by ${page.senderName}` : ''}
+                                    </p>
+                                    <ShareButtons
+                                        pageId={page.id}
+                                        title={`Happy Birthday ${page.recipientName}! 🎂`}
+                                        text="Open this on your phone and blow out the candles! ✨"
+                                    />
+
+                                    {page.isVip && (
+                                        <div className="my-4 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-xs font-bold text-amber-900 shadow-xs">
+                                            <span>👑 Specially handcrafted with love for {page.recipientName}{page.senderName ? ` by ${page.senderName}` : ''}</span>
+                                        </div>
+                                    )}
+
+                                    <div className="max-w-xl mx-auto my-6">
+                                        <MonetizationSlot slotId={`card-footer-${page.id}`} />
+                                    </div>
+
+                                    <div className="mt-8 sticky bottom-4 z-30 bg-white/85 backdrop-blur-md border border-purple-100 rounded-2xl p-4 shadow-xl">
+                                        <p className="text-sm font-bold text-gray-900 mb-3">💜 Loved this surprise? Create yours free in 30 seconds</p>
+                                        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                                            <TrackedLink
+                                                href="/?utm_source=recipient&utm_medium=card&utm_campaign=post_card_cta#create"
+                                                event="recipient_create_click"
+                                                eventData={{ path: '/b/[id]' }}
+                                                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white transition-all text-sm font-bold shadow-lg hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-purple-300"
+                                            >
+                                                <span>🎉 Create your own free card</span>
+                                            </TrackedLink>
+                                            <Link
+                                                href="/wishes"
+                                                className="inline-flex items-center gap-1.5 px-5 py-3 rounded-full bg-white hover:bg-purple-50 text-purple-700 transition-all text-sm font-semibold border border-purple-200 shadow-xs"
+                                            >
+                                                <span>Browse Birthday Wishes</span>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </footer>
+                            }
+                        />
+                    </ClientOnly>
                 </div>
             </main>
         </>

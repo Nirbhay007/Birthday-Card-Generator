@@ -2,16 +2,19 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import confetti from 'canvas-confetti';
 import { Gift, Heart, Sparkles, Crown, Palette, Eye, Copy, Check, X, ArrowRight } from 'lucide-react';
-import CandleBlower from '@/components/CandleBlower';
 import CelebrationBackground from '@/components/CelebrationBackground';
-import ProAtmosphere from '@/components/ProAtmosphere';
-import VipCustomizerModal from '@/components/VipCustomizerModal';
-import PostCreationModal from '@/components/PostCreationModal';
-import DeliveryScheduler from '@/components/DeliveryScheduler';
 import GroupWishes from '@/components/GroupWishes';
-import KeepsakeCard from '@/components/premium/KeepsakeCard';
+
+// Dynamic client-only imports to prevent expensive server-side evaluation during SSR
+const CandleBlower = dynamic(() => import('@/components/CandleBlower'), { ssr: false });
+const ProAtmosphere = dynamic(() => import('@/components/ProAtmosphere'), { ssr: false });
+const VipCustomizerModal = dynamic(() => import('@/components/VipCustomizerModal'), { ssr: false });
+const PostCreationModal = dynamic(() => import('@/components/PostCreationModal'), { ssr: false });
+const DeliveryScheduler = dynamic(() => import('@/components/DeliveryScheduler'), { ssr: false });
+const KeepsakeCard = dynamic(() => import('@/components/premium/KeepsakeCard'), { ssr: false });
 import { BIRTHDAY_OPENED_EVENT } from '@/lib/music';
 import { trackShare } from '@/lib/shareTracking';
 import { track } from '@/lib/track';

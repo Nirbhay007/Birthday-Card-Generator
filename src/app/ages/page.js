@@ -8,6 +8,8 @@ import { getBreadcrumbSchema, serializeJsonLd } from '@/lib/seo';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
+export const revalidate = 86400;
+
 export const metadata = {
   title: 'Birthday Wishes by Age: 1st, 16th, 18th, 21st, 30th, 50th, 80th & More',
   description: 'Find the perfect birthday wish for every milestone age: 1st, 2nd, 5th, 13th, 15th, 16th, 18th, 21st, 25th, 30th, 40th, 50th, 60th, 70th, 80th. Copy a message or send an interactive card with candles!',

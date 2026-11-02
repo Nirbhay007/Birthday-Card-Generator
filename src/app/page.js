@@ -5,6 +5,7 @@ import BirthdayGeneratorContainer from '@/components/BirthdayGeneratorContainer'
 import CelebrationBackground from '@/components/CelebrationBackground';
 import MonetizationSlot from '@/components/MonetizationSlot';
 import CinemaShowcase from '@/components/premium/CinemaShowcase';
+import ClientOnly from '@/components/ClientOnly';
 import SiteNav from '@/components/site/SiteNav';
 import SiteFooter from '@/components/site/SiteFooter';
 import HeroPreview from '@/components/site/HeroPreview';
@@ -17,6 +18,8 @@ import {
 import { getSoftwareApplicationSchema, getFAQSchema, getHowToSchema, getVideoObjectSchema, serializeJsonLd } from '@/lib/seo';
 import { WISH_CATEGORIES } from '@/lib/wishesData';
 import { getAllAgePages } from '@/lib/ageWishesData';
+
+export const revalidate = 86400;
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
@@ -159,7 +162,16 @@ export default function Home() {
                 Fill three fields and watch the card build itself in the live preview.
               </p>
             </div>
-            <BirthdayGeneratorContainer />
+            <ClientOnly
+              fallback={
+                <div className="p-12 text-center text-gray-500 bg-white/50 backdrop-blur-sm rounded-3xl border border-purple-100 animate-pulse">
+                  <div className="w-12 h-12 rounded-full border-4 border-purple-500/30 border-t-purple-600 animate-spin mx-auto mb-4" />
+                  <p className="font-semibold text-sm">Loading card generator...</p>
+                </div>
+              }
+            >
+              <BirthdayGeneratorContainer />
+            </ClientOnly>
           </div>
         </section>
 
@@ -168,7 +180,9 @@ export default function Home() {
 
         {/* ── Premium showcase ─────────────────────────────────────────── */}
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <CinemaShowcase />
+          <ClientOnly fallback={<div className="min-h-[400px] animate-pulse bg-purple-950/20 rounded-3xl" />}>
+            <CinemaShowcase />
+          </ClientOnly>
         </div>
 
         {/* ── Pricing ──────────────────────────────────────────────────── */}

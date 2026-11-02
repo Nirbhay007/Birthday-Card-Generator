@@ -34,13 +34,25 @@ export async function GET(request) {
                     });
                 }
             } catch {
-                // Fall through to on-demand rendering.
+                // Fall through to fallback
             }
         }
 
-        // Slow path: nothing stored yet. Importing here (rather than at module
-        // scope) keeps the WASM renderer out of the isolate's boot path, so
-        // the redirect above stays cheap.
+        // Fast fallback path: When a custom card image has not been pre-rendered into R2,
+        // redirect to the pre-rendered default preview image.
+        // Booting Satori / resvg WASM on Cloudflare Workers Free exceeds the 10ms CPU limit.
+        const defaultOgUrl = ogPublicUrl('og/v1/default.png');
+        if (defaultOgUrl) {
+            return new Response(null, {
+                status: 302,
+                headers: {
+                    Location: defaultOgUrl,
+                    'Cache-Control': IMMUTABLE_CACHE,
+                },
+            });
+        }
+
+        // Emergency fallback if R2 is not configured (e.g. local preview)
         const { ImageResponse } = await import('next/og');
 
         const senderBadge = input.sender

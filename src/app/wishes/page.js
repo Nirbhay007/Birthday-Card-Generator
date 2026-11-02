@@ -8,6 +8,8 @@ import WishCard from './[slug]/WishCard';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
+export const revalidate = 86400;
+
 const FEATURED_WISHES = [
   {
     category: 'Best Friend',
