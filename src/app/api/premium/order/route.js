@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
+import { getClientIp } from '@/lib/clientIp';
 import prisma from '@/lib/prisma';
 import { pollTokenFor } from '@/lib/premiumTokens';
 import { resolveRazorpayKeys } from '@/lib/razorpayKeys';
@@ -89,8 +90,8 @@ export async function POST(request) {
 
         const { amount, currency } = (PRICES[tier] || PRICES.universe)[region];
 
-        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-        if (throttled(ip)) {
+        const ip = getClientIp(request);
+        if (ip && throttled(ip)) {
             return NextResponse.json({ success: false, error: 'Slow down' }, { status: 429 });
         }
 

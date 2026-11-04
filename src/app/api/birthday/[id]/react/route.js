@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { getClientIp } from '@/lib/clientIp';
 import prisma from '@/lib/prisma';
 
 /**
@@ -113,8 +114,8 @@ export async function POST(request, { params }) {
             return NextResponse.json({ success: false, error: 'Unknown reaction type' }, { status: 400 });
         }
 
-        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-        if (throttled(ip)) {
+        const ip = getClientIp(request);
+        if (ip && throttled(ip)) {
             return NextResponse.json({ success: false, error: 'Slow down' }, { status: 429 });
         }
 

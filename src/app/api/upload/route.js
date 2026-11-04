@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getClientIp } from '@/lib/clientIp';
 import { uploadFileToR2 } from '@/lib/r2';
 import { sendEmailAlert } from '@/lib/alerts';
 
@@ -65,10 +66,10 @@ const MAX_AUDIO_SIZE = 8 * 1024 * 1024; // 8MB max for premium music
 
 export async function POST(request) {
     try {
-        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+        const ip = getClientIp(request);
 
         // 1. IP Rate Limiting
-        if (ip !== 'unknown' && isRateLimited(ip)) {
+        if (ip && isRateLimited(ip)) {
             return NextResponse.json(
                 { success: false, error: 'Upload limit reached (max 40 uploads per hour). Please try again in a little while.' },
                 { status: 429 }

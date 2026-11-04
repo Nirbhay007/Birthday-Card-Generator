@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getClientIp } from '@/lib/clientIp';
 import prisma from '@/lib/prisma';
 
 /**
@@ -91,8 +92,8 @@ export async function POST(request) {
             return NextResponse.json({ success: false, error: 'Unknown event' }, { status: 400 });
         }
 
-        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-        if (throttled(ip)) {
+        const ip = getClientIp(request);
+        if (ip && throttled(ip)) {
             return NextResponse.json({ success: false, error: 'Slow down' }, { status: 429 });
         }
 

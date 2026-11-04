@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getClientIp } from '@/lib/clientIp';
 import prisma from '@/lib/prisma';
 
 /**
@@ -71,8 +72,8 @@ export async function GET(request) {
 
 export async function POST(request) {
     try {
-        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-        if (throttled(ip)) {
+        const ip = getClientIp(request);
+        if (ip && throttled(ip)) {
             return NextResponse.json({ success: false, error: 'Too many wishes at once. Take a breath and try again.' }, { status: 429 });
         }
 

@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendEmailAlert } from '@/lib/alerts';
+import { getClientIp } from '@/lib/clientIp';
 import { warmOgImage } from '@/lib/og-warm';
 import { isValidEmail } from '@/lib/utils';
 
@@ -33,23 +34,28 @@ export async function POST(request) {
 
         // Rate Limiting — findMany with take=limit is cheaper than count() for
         // threshold checks: we only need to know whether >= limit rows exist.
-        const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+        // A null IP (host exposes none, e.g. local dev) skips the check rather
+        // than putting every visitor in one shared "unknown" bucket.
+        const ip = getClientIp(request);
 
-        const recentCheck = await prisma.birthdayPage.findMany({
-            where: {
-                ipAddress: ip,
-                createdAt: { gte: oneHourAgo },
-            },
-            select: { id: true },
-            take: MAX_PAGES_PER_HOUR,
-        });
+        if (ip) {
+            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
-        if (recentCheck.length >= MAX_PAGES_PER_HOUR) {
-            return NextResponse.json(
-                { success: false, error: `Rate limit exceeded. You can create up to ${MAX_PAGES_PER_HOUR} pages per hour.` },
-                { status: 429 }
-            );
+            const recentCheck = await prisma.birthdayPage.findMany({
+                where: {
+                    ipAddress: ip,
+                    createdAt: { gte: oneHourAgo },
+                },
+                select: { id: true },
+                take: MAX_PAGES_PER_HOUR,
+            });
+
+            if (recentCheck.length >= MAX_PAGES_PER_HOUR) {
+                return NextResponse.json(
+                    { success: false, error: `Rate limit exceeded. You can create up to ${MAX_PAGES_PER_HOUR} pages per hour.` },
+                    { status: 429 }
+                );
+            }
         }
 
         // Trim before validating: whitespace-only names are not names, and the
