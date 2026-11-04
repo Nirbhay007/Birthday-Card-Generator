@@ -1,6 +1,5 @@
 import { THEME_BG, normalizeOgInput, ogStorageKey, ogPublicUrl } from '@/lib/og';
 
-
 const IMMUTABLE_CACHE = 'public, immutable, no-transform, max-age=31536000, s-maxage=31536000';
 
 // Upper bound on the R2 existence probe. If storage is slow or unreachable we
@@ -26,9 +25,8 @@ export async function GET(request) {
 
         if (!isWarmRender) {
             // Fast path. Cards are rendered once and stored in R2; every later
-            // unfurl (from any region) is served that static object by
-            // Cloudflare's CDN. Redirecting avoids booting Satori + resvg here,
-            // which is where ~1.2s of CPU per cold render was going.
+            // unfurl is served as a static object by Vercel's edge network
+            // instead of booting Satori + resvg inside a function.
             const storedUrl = ogPublicUrl(ogStorageKey(input));
             if (storedUrl) {
                 try {
@@ -52,7 +50,7 @@ export async function GET(request) {
 
             // Fast fallback path: When a custom card image has not been pre-rendered into R2,
             // redirect to the pre-rendered default preview image.
-            // Booting Satori / resvg WASM on Cloudflare Workers Free exceeds the 10ms CPU limit.
+            // Booting Satori / resvg here would add ~1s to every unfurl.
             const defaultOgUrl = ogPublicUrl('og/v1/default.png');
             if (defaultOgUrl) {
                 return new Response(null, {

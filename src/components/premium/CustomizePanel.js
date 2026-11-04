@@ -7,6 +7,7 @@ import { PTHEMES } from './looks';
 import { RELATIONSHIPS, getTone, getRelationshipQuotes } from './relationships';
 import { TRACKS, PREMIUM_TRACKS } from '@/lib/music';
 import { compressAndNormalizeImage } from '@/lib/imageUtils';
+import { needsDirectBlobUpload, uploadDirectToBlob } from '@/lib/uploadClient';
 import Reveal from './Reveal';
 
 export const EMPTY_CUSTOM = {
@@ -97,20 +98,34 @@ export default function CustomizePanel({
 
         setUploadingMusic(true);
         try {
-            const fd = new FormData();
-            fd.append('file', file);
-            const res = await fetch('/api/upload', { method: 'POST', body: fd });
-            const data = await res.json();
-            if (data.success) {
+            let uploadedUrl = null;
+
+            if (needsDirectBlobUpload(file)) {
+                // Over Vercel's 4.5MB function body cap: send the bytes
+                // straight to Blob and keep the server out of the path.
+                uploadedUrl = await uploadDirectToBlob(file, 'music');
+            } else {
+                const fd = new FormData();
+                fd.append('file', file);
+                const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (!data.success) {
+                    setMusicError(data.error || 'Failed to upload song. Please try again.');
+                    return;
+                }
+                uploadedUrl = data.url;
+            }
+
+            if (uploadedUrl) {
                 const cleanName = file.name.replace(/\.[^/.]+$/, '').slice(0, 40);
-                onCustomMusicChange?.({ url: data.url, name: cleanName });
+                onCustomMusicChange?.({ url: uploadedUrl, name: cleanName });
                 onMusicChange('custom');
             } else {
-                setMusicError(data.error || 'Failed to upload song. Please try again.');
+                setMusicError('Failed to upload song. Please try again.');
             }
         } catch (err) {
             console.error('Audio upload error:', err);
-            setMusicError('Network error while uploading song. Please try again.');
+            setMusicError(err?.message || 'Network error while uploading song. Please try again.');
         } finally {
             setUploadingMusic(false);
         }
@@ -130,14 +145,26 @@ export default function CustomizePanel({
         setUploadingPhoto(true);
         try {
             const compressed = await compressAndNormalizeImage(rawFile);
-            const fd = new FormData();
-            fd.append('file', compressed);
-            const res = await fetch('/api/upload', { method: 'POST', body: fd });
-            const data = await res.json();
-            if (data.success) {
-                onPhotoChange?.(data.url);
+            let uploadedUrl = null;
+
+            if (needsDirectBlobUpload(compressed)) {
+                uploadedUrl = await uploadDirectToBlob(compressed, 'photos');
             } else {
-                setPhotoError(data.error || 'Failed to upload photo. Please try again.');
+                const fd = new FormData();
+                fd.append('file', compressed);
+                const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                const data = await res.json();
+                if (!data.success) {
+                    setPhotoError(data.error || 'Failed to upload photo. Please try again.');
+                    return;
+                }
+                uploadedUrl = data.url;
+            }
+
+            if (uploadedUrl) {
+                onPhotoChange?.(uploadedUrl);
+            } else {
+                setPhotoError('Failed to upload photo. Please try again.');
             }
         } catch (err) {
             console.error('Photo upload error:', err);
@@ -173,6 +200,12 @@ export default function CustomizePanel({
             for (const raw of batch) {
                 try {
                     const compressed = await compressAndNormalizeImage(raw);
+                    if (needsDirectBlobUpload(compressed)) {
+                        const url = await uploadDirectToBlob(compressed, 'photos');
+                        if (url) uploaded.push(url);
+                        continue;
+                    }
+
                     const fd = new FormData();
                     fd.append('file', compressed);
                     const res = await fetch('/api/upload', { method: 'POST', body: fd });

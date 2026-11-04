@@ -1,32 +1,28 @@
 /**
  * Resolve the client IP used for per-visitor rate limiting.
  *
- * Cloudflare Workers run before the edge proxy re-adds `X-Forwarded-For`, so
- * that header is absent inside the Worker. Reading it (as the routes used to)
- * collapsed every visitor into the same `'unknown'` bucket, turning per-IP
- * limits into one global limit for the entire site.
+ * Vercel terminates the request before it reaches the function, so
+ * `x-forwarded-for` and `x-real-ip` are populated by the platform. The first
+ * `x-forwarded-for` entry is the original client for Vercel / standard proxies.
  *
- * `CF-Connecting-IP` is set by Cloudflare's edge on every request and cannot be
- * forged by the client. The other headers keep the same code working on Vercel
- * and local dev.
+ * We intentionally do not trust `cf-connecting-ip` here: it is only written by
+ * Cloudflare's edge, so on a direct Vercel deployment a client could send its
+ * own value and dodge rate limits.
  */
 export function getClientIp(request) {
     const headers = request?.headers;
     if (!headers) return null;
 
-    for (const name of ['cf-connecting-ip', 'true-client-ip', 'x-real-ip']) {
-        const ip = normalizeIp(headers.get(name));
-        if (ip) return ip;
-    }
-
     const forwarded = headers.get('x-forwarded-for');
     if (forwarded) {
-        // The first entry is the original client for Vercel / standard proxies.
         for (const part of forwarded.split(',')) {
             const ip = normalizeIp(part);
             if (ip) return ip;
         }
     }
+
+    const realIp = normalizeIp(headers.get('x-real-ip'));
+    if (realIp) return realIp;
 
     return null;
 }

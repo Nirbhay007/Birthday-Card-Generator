@@ -6,6 +6,17 @@ import {
     ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 
+/**
+ * Cloudflare R2 storage, accessed through its S3-compatible API.
+ *
+ * R2 is deliberately kept for existing media: every card created so far points
+ * at an r2.dev object URL, so switching providers would break those pages.
+ * New uploads use the same bucket, with Vercel Blob as a fallback (see
+ * /api/upload) when R2 is unreachable or credentials are missing.
+ *
+ * Env is read lazily so a development run without R2 credentials can still
+ * boot, and so tests can change env between requests.
+ */
 function getR2Config() {
     return {
         accountId: process.env.R2_ACCOUNT_ID,
@@ -39,76 +50,18 @@ export function getR2Client() {
     return r2Client;
 }
 
-/**
- * Access the native Cloudflare R2 binding when running inside Cloudflare Workers
- */
-async function getNativeR2Bucket() {
-    try {
-        const { getCloudflareContext } = await import('@opennextjs/cloudflare');
-        const ctx = await getCloudflareContext({ async: true });
-        if (ctx?.env?.BIRTHDAY_ASSETS) {
-            return ctx.env.BIRTHDAY_ASSETS;
-        }
-    } catch {
-        // Not running in Cloudflare Workers or binding not found
-    }
-    return null;
-}
-
-/**
- * True only inside the real Cloudflare Workers runtime.
- *
- * `getCloudflareContext()` also resolves a *local* Miniflare bucket under
- * `next dev`. Uploading there returns a public r2.dev URL for an object that
- * exists only on the developer's machine, so every photo 404s in the browser.
- * Prefer the S3 client whenever we are not actually in workerd and S3
- * credentials exist; keep the binding for Workers and for credential-less QA
- * runs (which must never touch live storage).
- */
-function isCloudflareWorkersRuntime() {
-    try {
-        return typeof navigator !== 'undefined' && /Cloudflare-Workers/i.test(navigator.userAgent || '');
-    } catch {
-        return false;
-    }
-}
-
-function shouldUseNativeBinding() {
-    const config = getR2Config();
-    const hasS3Creds = Boolean(config.accountId && config.accessKeyId && config.secretAccessKey);
-    return isCloudflareWorkersRuntime() || !hasS3Creds;
+function publicUrlFor(key) {
+    const { accountId, bucketName, publicDomain } = getR2Config();
+    return publicDomain
+        ? `${publicDomain}/${key}`
+        : `https://${bucketName}.${accountId}.r2.cloudflarestorage.com/${key}`;
 }
 
 /**
  * Upload a buffer or Uint8Array to Cloudflare R2 and return its public URL
  */
 export async function uploadFileToR2({ buffer, key, contentType }) {
-    const config = getR2Config();
-    const publicDomain = config.publicDomain;
-    const bucketName = config.bucketName;
-    const accountId = config.accountId;
-
-    // Fast path: use native Cloudflare Worker R2 binding (zero network hop, no AWS S3 auth needed)
-    try {
-        const nativeBucket = shouldUseNativeBinding() ? await getNativeR2Bucket() : null;
-        if (nativeBucket) {
-            await nativeBucket.put(key, buffer, {
-                httpMetadata: {
-                    contentType: contentType || 'application/octet-stream',
-                },
-            });
-            const url = publicDomain ? `${publicDomain}/${key}` : `https://${bucketName}.${accountId}.r2.cloudflarestorage.com/${key}`;
-            return {
-                url,
-                key,
-                bucket: bucketName,
-            };
-        }
-    } catch (nativeErr) {
-        console.warn('[R2] Native binding upload failed, trying S3 client fallback:', nativeErr?.message || nativeErr);
-    }
-
-    // Fallback: AWS S3 client over HTTPS
+    const { bucketName } = getR2Config();
     const client = getR2Client();
 
     await client.send(
@@ -120,9 +73,8 @@ export async function uploadFileToR2({ buffer, key, contentType }) {
         })
     );
 
-    const url = publicDomain ? `${publicDomain}/${key}` : `https://${bucketName}.${accountId}.r2.cloudflarestorage.com/${key}`;
     return {
-        url,
+        url: publicUrlFor(key),
         key,
         bucket: bucketName,
     };
@@ -136,24 +88,13 @@ export async function deleteFilesFromR2(keys) {
     const normalizedKeys = (Array.isArray(keys) ? keys : [keys]).filter(Boolean);
     if (normalizedKeys.length === 0) return 0;
 
-    // Fast path: native Cloudflare R2 binding
-    try {
-        const nativeBucket = shouldUseNativeBinding() ? await getNativeR2Bucket() : null;
-        if (nativeBucket) {
-            await nativeBucket.delete(normalizedKeys);
-            return normalizedKeys.length;
-        }
-    } catch (nativeErr) {
-        console.warn('[R2] Native binding delete failed, trying S3 client fallback:', nativeErr?.message || nativeErr);
-    }
-
-    const config = getR2Config();
+    const { bucketName } = getR2Config();
     const client = getR2Client();
 
     if (normalizedKeys.length === 1) {
         await client.send(
             new DeleteObjectCommand({
-                Bucket: config.bucketName,
+                Bucket: bucketName,
                 Key: normalizedKeys[0],
             })
         );
@@ -166,7 +107,7 @@ export async function deleteFilesFromR2(keys) {
         const chunk = normalizedKeys.slice(i, i + 1000);
         const res = await client.send(
             new DeleteObjectsCommand({
-                Bucket: config.bucketName,
+                Bucket: bucketName,
                 Delete: {
                     Objects: chunk.map((k) => ({ Key: k })),
                     Quiet: false,
@@ -183,30 +124,11 @@ export async function deleteFilesFromR2(keys) {
  * List files in R2 with an optional prefix
  */
 export async function listR2Files({ prefix = '', limit = 1000 } = {}) {
-    const config = getR2Config();
-    const publicDomain = config.publicDomain;
-
-    // Fast path: native Cloudflare R2 binding
-    try {
-        const nativeBucket = shouldUseNativeBinding() ? await getNativeR2Bucket() : null;
-        if (nativeBucket) {
-            const res = await nativeBucket.list({ prefix, limit });
-            const objects = res.objects || [];
-            return objects.map((item) => ({
-                key: item.key,
-                size: item.size,
-                lastModified: item.uploaded,
-                url: publicDomain ? `${publicDomain}/${item.key}` : item.key,
-            }));
-        }
-    } catch (nativeErr) {
-        console.warn('[R2] Native binding list failed, trying S3 client fallback:', nativeErr?.message || nativeErr);
-    }
-
+    const { bucketName } = getR2Config();
     const client = getR2Client();
     const res = await client.send(
         new ListObjectsV2Command({
-            Bucket: config.bucketName,
+            Bucket: bucketName,
             Prefix: prefix,
             MaxKeys: limit,
         })
@@ -217,7 +139,7 @@ export async function listR2Files({ prefix = '', limit = 1000 } = {}) {
         key: item.Key,
         size: item.Size,
         lastModified: item.LastModified,
-        url: publicDomain ? `${publicDomain}/${item.Key}` : item.Key,
+        url: publicUrlFor(item.Key),
     }));
 }
 

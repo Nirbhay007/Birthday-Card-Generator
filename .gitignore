@@ -36,6 +36,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # local databases (schema runs on Postgres; these are legacy SQLite leftovers)
 *.db
@@ -51,7 +52,3 @@ public/uploads/
 next-env.d.ts
 
 /src/generated/prisma
-
-# Cloudflare Workers build output
-.open-next/
-.wrangler/

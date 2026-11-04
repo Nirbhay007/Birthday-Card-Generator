@@ -8,6 +8,8 @@ import { runDeliveries } from '@/lib/deliveries';
  * creator a WhatsApp-assist link when no recipient email is known. Protected
  * by CRON_SECRET in production; `?dryRun=1` reports without sending.
  */
+export const maxDuration = 60;
+
 export async function GET(request) {
     const secret = (process.env.CRON_SECRET || '').trim();
     const authHeader = request.headers.get('authorization') || '';

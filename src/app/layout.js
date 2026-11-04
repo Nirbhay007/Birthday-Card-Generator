@@ -3,6 +3,8 @@ import Script from "next/script";
 import "./globals.css";
 import "./themes.css";
 import { getWebSiteSchema, getOrganizationSchema, getWebApplicationSchema, getProductSchema, serializeJsonLd } from "@/lib/seo";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 
 import HydrationMarker from "@/components/HydrationMarker";
 import AttributionCapture from "@/components/AttributionCapture";
@@ -145,6 +147,7 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
 
         {/* Application identity */}
         <meta name="application-name" content="BirthdayGen" />
@@ -171,7 +174,8 @@ export default function RootLayout({ children }) {
         <HydrationMarker />
         <AttributionCapture />
         {children}
-
+        <Analytics />
+        <SpeedInsights />
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>
             <Script
@@ -190,13 +194,6 @@ export default function RootLayout({ children }) {
             </Script>
           </>
         )}
-
-        {/* Cloudflare Web Analytics */}
-        <Script
-          src="https://static.cloudflareinsights.com/beacon.min.js"
-          strategy="afterInteractive"
-          data-cf-beacon='{"token": "59ceaa3fbfc34f339c861188d2d6a2a7"}'
-        />
       </body>
     </html>
   );

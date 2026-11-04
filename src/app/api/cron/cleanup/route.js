@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { deleteFilesFromR2, listR2Files, getR2KeyFromUrl } from '@/lib/r2';
+import { del } from '@vercel/blob';
 
-// Cloudflare Workers have a 30s CPU time limit on the paid plan.
+// Cap cron execution time — keeps a slow storage scan from running forever.
+export const maxDuration = 30;
 
 export async function GET(request) {
     // Security: Verify request is from Vercel Cron
@@ -67,12 +69,24 @@ export async function GET(request) {
                 }
             }
 
-            // Delete from Cloudflare R2 (including any legacy Vercel Blob URLs that were migrated)
+            // Delete from Cloudflare R2
             if (r2Keys.length > 0) {
                 try {
                     await deleteFilesFromR2(r2Keys);
                 } catch (r2Err) {
                     console.error('R2 expired photo cleanup error:', r2Err);
+                }
+            }
+
+            // Delete the same media when an upload fell back to Vercel Blob.
+            if (vercelBlobUrls.length > 0 && process.env.BLOB_READ_WRITE_TOKEN) {
+                try {
+                    for (let i = 0; i < vercelBlobUrls.length; i += 100) {
+                        const chunk = vercelBlobUrls.slice(i, i + 100);
+                        await del(chunk);
+                    }
+                } catch (vErr) {
+                    console.warn('Vercel Blob delete error:', vErr?.message || vErr);
                 }
             }
 

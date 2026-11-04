@@ -1,75 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getClientIp } from '@/lib/clientIp';
+import { isUploadRateLimited } from '@/lib/uploadRateLimit';
+import { MAX_AUDIO_SIZE, MAX_IMAGE_SIZE, isAudioUpload, isImageUpload } from '@/lib/uploadRules';
 import { uploadFileToR2 } from '@/lib/r2';
+import { put } from '@vercel/blob';
 import { sendEmailAlert } from '@/lib/alerts';
-
-// In-memory sliding-window rate limiting (40 uploads per hour per IP)
-const uploadRateLimit = new Map();
-
-function isRateLimited(ip) {
-    const now = Date.now();
-    const windowMs = 60 * 60 * 1000; // 1 hour
-    const limit = 40; // 40 uploads per hour
-
-    const timestamps = uploadRateLimit.get(ip) || [];
-    const validTimestamps = timestamps.filter((t) => now - t < windowMs);
-
-    if (validTimestamps.length >= limit) {
-        uploadRateLimit.set(ip, validTimestamps);
-        return true;
-    }
-
-    validTimestamps.push(now);
-    uploadRateLimit.set(ip, validTimestamps);
-
-    // Periodically clean up stale IPs from map
-    if (uploadRateLimit.size > 500) {
-        for (const [key, times] of uploadRateLimit.entries()) {
-            if (times.every((t) => now - t >= windowMs)) {
-                uploadRateLimit.delete(key);
-            }
-        }
-    }
-
-    return false;
-}
-
-const ALLOWED_IMAGE_TYPES = [
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-    'image/gif',
-    'image/heic',
-    'image/heif',
-    'image/avif',
-    'image/bmp',
-    'image/tiff',
-    'image/svg+xml',
-    'image/x-icon',
-    'image/vnd.microsoft.icon',
-];
-const ALLOWED_AUDIO_TYPES = [
-    'audio/mpeg',
-    'audio/mp3',
-    'audio/wav',
-    'audio/x-wav',
-    'audio/ogg',
-    'audio/m4a',
-    'audio/x-m4a',
-    'audio/aac',
-    'audio/mp4',
-    'audio/webm',
-];
-
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB max for photos
-const MAX_AUDIO_SIZE = 8 * 1024 * 1024; // 8MB max for premium music
 
 export async function POST(request) {
     try {
         const ip = getClientIp(request);
 
         // 1. IP Rate Limiting
-        if (ip && isRateLimited(ip)) {
+        if (ip && isUploadRateLimited(ip)) {
             return NextResponse.json(
                 { success: false, error: 'Upload limit reached (max 40 uploads per hour). Please try again in a little while.' },
                 { status: 429 }
@@ -87,15 +29,8 @@ export async function POST(request) {
         const fileType = (file.type || '').toLowerCase();
         const fileName = (file.name || '').toLowerCase();
 
-        const isAudio =
-            ALLOWED_AUDIO_TYPES.includes(fileType) ||
-            /\.(mp3|m4a|wav|aac|ogg|webm)$/i.test(fileName);
-
-        const isImage =
-            ALLOWED_IMAGE_TYPES.includes(fileType) ||
-            /\.(jpe?g|png|webp|gif|heic|heif|avif|bmp|tiff?|svg|ico)$/i.test(fileName) ||
-            // HEIC files from iOS often arrive with empty or generic MIME types
-            ((!fileType || fileType === 'application/octet-stream') && /\.(heic|heif)$/i.test(fileName));
+        const isAudio = isAudioUpload(fileType, fileName);
+        const isImage = isImageUpload(fileType, fileName);
 
         if (!isImage && !isAudio) {
             return NextResponse.json(
@@ -142,13 +77,23 @@ export async function POST(request) {
             });
             url = r2Url;
         } catch (r2Error) {
-            console.error('[Upload] R2 upload failed:', r2Error?.message || r2Error);
+            console.warn('[Upload] Primary R2 upload failed, attempting Vercel Blob fallback:', r2Error?.message || r2Error);
             sendEmailAlert({
-                title: 'R2 Upload Failed',
-                message: `Cloudflare R2 failed (${r2Error?.name || 'Error'}: ${r2Error?.message || 'AccessDenied'}). No fallback available.`,
-                level: 'critical',
+                title: 'R2 Upload Failed (Fallback Engaged)',
+                message: `Cloudflare R2 failed (${r2Error?.name || 'Error'}: ${r2Error?.message || 'AccessDenied'}). Switched to Vercel Blob fallback automatically.`,
+                level: 'warning',
             }).catch(console.error);
-            throw r2Error;
+
+            if (process.env.BLOB_READ_WRITE_TOKEN) {
+                const blob = await put(pathname, buffer, {
+                    access: 'public',
+                    contentType,
+                });
+                url = blob.url;
+                storageProvider = 'vercel-blob';
+            } else {
+                throw r2Error;
+            }
         }
 
         return NextResponse.json({

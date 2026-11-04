@@ -8,6 +8,8 @@ import { runRecovery } from '@/lib/recovery';
  * was created. Protected by CRON_SECRET in production; `?dryRun=1` reports
  * what would be sent without claiming or emailing anything.
  */
+export const maxDuration = 60;
+
 export async function GET(request) {
     const secret = (process.env.CRON_SECRET || '').trim();
     const authHeader = request.headers.get('authorization') || '';

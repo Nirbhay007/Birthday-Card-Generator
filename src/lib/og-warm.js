@@ -6,9 +6,9 @@ import { buildOgPath, normalizeOgInput, ogStorageKey } from '@/lib/og';
  * Pre-render a card's social preview and store it in R2.
  *
  * /api/og then redirects to the stored PNG, so unfurls from any region are
- * served by Cloudflare's CDN instead of booting Satori + resvg on a cold edge
- * isolate. Measured cost of a cold render was ~1.2s of CPU, which made it the
- * single largest line item in the project's Fluid Active CPU usage.
+ * served as a static R2 object instead of booting Satori + resvg in every
+ * function instance. Measured cost of a cold render was ~1.2s of CPU, which
+ * made it the single largest line item in the project's function usage.
  *
  * Runs after the response has been sent. Every failure is swallowed on
  * purpose: if the image is not stored, /api/og falls back to the generic
@@ -19,8 +19,7 @@ import { buildOgPath, normalizeOgInput, ogStorageKey } from '@/lib/og';
  * would upload that generic image under the card's own immutable key. The
  * `warm=1` + Bearer secret pair is what makes the route render instead.
  *
- * Kept out of `@/lib/og` because it pulls in the AWS SDK, and that module is
- * imported by the edge-runtime OG route.
+ * Kept out of `@/lib/og` because it pulls in the AWS SDK.
  */
 export function warmOgImage(request, page) {
     const ogPath = buildOgPath({

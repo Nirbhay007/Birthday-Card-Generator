@@ -3,16 +3,16 @@
  *
  * Why this module exists
  * ----------------------
- * /api/og used to rasterise a brand new PNG on every cold isolate. Measured
- * against production, a cold render costs ~1.23s of CPU (booting the resvg
- * WASM module and font data dominates; the layout itself is trivial), which
- * made the route ~77% of the project's Fluid Active CPU usage. The same card
- * gets unfurled from several regions, and the CDN caches per-POP, so each
- * region paid that boot cost again for an identical image.
+ * /api/og used to rasterise a brand new PNG on every cold function instance.
+ * Measured against production, a cold render costs ~1.23s of CPU (booting the
+ * resvg WASM module and font data dominates; the layout itself is trivial),
+ * which made the route ~77% of the project's function CPU usage. The same card
+ * gets unfurled from several regions, so each region paid that boot cost again
+ * for an identical image.
  *
  * The fix is to render each image once, store it in R2, and have /api/og
- * redirect to the stored object. Cloudflare then serves one globally cached
- * file instead of booting an image renderer per region.
+ * redirect to the stored object. The CDN then serves one globally cached file
+ * instead of booting an image renderer per region.
  *
  * The storage key is derived purely from the render inputs, so the public
  * /api/og URL contract is unchanged — previously cached images stay valid and

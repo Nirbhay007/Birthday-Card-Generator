@@ -172,7 +172,7 @@ export async function PATCH(request, { params }) {
         try { revalidatePath(`/b/${id}`); } catch {}
 
         // A theme change produces a different preview image. Render it now so
-        // the next unfurl is served from R2 instead of a cold edge isolate.
+        // the next unfurl is served from R2 instead of a fresh function render.
         if (updateData.theme) warmOgImage(request, updated);
 
         return NextResponse.json({

@@ -2,13 +2,12 @@
   "name": "birthday-generator",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate --no-engine && next build",
-    "build:worker": "NEXT_PRIVATE_STANDALONE=true npm run build && opennextjs-cloudflare build --skipNextBuild",
-    "preview": "npm run build:worker && opennextjs-cloudflare preview",
-    "deploy:cf": "npm run build:worker && opennextjs-cloudflare deploy",
-    "deploy:dev": "NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_TZESihLNLuI8VW npm run build:worker && opennextjs-cloudflare deploy -e dev",
     "start": "next start",
     "lint": "eslint",
     "analytics": "node scripts/analytics.js",
@@ -28,6 +27,9 @@
     "@aws-sdk/client-s3": "^3.1129.0",
     "@gsap/react": "^2.1.2",
     "@prisma/client": "^5.22.0",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/blob": "^2.8.2",
+    "@vercel/speed-insights": "^2.0.0",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.24",
@@ -44,14 +46,12 @@
     "resend": "^6.32.1"
   },
   "devDependencies": {
-    "@opennextjs/cloudflare": "^1.20.15",
     "@playwright/test": "^1.64.1",
     "autoprefixer": "^10.4.22",
     "baseline-browser-mapping": "^2.11.24",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
     "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.1",
-    "wrangler": "^4.156.0"
+    "tailwindcss": "^3.4.1"
   }
 }

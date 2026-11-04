@@ -11,7 +11,8 @@ import { runReminders } from '@/lib/reminders';
  * be sent without writing or emailing anything.
  */
 
-// Cloudflare Workers cron triggers are not subject to the 30s subrequest limit.
+// Sending many emails can take longer than the default function timeout.
+export const maxDuration = 60;
 
 export async function GET(request) {
     const secret = (process.env.CRON_SECRET || '').trim();

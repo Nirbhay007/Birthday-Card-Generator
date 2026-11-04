@@ -12,6 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getAttributionSource } from '@/lib/attribution';
 import { track } from '@/lib/track';
+import { needsDirectBlobUpload, uploadDirectToBlob } from '@/lib/uploadClient';
 import { FREE_TRACKS, VIP_TRACKS, PRO_TRACKS, ALL_TRACKS, getTrackName, playAudioPreview, stopAllAudioPreviews } from '@/lib/music';
 
 const DRAFT_KEY = 'birthdaygen-draft-v1';
@@ -427,6 +428,14 @@ export default function CreateForm({ formData, setFormData }) {
                 let lastError = null;
                 for (let attempt = 1; attempt <= 2; attempt++) {
                     try {
+                        // Browser → Vercel Blob direct path for anything the
+                        // serverless function body limit would reject.
+                        if (needsDirectBlobUpload(item.file)) {
+                            const directUrl = await uploadDirectToBlob(item.file, 'photos');
+                            if (directUrl) return directUrl;
+                            throw new Error('Failed to upload photo');
+                        }
+
                         const fd = new FormData();
                         fd.append('file', item.file);
                         const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
