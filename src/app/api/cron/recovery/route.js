@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import { runRecovery } from '@/lib/recovery';
 
 /**
- * GET /api/cron/recovery — hourly abandoned-checkout sweep.
+ * GET /api/cron/recovery — daily abandoned-checkout sweep.
  *
- * Sends at most one email per unpaid order, two hours to seven days after it
- * was created. Protected by CRON_SECRET in production; `?dryRun=1` reports
- * what would be sent without claiming or emailing anything.
+ * Runs once a day at 06:00 UTC. Sends at most one email per unpaid order,
+ * between 24 hours and 7 days after it was created. Protected by CRON_SECRET
+ * in production; `?dryRun=1` reports what would be sent without claiming or
+ * emailing anything.
  */
 export const maxDuration = 60;
 

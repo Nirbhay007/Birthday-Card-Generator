@@ -3,12 +3,12 @@
  *
  * The leak this closes: 81 orders/month are created, 29 paid, 43 left created,
  * 9 failed. A buyer who got interrupted by a UPI app switch or a closed tab
- * usually never comes back on their own. One email, two hours later, with a
+ * usually never comes back on their own. One email, the next day, with a
  * signed link back to the exact checkout, is the cheapest second chance.
  *
  * Rules:
  *   - only orders with a buyer email (phone-only orders cannot be emailed);
- *   - at least 2 hours old, at most 7 days old;
+ *   - at least 24 hours old, at most 7 days old (the cron runs once a day);
  *   - never paid, never already nudged (`recoverySentAt`);
  *   - never after the card's birthday has passed — a "your VIP card is still
  *     waiting" email the day after the party is worse than silence;
@@ -23,7 +23,11 @@ import { isBirthdayRelevant } from '@/lib/cardDates';
 import { isEmailConfigured, parseBuyerEmail, sendRecoveryForOrder } from '@/lib/email';
 
 export const MAX_RECOVERY_PER_RUN = 30;
+const MIN_AGE_HOURS = 24;
+const MAX_AGE_DAYS = 7;
 const SEND_GAP_MS = 550;
+/** Stop cleanly before the 60s function limit; the rest waits for tomorrow. */
+const MAX_RUN_MS = 50_000;
 
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -37,14 +41,14 @@ function maskEmail(value) {
 }
 
 export async function findRecoverableOrders(now = new Date()) {
-    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const minimumAge = new Date(now.getTime() - MIN_AGE_HOURS * 60 * 60 * 1000);
+    const maximumAge = new Date(now.getTime() - MAX_AGE_DAYS * 24 * 60 * 60 * 1000);
 
     const rows = await prisma.premiumOrder.findMany({
         where: {
             status: { in: ['created', 'failed'] },
             recoverySentAt: null,
-            createdAt: { gte: sevenDaysAgo, lte: twoHoursAgo },
+            createdAt: { gte: maximumAge, lte: minimumAge },
             buyerContact: { contains: '@' },
         },
         select: {
@@ -167,12 +171,19 @@ export async function runRecovery({ now = new Date(), dryRun = false, max = MAX_
     let sent = 0;
     let failed = 0;
     let skipped = 0;
+    let processed = 0;
+    let stoppedEarly = false;
     const failures = [];
 
     for (let i = 0; i < batch.length; i++) {
+        if (Date.now() - startedAt > MAX_RUN_MS) {
+            stoppedEarly = true;
+            break;
+        }
         if (i > 0) await sleep(SEND_GAP_MS);
         try {
             const result = await sendRecoveryForOrder(batch[i].orderId);
+            processed += 1;
             if (result.sent) {
                 sent += 1;
             } else if (result.reason === 'birthday_passed') {
@@ -182,6 +193,7 @@ export async function runRecovery({ now = new Date(), dryRun = false, max = MAX_
                 failures.push({ orderId: batch[i].orderId, reason: result.reason });
             }
         } catch (err) {
+            processed += 1;
             failed += 1;
             failures.push({ orderId: batch[i].orderId, reason: 'unexpected_error' });
             console.error(`[Recovery] unexpected failure for ${batch[i].orderId}:`, err?.message || err);
@@ -202,11 +214,11 @@ export async function runRecovery({ now = new Date(), dryRun = false, max = MAX_
         configured: true,
         due: eligible.length,
         duplicateSuppressed: duplicates.length,
-        processed: batch.length,
+        processed,
         sent,
         skipped,
         failed,
-        truncated: eligible.length > batch.length,
+        truncated: stoppedEarly || eligible.length > batch.length,
         failures: failures.slice(0, 10),
         durationMs: Date.now() - startedAt,
     };

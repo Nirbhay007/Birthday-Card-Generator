@@ -1,13 +1,25 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { isValidEmail } from '@/lib/utils';
+import {
+    deliveryDateString,
+    deliverySweepForDate,
+    nextDeliveryDate,
+    todayInDeliveryZone,
+} from '@/lib/deliverySchedule';
 
 /**
  * Scheduled delivery for a card (VIP feature).
  *
  * GET    /api/delivery?pageId=...&token=...   read the current schedule
- * POST   /api/delivery { pageId, editToken, scheduledAt, ... }  create/update
+ * POST   /api/delivery { pageId, editToken, scheduledDate, ... }  create/update
  * DELETE /api/delivery?pageId=...&token=...   cancel
+ *
+ * Delivery is date-based because the daily cron only runs one sweep. The API
+ * accepts `scheduledDate` (YYYY-MM-DD) and stores that date's 03:00 UTC sweep
+ * instant. Vercel may run the sweep up to 59 minutes later, which is why the
+ * UI describes a morning window rather than an exact time. `scheduledAt` is
+ * still accepted for older clients and reduced to its date part.
  *
  * Ownership is the card's edit token, exactly like theme/music edits. The
  * public card link cannot schedule or cancel anything.
@@ -23,6 +35,17 @@ function tokensMatch(expected, provided) {
 function cleanEmail(value) {
     if (typeof value !== 'string') return '';
     return value.trim().toLowerCase().slice(0, 255);
+}
+
+function requestedDeliveryDate(body) {
+    const explicit = String(body?.scheduledDate || '').trim();
+    if (explicit) return explicit;
+
+    // Backwards compatibility: the old UI sent a full ISO timestamp. Keep the
+    // calendar date the creator picked instead of shifting it into UTC.
+    const legacy = String(body?.scheduledAt || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(legacy)) return legacy.slice(0, 10);
+    return '';
 }
 
 async function authorize(pageId, token) {
@@ -43,6 +66,7 @@ function serialize(delivery) {
     return {
         id: delivery.id,
         scheduledAt: delivery.scheduledAt,
+        scheduledDate: deliveryDateString(delivery.scheduledAt),
         timezone: delivery.timezone,
         recipientEmail: delivery.recipientEmail,
         recipientName: delivery.recipientName,
@@ -88,16 +112,24 @@ export async function POST(request) {
             return NextResponse.json({ success: false, error: 'Scheduled delivery is a VIP feature. Unlock VIP first.' }, { status: 402 });
         }
 
-        const scheduledAt = new Date(body?.scheduledAt);
-        if (Number.isNaN(scheduledAt.getTime())) {
-            return NextResponse.json({ success: false, error: 'Choose a valid delivery date and time.' }, { status: 400 });
+        const scheduledDate = requestedDeliveryDate(body);
+        const scheduledAt = deliverySweepForDate(scheduledDate);
+        if (!scheduledAt) {
+            return NextResponse.json({ success: false, error: 'Choose a valid delivery date.' }, { status: 400 });
         }
+
         const now = Date.now();
-        if (scheduledAt.getTime() < now + 60 * 1000) {
-            return NextResponse.json({ success: false, error: 'Choose a time at least a minute from now.' }, { status: 400 });
+        if (scheduledDate < todayInDeliveryZone()) {
+            return NextResponse.json({ success: false, error: 'Choose today or a future date.' }, { status: 400 });
+        }
+        if (scheduledDate < nextDeliveryDate()) {
+            return NextResponse.json(
+                { success: false, error: "Today's delivery window has already passed. Choose tomorrow or a later date." },
+                { status: 400 }
+            );
         }
         if (scheduledAt.getTime() > now + 366 * 24 * 60 * 60 * 1000) {
-            return NextResponse.json({ success: false, error: 'Choose a delivery time within the next year.' }, { status: 400 });
+            return NextResponse.json({ success: false, error: 'Choose a delivery date within the next year.' }, { status: 400 });
         }
 
         const recipientEmail = cleanEmail(body?.recipientEmail);

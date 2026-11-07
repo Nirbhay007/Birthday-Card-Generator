@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import { runDeliveries } from '@/lib/deliveries';
 
 /**
- * GET /api/cron/delivery — scheduled card delivery sweep.
+ * GET /api/cron/delivery — daily scheduled card delivery sweep.
  *
- * Runs every 5 minutes. Sends due cards to recipient emails, or emails the
- * creator a WhatsApp-assist link when no recipient email is known. Protected
- * by CRON_SECRET in production; `?dryRun=1` reports without sending.
+ * Runs once a day at 03:00 UTC (08:30–09:30 IST). Sends every card whose chosen
+ * delivery date has arrived to the recipient email, or emails the creator a
+ * WhatsApp-assist link when no recipient email is known. Protected by
+ * CRON_SECRET in production; `?dryRun=1` reports without sending.
  */
 export const maxDuration = 60;
 

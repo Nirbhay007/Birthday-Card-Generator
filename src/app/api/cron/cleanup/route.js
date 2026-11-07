@@ -7,9 +7,17 @@ import { del } from '@vercel/blob';
 export const maxDuration = 30;
 
 export async function GET(request) {
-    // Security: Verify request is from Vercel Cron
-    const authHeader = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    // Security: verify the request came from Vercel Cron. In production the
+    // secret is required, matching the delivery/recovery/reminder routes, so
+    // this endpoint can never be used as an open storage-deletion trigger.
+    const secret = (process.env.CRON_SECRET || '').trim();
+    const authHeader = request.headers.get('authorization') || '';
+
+    if (!secret && process.env.NODE_ENV === 'production') {
+        console.error('[Cleanup] CRON_SECRET is not set; refusing to run in production.');
+        return NextResponse.json({ success: false, error: 'CRON_SECRET is not configured.' }, { status: 503 });
+    }
+    if (secret && authHeader !== `Bearer ${secret}`) {
         return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 

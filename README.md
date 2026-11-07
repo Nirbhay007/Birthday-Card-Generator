@@ -31,11 +31,11 @@ If you want to run my project locally:
 1. Clone the repo.
 2. Install dependencies:
    ```bash
-   npm install
+   pnpm install
    ```
 3. Run the development server:
    ```bash
-   npm run dev
+   pnpm dev
    ```
 4. Open [http://localhost:3000](http://localhost:3000) to see it in action.
 
@@ -52,7 +52,7 @@ as the internal alerts. Add these to the deployment environment:
 | `EMAIL_FROM` | all email | Verified sender, e.g. `BirthdayGen <hello@yourdomain.com>`. Falls back to `ALERT_FROM_EMAIL`. `onboarding@resend.dev` only delivers to the Resend account owner. |
 | `EMAIL_REPLY_TO` | reminders | Optional. Replies to reminder emails go here. |
 | `EMAIL_TOKEN_SECRET` | unsubscribe links | Signs one-click unsubscribe tokens. Falls back to `CRON_SECRET`, then `RAZORPAY_KEY_SECRET`, so existing deployments work without a new secret. |
-| `CRON_SECRET` | reminder cron | Vercel Cron sends it automatically. In production `/api/cron/reminders` refuses to run without it, so the endpoint can never be triggered by strangers. |
+| `CRON_SECRET` | all cron routes | Vercel Cron sends it automatically. In production every `/api/cron/*` route refuses to run without it, so the endpoints can never be triggered by strangers. |
 | `NEXT_PUBLIC_SITE_URL` | email links | Absolute card / unsubscribe URLs. Defaults to `https://birthday.nirbhay.online`. |
 
 The reminder sweep runs daily at 05:00 UTC via `vercel.json`. A card gets one
@@ -61,12 +61,15 @@ birthday date, and cards created fewer than 30 days before the birthday, are
 skipped. Unsubscribing sets `reminderOptOutAt`; the card and its photos stay
 saved.
 
-Apply the additive database migration before deploying (run this SQL file in
-your database, or use `prisma db push` in a disposable environment):
+Scheduled delivery is date-based. The creator picks a delivery date and the
+card goes out in that day's single sweep at 03:00 UTC (08:30–09:30 IST; Hobby
+cron timing is per-hour). A recipient email sends the card automatically;
+without one, the creator gets a ready-to-send WhatsApp link. This keeps the
+feature fully usable on Vercel Hobby, which only allows daily cron jobs.
 
-```bash
-prisma/migrations/20261027000000_email_delivery/migration.sql
-```
+Apply the database migrations before deploying. See
+[Database migrations](#database-migrations) for the one-time baseline command
+used by the existing production database.
 
 Preview the reminder queue locally without sending anything:
 
@@ -93,7 +96,7 @@ at an R2 object URL.
 | Install command | `pnpm install` (a `pnpm-lock.yaml` is committed) |
 | Build command | `pnpm build` |
 | Output directory | `.next` (default) |
-| Node.js | 20.9 or newer (declared in `engines`) |
+| Node.js | 22.x (pinned in `engines`) |
 
 `vercel.json` only defines the cron schedule and per-route memory/time limits.
 It does not override the framework build.
@@ -105,7 +108,7 @@ Preview:
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
-| `PRISMA_DATABASE_URL` | yes | Prisma Accelerate URL (`prisma+postgres://…`). The build runs `prisma generate --no-engine`, so the runtime URL must go through Accelerate. |
+| `PRISMA_DATABASE_URL` | yes | Runtime database URL. Production uses Prisma Accelerate (`prisma+postgres://…`); Preview and local development may use a direct Postgres URL. The build runs the standard `prisma generate`, so both work. |
 | `POSTGRES_URL` | yes | Direct PostgreSQL URL. The Prisma schema uses it as `directUrl` for migrations. |
 | `NEXT_PUBLIC_SITE_URL` | recommended | Canonical site origin used by metadata, OG images and emails. Set it to the production domain. |
 | `CRON_SECRET` | yes | Vercel Cron sends `Authorization: Bearer $CRON_SECRET`; production cron routes reject calls without it. |
@@ -131,31 +134,47 @@ Preview:
 
 ### Database migrations
 
-Migrations are not run by the build. Apply them once against the direct
-database URL before (or right after) the first deploy:
+Migrations are not run by the build. `prisma/migrations` now contains a single
+Postgres baseline that matches `prisma/schema.prisma`.
+
+For a brand-new database:
 
 ```bash
-POSTGRES_URL="postgres://…" pnpm prisma migrate deploy
+PRISMA_DATABASE_URL="prisma+postgres://…" \
+POSTGRES_URL="postgres://…" \
+pnpm prisma migrate deploy
 ```
 
-The local `.env` fallback for development uses a direct Postgres URL; for
-development without Accelerate, run `pnpm prisma generate` (without
-`--no-engine`) and point `PRISMA_DATABASE_URL` at the direct URL.
+The existing production database was created before migration history was
+tracked. Baseline it once so Prisma knows the schema is already applied (this
+only records the migration; it does not change tables):
+
+```bash
+PRISMA_DATABASE_URL="prisma+postgres://…" \
+POSTGRES_URL="postgres://…" \
+pnpm prisma migrate resolve --applied 20261107000000_baseline
+```
+
+After that, `pnpm prisma migrate deploy` applies only new migrations. The local
+`.env` can use a direct Postgres URL for `PRISMA_DATABASE_URL`; the standard
+client generated by the build works with both direct Postgres and Accelerate.
 
 ### Cron jobs
 
-`vercel.json` schedules four jobs:
+`vercel.json` schedules four jobs, all once per day so they work on the Vercel
+Hobby plan:
 
 | Path | Schedule | What it does |
 | --- | --- | --- |
-| `/api/cron/delivery` | every 5 minutes | Sends scheduled cards / WhatsApp-assist emails. |
-| `/api/cron/recovery` | hourly | Abandoned-checkout recovery emails. |
+| `/api/cron/delivery` | daily 03:00 UTC (08:30–09:30 IST) | Sends cards whose chosen delivery date has arrived, or WhatsApp-assist emails. |
 | `/api/cron/cleanup` | daily 04:00 UTC | Deletes expired and orphaned media from R2 and Vercel Blob. |
 | `/api/cron/reminders` | daily 05:00 UTC | Annual birthday reminder emails. |
+| `/api/cron/recovery` | daily 06:00 UTC | Abandoned-checkout recovery emails (24 hours to 7 days old). |
 
 Vercel automatically adds the `Authorization: Bearer $CRON_SECRET` header.
-Hobby projects only support daily crons, so the 5-minute and hourly schedules
-need a Pro plan.
+Every cron route refuses to run in production when the secret is missing.
+Hobby cron timing is per-hour (±59 minutes), so delivery is a morning window,
+not an exact minute.
 
 ### Media uploads
 

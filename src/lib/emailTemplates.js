@@ -251,9 +251,9 @@ export function renderReminderEmail({
 }
 
 /**
- * Abandoned-checkout recovery. Sent once, a couple of hours after an order was
- * created and left unpaid. The link is signed (order id + poll token) so only
- * the buyer who received this email can resume the exact order.
+ * Abandoned-checkout recovery. Sent once, the day after an order was created
+ * and left unpaid. The link is signed (order id + poll token) so only the
+ * buyer who received this email can resume the exact order.
  */
 export function renderRecoveryEmail({
     recipientName = '',

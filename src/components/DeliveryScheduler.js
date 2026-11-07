@@ -5,52 +5,41 @@ import { CalendarClock, Loader2, Mail, Check, X, Send } from 'lucide-react';
 import { track } from '@/lib/track';
 import { isValidEmail } from '@/lib/utils';
 import { loadBuyerContact } from '@/lib/payments';
+import {
+    DELIVERY_SWEEP_LABEL,
+    formatDeliveryDate,
+    nextDeliveryDate,
+} from '@/lib/deliverySchedule';
 
 /**
  * Scheduled delivery (VIP owner only).
  *
+ * Delivery is date-based: Vercel Hobby only allows one cron run per day, so
+ * every card chosen for a date goes out in that morning's single sweep.
+ *
  * Two honest paths, matching the backend:
- *   - recipient email  → we send the card automatically at the chosen time.
+ *   - recipient email  → we send the card automatically.
  *   - creator email    → we email the creator a ready-to-send WhatsApp link.
  *
  * No WhatsApp provider is connected, so the UI never promises an automatic
  * WhatsApp message. It says exactly which of the two things will happen.
  */
 
-function defaultLocalDateTime(birthdayDate) {
-    const now = new Date();
-    let target = null;
+function defaultDeliveryDate(birthdayDate) {
+    const earliest = nextDeliveryDate();
     if (birthdayDate) {
-        // The API can hand us a full ISO timestamp; keep only the date part so
-        // appending a local time never produces an Invalid Date.
+        // The API can hand us a full ISO timestamp; keep only the date part.
         const dateOnly = String(birthdayDate).slice(0, 10);
-        const parsed = new Date(`${dateOnly}T09:00:00`);
-        if (!Number.isNaN(parsed.getTime()) && parsed.getTime() > now.getTime() + 5 * 60 * 1000) {
-            target = parsed;
-        }
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly) && dateOnly >= earliest) return dateOnly;
     }
-    if (!target) {
-        target = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-        target.setHours(9, 0, 0, 0);
-    }
-    const pad = (n) => String(n).padStart(2, '0');
-    return `${target.getFullYear()}-${pad(target.getMonth() + 1)}-${pad(target.getDate())}T${pad(target.getHours())}:${pad(target.getMinutes())}`;
-}
-
-function formatSchedule(value) {
-    if (!value) return '';
-    try {
-        return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
-    } catch {
-        return '';
-    }
+    return earliest;
 }
 
 export default function DeliveryScheduler({ pageId, isVip, birthdayDate = null, defaultCreatorEmail = '' }) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [delivery, setDelivery] = useState(null);
-    const [scheduledAt, setScheduledAt] = useState(() => defaultLocalDateTime(birthdayDate));
+    const [scheduledDate, setScheduledDate] = useState(() => defaultDeliveryDate(birthdayDate));
     const [recipientEmail, setRecipientEmail] = useState('');
     const [creatorEmail, setCreatorEmail] = useState(defaultCreatorEmail || '');
     const [status, setStatus] = useState({ phase: 'idle', message: '' });
@@ -87,6 +76,7 @@ export default function DeliveryScheduler({ pageId, isVip, birthdayDate = null, 
                 if (!alive || !data?.success) return;
                 if (data.delivery && data.delivery.status !== 'cancelled') {
                     setDelivery(data.delivery);
+                    setScheduledDate(data.delivery.scheduledDate || String(data.delivery.scheduledAt || '').slice(0, 10));
                     setRecipientEmail(data.delivery.recipientEmail || '');
                     setCreatorEmail(data.delivery.creatorEmail || '');
                 }
@@ -104,8 +94,8 @@ export default function DeliveryScheduler({ pageId, isVip, birthdayDate = null, 
             setStatus({ phase: 'error', message: 'Open this card from the browser where you created it to schedule delivery.' });
             return;
         }
-        if (!scheduledAt) {
-            setStatus({ phase: 'error', message: 'Pick a delivery date and time.' });
+        if (!scheduledDate) {
+            setStatus({ phase: 'error', message: 'Pick a delivery date.' });
             return;
         }
         const to = String(recipientEmail || '').trim();
@@ -132,7 +122,7 @@ export default function DeliveryScheduler({ pageId, isVip, birthdayDate = null, 
                 body: JSON.stringify({
                     pageId,
                     editToken: token,
-                    scheduledAt: new Date(scheduledAt).toISOString(),
+                    scheduledDate,
                     timezone,
                     recipientEmail: to || null,
                     creatorEmail: cc || null,
@@ -144,8 +134,8 @@ export default function DeliveryScheduler({ pageId, isVip, birthdayDate = null, 
             setStatus({
                 phase: 'saved',
                 message: to
-                    ? `Scheduled. We'll email the card to ${to} within 5 minutes of the chosen time.`
-                    : `Scheduled. We'll email you a ready-to-send WhatsApp link within 5 minutes of the chosen time.`,
+                    ? `Scheduled for ${formatDeliveryDate(data.delivery.scheduledAt)}. We'll email the card to ${to} in that morning's delivery sweep (around ${DELIVERY_SWEEP_LABEL}).`
+                    : `Scheduled for ${formatDeliveryDate(data.delivery.scheduledAt)}. We'll email you a ready-to-send WhatsApp link in that morning's delivery sweep (around ${DELIVERY_SWEEP_LABEL}).`,
             });
             track('delivery_scheduled');
         } catch (err) {
@@ -194,8 +184,8 @@ export default function DeliveryScheduler({ pageId, isVip, birthdayDate = null, 
                             <span className="block text-sm font-extrabold text-gray-900">Schedule the delivery</span>
                             <span className="block text-[11px] text-gray-500 mt-0.5">
                                 {active
-                                    ? `Set for ${formatSchedule(active.scheduledAt)}`
-                                    : 'Send it at the right moment, even if you are busy.'}
+                                    ? `Delivery on ${formatDeliveryDate(active.scheduledAt)}`
+                                    : 'Pick a date; we send it in the morning.'}
                             </span>
                         </span>
                     </span>
@@ -208,25 +198,26 @@ export default function DeliveryScheduler({ pageId, isVip, birthdayDate = null, 
                             <div className="rounded-xl bg-purple-50 border border-purple-200 px-3 py-2.5 text-[11px] text-purple-900 flex items-start gap-2">
                                 <Check className="w-3.5 h-3.5 text-purple-700 shrink-0 mt-0.5" />
                                 <span>
-                                    <strong>{formatSchedule(active.scheduledAt)}</strong>
+                                    <strong>{formatDeliveryDate(active.scheduledAt)}</strong>
                                     {active.recipientEmail
                                         ? ` · email to ${active.recipientEmail}`
                                         : ' · WhatsApp reminder to you'}
-                                    {active.status === 'sent' ? ' · sent' : ''}
+                                    {active.status === 'sent' ? ' · sent' : active.status === 'failed' ? ' · failed' : ''}
                                 </span>
                             </div>
                         )}
 
                         <label className="block">
-                            <span className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">Delivery time</span>
+                            <span className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">Delivery date</span>
                             <input
-                                type="datetime-local"
-                                value={scheduledAt}
-                                onChange={(e) => setScheduledAt(e.target.value)}
+                                type="date"
+                                value={scheduledDate}
+                                min={nextDeliveryDate()}
+                                onChange={(e) => setScheduledDate(e.target.value)}
                                 className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-400"
                             />
                             <span className="block text-[10px] text-gray-400 mt-1">
-                                Times are in {timezone}. Cards go out on our next delivery sweep — within 5 minutes of this time.
+                                Cards are delivered once a day, in the morning (around {DELIVERY_SWEEP_LABEL}). Pick the date you want it to arrive.
                             </span>
                         </label>
 

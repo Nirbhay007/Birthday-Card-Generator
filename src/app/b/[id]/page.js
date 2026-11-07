@@ -15,7 +15,7 @@ import TrackedLink from '@/components/site/TrackedLink';
 // ISR: cache each card page for 1 hour at the CDN.
 // Card views are the bulk of traffic, and page content only changes through
 // the app, which calls revalidatePath() on edits and VIP upgrades. A longer
-// window avoids re-rendering healthy cards every 5 minutes while they are
+// window avoids re-rendering healthy cards on every request while they are
 // being viewed. URL flags (?created=1 / ?preview=1 / ?viewer=1) are handled
 // client-side in <BirthdayExperience />, so they share this cache entry
 // without breaking.
