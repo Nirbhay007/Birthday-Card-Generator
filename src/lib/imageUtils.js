@@ -57,8 +57,11 @@ async function tryNativeDecode(file, maxDim = 1600, quality = 0.85) {
 /**
  * Convert HEIC using 'heic-to/csp' with a timeout.
  * Uses the CSP-safe build to prevent Content Security Policy violations in production.
+ * A 10MB HEIC already takes ~6s in WASM on a fast desktop, so the timeout is
+ * generous: a short one rejects exactly the large phone photos that need this
+ * path most. The uploader shows a progress message while it runs.
  */
-async function tryWasmHeicToJpeg(file, timeoutMs = 7000) {
+async function tryWasmHeicToJpeg(file, timeoutMs = 30000) {
     if (typeof window === 'undefined' || !file) return null;
 
     try {
@@ -103,7 +106,7 @@ export async function convertHeicToJpeg(file) {
 
     // 2. Try CSP-safe libheif WASM worker (Chrome, Firefox, Edge)
     try {
-        const wasmResult = await tryWasmHeicToJpeg(file, 7000);
+        const wasmResult = await tryWasmHeicToJpeg(file, 30000);
         if (wasmResult) return wasmResult;
     } catch (err) {
         console.warn('WASM HEIC conversion attempt failed:', err);
