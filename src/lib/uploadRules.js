@@ -6,6 +6,12 @@
  */
 export const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB max for photos
 export const MAX_AUDIO_SIZE = 8 * 1024 * 1024; // 8MB max for premium music
+// Original HEIC/HEIF files are uploaded to temporary Blob storage before the
+// server converts them to JPEG. They can be much larger than a final photo.
+export const MAX_HEIC_SOURCE_SIZE = 25 * 1024 * 1024;
+// Temporary HEIC hand-off files use this filename prefix so the conversion
+// route can tell them apart from real, user-visible photos.
+export const HEIC_SOURCE_PREFIX = 'heic-src-';
 
 export const ALLOWED_IMAGE_TYPES = [
     'image/jpeg',
@@ -40,6 +46,12 @@ export function isAudioUpload(fileType = '', fileName = '') {
         ALLOWED_AUDIO_TYPES.includes(fileType) ||
         /\.(mp3|m4a|wav|aac|ogg|webm)$/i.test(fileName)
     );
+}
+
+export function isHeicUpload(fileType = '', fileName = '') {
+    const type = String(fileType || '').toLowerCase();
+    const name = String(fileName || '').toLowerCase();
+    return type === 'image/heic' || type === 'image/heif' || /\.(heic|heif)$/.test(name);
 }
 
 export function isImageUpload(fileType = '', fileName = '') {

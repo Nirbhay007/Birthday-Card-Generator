@@ -7,7 +7,7 @@ import { PTHEMES } from './looks';
 import { RELATIONSHIPS, getTone, getRelationshipQuotes } from './relationships';
 import { TRACKS, PREMIUM_TRACKS } from '@/lib/music';
 import { compressAndNormalizeImage } from '@/lib/imageUtils';
-import { needsDirectBlobUpload, uploadDirectToBlob } from '@/lib/uploadClient';
+import { needsDirectBlobUpload, uploadDirectToBlob, uploadPhotoFile } from '@/lib/uploadClient';
 import Reveal from './Reveal';
 
 export const EMPTY_CUSTOM = {
@@ -145,21 +145,7 @@ export default function CustomizePanel({
         setUploadingPhoto(true);
         try {
             const compressed = await compressAndNormalizeImage(rawFile);
-            let uploadedUrl = null;
-
-            if (needsDirectBlobUpload(compressed)) {
-                uploadedUrl = await uploadDirectToBlob(compressed, 'photos');
-            } else {
-                const fd = new FormData();
-                fd.append('file', compressed);
-                const res = await fetch('/api/upload', { method: 'POST', body: fd });
-                const data = await res.json();
-                if (!data.success) {
-                    setPhotoError(data.error || 'Failed to upload photo. Please try again.');
-                    return;
-                }
-                uploadedUrl = data.url;
-            }
+            const uploadedUrl = await uploadPhotoFile(compressed);
 
             if (uploadedUrl) {
                 onPhotoChange?.(uploadedUrl);
@@ -200,17 +186,8 @@ export default function CustomizePanel({
             for (const raw of batch) {
                 try {
                     const compressed = await compressAndNormalizeImage(raw);
-                    if (needsDirectBlobUpload(compressed)) {
-                        const url = await uploadDirectToBlob(compressed, 'photos');
-                        if (url) uploaded.push(url);
-                        continue;
-                    }
-
-                    const fd = new FormData();
-                    fd.append('file', compressed);
-                    const res = await fetch('/api/upload', { method: 'POST', body: fd });
-                    const data = await res.json();
-                    if (data.success && data.url) uploaded.push(data.url);
+                    const url = await uploadPhotoFile(compressed);
+                    if (url) uploaded.push(url);
                 } catch {
                     // One bad photo never sinks the batch.
                 }

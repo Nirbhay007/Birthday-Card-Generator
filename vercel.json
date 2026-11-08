@@ -22,6 +22,10 @@
             "memory": 1024,
             "maxDuration": 30
         },
+        "src/app/api/upload/heic/route.js": {
+            "memory": 1024,
+            "maxDuration": 120
+        },
         "src/app/api/cron/cleanup/route.js": {
             "memory": 512,
             "maxDuration": 30

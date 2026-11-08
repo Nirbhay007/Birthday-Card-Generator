@@ -6,7 +6,9 @@ import {
     ALLOWED_AUDIO_TYPES,
     ALLOWED_IMAGE_TYPES,
     MAX_AUDIO_SIZE,
+    MAX_HEIC_SOURCE_SIZE,
     MAX_IMAGE_SIZE,
+    isHeicUpload,
 } from '@/lib/uploadRules';
 
 /**
@@ -58,9 +60,14 @@ export async function POST(request) {
                 }
 
                 const isAudio = pathname.startsWith('music/');
+                const isHeicSource = !isAudio && isHeicUpload('', pathname);
                 return {
                     allowedContentTypes: isAudio ? ALLOWED_AUDIO_TYPES : ALLOWED_IMAGE_TYPES,
-                    maximumSizeInBytes: isAudio ? MAX_AUDIO_SIZE : MAX_IMAGE_SIZE,
+                    maximumSizeInBytes: isAudio
+                        ? MAX_AUDIO_SIZE
+                        : isHeicSource
+                            ? MAX_HEIC_SOURCE_SIZE
+                            : MAX_IMAGE_SIZE,
                     addRandomSuffix: false,
                 };
             },

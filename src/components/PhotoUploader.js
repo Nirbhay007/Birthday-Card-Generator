@@ -4,7 +4,7 @@ import React, { useCallback, useState, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { X, Upload, Loader2, Camera, ChevronLeft, ChevronRight, AlertCircle, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { compressAndNormalizeImage } from '@/lib/imageUtils';
+import { compressAndNormalizeImage, isHeicFile } from '@/lib/imageUtils';
 
 const MAX_RAW_FILE_SIZE = 25 * 1024 * 1024; // 25MB raw camera limit before client compression
 
@@ -38,7 +38,11 @@ export default function PhotoUploader({ photos, setPhotos, maxPhotos = 4 }) {
         try {
             for (let i = 0; i < files.length; i++) {
                 const rawFile = files[i];
-                setProgress(`Preparing photo ${i + 1} of ${files.length}...`);
+                setProgress(
+                    isHeicFile(rawFile)
+                        ? `Converting HEIC photo ${i + 1} of ${files.length}…`
+                        : `Preparing photo ${i + 1} of ${files.length}...`
+                );
                 try {
                     const compressed = await compressAndNormalizeImage(rawFile);
                     const previewUrl = URL.createObjectURL(compressed);

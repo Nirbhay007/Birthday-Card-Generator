@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getClientIp } from '@/lib/clientIp';
 import { isUploadRateLimited } from '@/lib/uploadRateLimit';
-import { MAX_AUDIO_SIZE, MAX_IMAGE_SIZE, isAudioUpload, isImageUpload } from '@/lib/uploadRules';
-import { uploadFileToR2 } from '@/lib/r2';
-import { put } from '@vercel/blob';
+import { MAX_AUDIO_SIZE, MAX_IMAGE_SIZE, isAudioUpload, isHeicUpload, isImageUpload } from '@/lib/uploadRules';
+import { storeMediaBuffer } from '@/lib/mediaStorage';
+import { convertHeicBufferToJpeg, isHeicBuffer } from '@/lib/heicServer';
 import { sendEmailAlert } from '@/lib/alerts';
 
 export async function POST(request) {
@@ -58,49 +58,50 @@ export async function POST(request) {
         }
 
         const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const contentType = file.type || (isAudio ? 'audio/mpeg' : 'image/jpeg');
+        let buffer = Buffer.from(arrayBuffer);
+        let contentType = file.type || (isAudio ? 'audio/mpeg' : 'image/jpeg');
+        let uploadName = file.name;
+
+        // Normalize HEIC/HEIF photos on the server. The browser usually
+        // converts them first, but passing through a file the client could
+        // not decode leaves an image most browsers cannot display.
+        if (isImage && isHeicUpload(fileType, fileName)) {
+            if (!isHeicBuffer(buffer)) {
+                return NextResponse.json(
+                    { success: false, error: 'This file is not a valid HEIC photo. Please choose another image.' },
+                    { status: 400 }
+                );
+            }
+
+            try {
+                buffer = await convertHeicBufferToJpeg(buffer);
+                contentType = 'image/jpeg';
+                uploadName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
+            } catch (conversionError) {
+                console.error('[Upload] HEIC conversion failed:', conversionError?.message || conversionError);
+                return NextResponse.json(
+                    { success: false, error: 'We could not process this HEIC photo. Please try another photo.' },
+                    { status: 422 }
+                );
+            }
+        }
 
         // Organize into subdirectories for clear management & cleanup
-        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
+        const safeName = uploadName.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
         const folder = isAudio ? 'music' : 'photos';
         const pathname = `${folder}/${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`;
 
-        let url;
-        let storageProvider = 'r2';
-
-        try {
-            const { url: r2Url } = await uploadFileToR2({
-                buffer,
-                key: pathname,
-                contentType,
-            });
-            url = r2Url;
-        } catch (r2Error) {
-            console.warn('[Upload] Primary R2 upload failed, attempting Vercel Blob fallback:', r2Error?.message || r2Error);
-            sendEmailAlert({
-                title: 'R2 Upload Failed (Fallback Engaged)',
-                message: `Cloudflare R2 failed (${r2Error?.name || 'Error'}: ${r2Error?.message || 'AccessDenied'}). Switched to Vercel Blob fallback automatically.`,
-                level: 'warning',
-            }).catch(console.error);
-
-            if (process.env.BLOB_READ_WRITE_TOKEN) {
-                const blob = await put(pathname, buffer, {
-                    access: 'public',
-                    contentType,
-                });
-                url = blob.url;
-                storageProvider = 'vercel-blob';
-            } else {
-                throw r2Error;
-            }
-        }
+        const { url, provider: storageProvider } = await storeMediaBuffer({
+            buffer,
+            pathname,
+            contentType,
+        });
 
         return NextResponse.json({
             success: true,
             url,
-            name: file.name,
-            size: file.size,
+            name: uploadName,
+            size: buffer.length,
             kind: isAudio ? 'audio' : 'photo',
             provider: storageProvider,
         });

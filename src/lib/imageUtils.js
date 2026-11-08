@@ -16,6 +16,66 @@ export function isHeicFile(file) {
 }
 
 /**
+ * Draw an image source into a downscaled canvas and encode it as JPEG.
+ * Returns a JPEG File, or null when the browser cannot encode the canvas.
+ */
+async function encodeJpegFile(source, width, height, fileName, maxDim, quality) {
+    const scale = Math.min(1, maxDim / Math.max(width, height));
+    const targetW = Math.max(1, Math.round(width * scale));
+    const targetH = Math.max(1, Math.round(height * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = targetW;
+    canvas.height = targetH;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    // JPEG has no alpha channel; flatten transparent pixels onto white.
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, targetW, targetH);
+    ctx.drawImage(source, 0, 0, targetW, targetH);
+
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+    if (!blob || blob.size === 0) return null;
+
+    const newName = (fileName || 'photo.heic').replace(/\.(heic|heif)$/i, '.jpg');
+    return new File([blob], newName, { type: 'image/jpeg' });
+}
+
+/**
+ * Try decoding through an <img> element. Safari 17+ renders HEIC in <img>
+ * even on the occasional device where createImageBitmap refuses it.
+ */
+async function tryImageElementDecode(file, maxDim, quality) {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return null;
+
+    let objectUrl = '';
+    try {
+        objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+        img.decoding = 'async';
+
+        await new Promise((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = () => reject(new Error('Image element could not decode this file'));
+            img.src = objectUrl;
+        });
+
+        if (!img.naturalWidth || !img.naturalHeight) return null;
+        return await encodeJpegFile(img, img.naturalWidth, img.naturalHeight, file.name, maxDim, quality);
+    } catch {
+        return null;
+    } finally {
+        if (objectUrl) {
+            try {
+                URL.revokeObjectURL(objectUrl);
+            } catch {}
+        }
+    }
+}
+
+/**
  * Try native hardware-accelerated decode first (Safari on iOS & macOS).
  * Returns a JPEG File if successful, or null if not supported natively.
  */
@@ -26,24 +86,12 @@ async function tryNativeDecode(file, maxDim = 1600, quality = 0.85) {
     if (typeof createImageBitmap === 'function') {
         try {
             const bmp = await createImageBitmap(file);
-            const { width, height } = bmp;
-            if (width && height) {
-                const scale = Math.min(1, maxDim / Math.max(width, height));
-                const targetW = Math.max(1, Math.round(width * scale));
-                const targetH = Math.max(1, Math.round(height * scale));
-                const canvas = document.createElement('canvas');
-                canvas.width = targetW;
-                canvas.height = targetH;
-                const ctx = canvas.getContext('2d');
-                if (ctx) {
-                    ctx.drawImage(bmp, 0, 0, targetW, targetH);
-                    bmp.close?.();
-                    const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', quality));
-                    if (blob && blob.size > 0) {
-                        const newName = (file.name || 'photo.heic').replace(/\.(heic|heif)$/i, '.jpg');
-                        return new File([blob], newName, { type: 'image/jpeg' });
-                    }
+            try {
+                if (bmp.width && bmp.height) {
+                    const result = await encodeJpegFile(bmp, bmp.width, bmp.height, file.name, maxDim, quality);
+                    if (result) return result;
                 }
+            } finally {
                 bmp.close?.();
             }
         } catch {
@@ -51,18 +99,22 @@ async function tryNativeDecode(file, maxDim = 1600, quality = 0.85) {
         }
     }
 
-    return null;
+    // Second native path: some Safari versions render HEIC in <img> but
+    // fail createImageBitmap for the same file.
+    return tryImageElementDecode(file, maxDim, quality);
 }
 
 /**
  * Convert HEIC using 'heic-to/csp' with a timeout.
  * Uses the CSP-safe build to prevent Content Security Policy violations in production.
- * A 10MB HEIC already takes ~6s in WASM on a fast desktop, so the timeout is
- * generous: a short one rejects exactly the large phone photos that need this
- * path most. The uploader shows a progress message while it runs.
+ * Large phone photos can take 10-20s in WASM, and slower devices take longer;
+ * the timeout is only a last-resort escape hatch so a wedged worker cannot
+ * block the uploader forever. The uploader shows a progress message while it runs.
  */
-async function tryWasmHeicToJpeg(file, timeoutMs = 30000) {
+async function tryWasmHeicToJpeg(file, timeoutMs = 90000) {
     if (typeof window === 'undefined' || !file) return null;
+
+    let timeoutId = null;
 
     try {
         const { heicTo } = await import('heic-to/csp');
@@ -74,9 +126,9 @@ async function tryWasmHeicToJpeg(file, timeoutMs = 30000) {
             quality: 0.86,
         });
 
-        const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('HEIC conversion timed out')), timeoutMs)
-        );
+        const timeoutPromise = new Promise((_, reject) => {
+            timeoutId = setTimeout(() => reject(new Error('HEIC conversion timed out')), timeoutMs);
+        });
 
         const convertedBlob = await Promise.race([conversionPromise, timeoutPromise]);
         if (!convertedBlob || convertedBlob.size === 0) return null;
@@ -86,6 +138,8 @@ async function tryWasmHeicToJpeg(file, timeoutMs = 30000) {
     } catch (err) {
         console.warn('WASM HEIC conversion error:', err);
         return null;
+    } finally {
+        if (timeoutId) clearTimeout(timeoutId);
     }
 }
 
@@ -106,22 +160,18 @@ export async function convertHeicToJpeg(file) {
 
     // 2. Try CSP-safe libheif WASM worker (Chrome, Firefox, Edge)
     try {
-        const wasmResult = await tryWasmHeicToJpeg(file, 30000);
+        const wasmResult = await tryWasmHeicToJpeg(file, 90000);
         if (wasmResult) return wasmResult;
     } catch (err) {
         console.warn('WASM HEIC conversion attempt failed:', err);
     }
 
-    // 3. Fallback: If under 5MB, pass through original file since server accepts HEIC
-    if (file.size <= 5 * 1024 * 1024) {
-        console.warn('Passing through original HEIC photo as fallback (≤5MB)');
-        return file;
-    }
-
-    // 4. File is too large to pass through to server and couldn't be converted
-    throw new Error(
-        `"${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)}MB) could not be converted in this browser. Please open the photo on your device and save/export it as JPG or PNG.`
-    );
+    // 3. Fallback: keep the original HEIC and let the upload layer convert it
+    //    on the server. This is the safety net for very large photos, unusual
+    //    HEVC profiles, or browsers with too little memory for the WASM build.
+    //    The server always stores a JPEG, so card viewers get a usable image.
+    console.warn('HEIC conversion unavailable in this browser; the server will convert it on upload.');
+    return file;
 }
 
 /**
@@ -141,8 +191,8 @@ export async function compressAndNormalizeImage(file, maxDim = 1600, quality = 0
         workFile = await convertHeicToJpeg(workFile);
     }
 
-    // If it's still HEIC (passed through under 5MB because browser couldn't convert it),
-    // skip canvas recompression since non-Safari browsers cannot decode HEIC on canvas.
+    // If it's still HEIC (the browser could not decode it), skip canvas
+    // recompression: the upload layer converts it on the server instead.
     if (isHeicFile(workFile)) {
         return workFile;
     }

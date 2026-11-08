@@ -38,9 +38,12 @@ importers:
       gsap:
         specifier: ^3.15.0
         version: 3.15.0
+      heic-decode:
+        specifier: ^2.1.0
+        version: 2.1.0
       heic-to:
-        specifier: ^1.5.2
-        version: 1.5.2
+        specifier: ^1.6.7
+        version: 1.6.7
       lucide-react:
         specifier: ^0.554.0
         version: 0.554.0(react@19.3.0)
@@ -65,6 +68,9 @@ importers:
       resend:
         specifier: ^6.32.1
         version: 6.32.1
+      sharp:
+        specifier: ^0.35.5
+        version: 0.35.5
     devDependencies:
       '@playwright/test':
         specifier: ^1.64.1
@@ -1668,8 +1674,12 @@ packages:
     resolution: {integrity: sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==}
     engines: {node: '>= 0.4'}
 
-  heic-to@1.5.2:
-    resolution: {integrity: sha512-8Fns+lZHAWmz5U5IUxDeXKwIf3foBoKNPLxxFY4B0MkLjNuomEIHCoDbDE+x/llFK3NCEO1cu4+n3iUKY+Svmw==}
+  heic-decode@2.1.0:
+    resolution: {integrity: sha512-0fB3O3WMk38+PScbHLVp66jcNhsZ/ErtQ6u2lMYu/YxXgbBtl+oKOhGQHa4RpvE68k8IzbWkABzHnyAIjR758A==}
+    engines: {node: '>=8.0.0'}
+
+  heic-to@1.6.7:
+    resolution: {integrity: sha512-GCPYNl86u6eZ7mr2aa+uQB+PrQOVKSBYfH8esovr8kh2c6EYQSDYIJ6uhXSmM2hPC8PdBVJ/Trn0jnfM9H9gvg==}
 
   hermes-estree@0.25.1:
     resolution: {integrity: sha512-0wUoCcLp+5Ev5pDW2OriHC2MJCbwLwuRx+gAqMTOkGKJJiBCLjtrvy4PWUGn6MIVefecRpzoOZ/UV6iGdOr+Cw==}
@@ -1891,6 +1901,10 @@ packages:
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
+
+  libheif-js@1.23.5:
+    resolution: {integrity: sha512-umXZPthnWZtF3iG/5mQG+AZ2V6i0UeYpo3z2CkggTEgL8dKmIIwJT6TDuAMuabXa1yTW8uJ1ZAgR+CxNTklYYw==}
+    engines: {node: '>=8.0.0'}
 
   lilconfig@3.1.3:
     resolution: {integrity: sha512-/vlFKAoH5Cgt3Ie+JLhRbwOsCQePABiU3tJ1egGvyQ+33R/vcwM2Zl2QR/LzjsBeItPt3oSVXapn+m4nQDvpzw==}
@@ -3014,8 +3028,7 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@img/colour@1.1.0':
-    optional: true
+  '@img/colour@1.1.0': {}
 
   '@img/sharp-darwin-arm64@0.35.5':
     optionalDependencies:
@@ -3757,8 +3770,7 @@ snapshots:
 
   delayed-stream@1.0.0: {}
 
-  detect-libc@2.1.2:
-    optional: true
+  detect-libc@2.1.2: {}
 
   didyoumean@1.2.2: {}
 
@@ -4317,7 +4329,11 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  heic-to@1.5.2: {}
+  heic-decode@2.1.0:
+    dependencies:
+      libheif-js: 1.23.5
+
+  heic-to@1.6.7: {}
 
   hermes-estree@0.25.1: {}
 
@@ -4535,6 +4551,8 @@ snapshots:
     dependencies:
       prelude-ls: 1.2.1
       type-check: 0.4.0
+
+  libheif-js@1.23.5: {}
 
   lilconfig@3.1.3: {}
 
@@ -4975,7 +4993,6 @@ snapshots:
       '@img/sharp-win32-arm64': 0.35.5
       '@img/sharp-win32-ia32': 0.35.5
       '@img/sharp-win32-x64': 0.35.5
-    optional: true
 
   shebang-command@2.0.0:
     dependencies:
