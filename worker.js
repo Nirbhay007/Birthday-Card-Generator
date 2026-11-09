@@ -97,7 +97,7 @@ function withEdgeTtl(response, seconds) {
     });
 }
 
-export default {
+const worker = {
     async fetch(request, env, ctx) {
         const url = new URL(request.url);
         const cache = caches.default;
@@ -109,7 +109,9 @@ export default {
 
         const isGet = request.method === "GET";
         const isApi = url.pathname.startsWith("/api/");
-        const isBypass = request.headers.has("Authorization");
+        const isBypass = request.headers.has("Authorization") ||
+                         request.headers.has("x-prerender-revalidate") ||
+                         request.headers.has("x-isr");
 
         // Razorpay webhooks can mark a card VIP without the client ever calling
         // /api/premium/verify. Clone before Next.js consumes the body.
@@ -197,3 +199,5 @@ export default {
         );
     },
 };
+
+export default worker;

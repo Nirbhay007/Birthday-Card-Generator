@@ -23,6 +23,27 @@
       "service": "birthday-generator"
     }
   ],
+  // Workers Paid: raise CPU limit to 30s so SSR and /api/og image generation never exceed CPU limit
+  "limits": {
+    "cpu_ms": 30000
+  },
+  // Durable Objects queue for OpenNext ISR revalidation deduplication
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "NEXT_CACHE_DO_QUEUE",
+        "class_name": "DOQueueHandler"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "DOQueueHandler"
+      ]
+    }
+  ],
   "observability": {
     "logs": {
       "enabled": true,
@@ -78,6 +99,17 @@
           "service": "birthday-generator-dev"
         }
       ],
+      "limits": {
+        "cpu_ms": 30000
+      },
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "NEXT_CACHE_DO_QUEUE",
+            "class_name": "DOQueueHandler"
+          }
+        ]
+      },
       "r2_buckets": [
         {
           "binding": "BIRTHDAY_ASSETS",

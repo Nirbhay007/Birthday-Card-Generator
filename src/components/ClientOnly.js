@@ -1,6 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useSyncExternalStore } from 'react';
+
+// A stable no-op subscription: the value only changes once, when the browser
+// starts hydrating. useSyncExternalStore avoids the cascading render that a
+// setState-in-useEffect mount flag causes, while keeping the same SSR contract.
+const subscribe = () => () => {};
 
 /**
  * Renders fallback during Server-Side Rendering (SSR), and switches to children
@@ -8,11 +13,11 @@ import { useState, useEffect } from 'react';
  * server CPU cycles.
  */
 export default function ClientOnly({ children, fallback = null }) {
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
+    const mounted = useSyncExternalStore(
+        subscribe,
+        () => true,
+        () => false
+    );
 
     if (!mounted) {
         return fallback;
