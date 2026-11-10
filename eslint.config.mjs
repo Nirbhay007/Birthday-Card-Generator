@@ -9,6 +9,7 @@ const eslintConfig = defineConfig([
     ".next/**",
     ".next-qa/**",
     ".open-next/**",
+    ".wrangler/**",
     ".vercel/**",
     "playwright-report/**",
     "test-results/**",

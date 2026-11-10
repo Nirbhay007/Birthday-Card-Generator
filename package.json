@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate --no-engine && next build",
+    "build": "prisma generate && next build",
     "build:worker": "NEXT_PRIVATE_STANDALONE=true npm run build && opennextjs-cloudflare build --skipNextBuild",
     "preview": "npm run build:worker && opennextjs-cloudflare preview",
     "deploy:cf": "npm run build:worker && opennextjs-cloudflare deploy",
@@ -27,6 +27,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1129.0",
     "@gsap/react": "^2.1.2",
+    "@prisma/adapter-pg": "5.22.0",
     "@prisma/client": "^5.22.0",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
@@ -35,6 +36,7 @@
     "heic-to": "^1.5.2",
     "lucide-react": "^0.554.0",
     "next": "16.4.3",
+    "pg": "^8.23.1",
     "prisma": "^5.22.0",
     "railway": "^3.11.0",
     "razorpay": "^2.9.8",
