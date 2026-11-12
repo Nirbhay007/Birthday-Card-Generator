@@ -196,3 +196,80 @@ export async function PATCH(request, { params }) {
         return NextResponse.json({ success: false, error: 'Failed to update card' }, { status: 500 });
     }
 }
+
+export async function GET(request, { params }) {
+    try {
+        const { id } = await params;
+        if (!id) {
+            return NextResponse.json({ success: false, error: 'Missing card ID' }, { status: 400 });
+        }
+
+        const page = await prisma.birthdayPage.findUnique({
+            where: { id },
+            include: {
+                photos: {
+                    orderBy: { order: 'asc' },
+                },
+            },
+        });
+
+        if (!page) {
+            return NextResponse.json({ success: false, error: 'Card not found' }, { status: 404 });
+        }
+
+        const isVip = !!page.isVip;
+        const isVipPro = isVip || !!page.isVipPro;
+        const FREE_THEMES = ['fun', 'elegant'];
+        const PRO_THEMES = ['holo', 'aurora'];
+        const PRO_TRACKS = ['techno', 'chamber', 'marching'];
+
+        const activeThemeRaw = isVip || isVipPro
+            ? (page.theme || 'royal')
+            : (FREE_THEMES.includes(page.theme) ? page.theme : 'fun');
+        const activeTheme = (!isVipPro && PRO_THEMES.includes(activeThemeRaw)) ? 'royal' : activeThemeRaw;
+
+        const activeMusicRaw = isVip || isVipPro
+            ? (page.music || 'classic')
+            : (page.music === 'off' ? 'off' : 'classic');
+        const activeMusic = (!isVipPro && PRO_TRACKS.includes(activeMusicRaw)) ? 'strings' : activeMusicRaw;
+
+        const allPhotos = page.photos || [];
+        const photoCap = isVipPro ? 12 : isVip ? 9 : 3;
+        const visiblePhotos = (isVip || isVipPro) ? allPhotos.slice(0, photoCap) : allPhotos.slice(0, 3);
+        const lockedPhotosCount = (isVip || isVipPro) ? Math.max(0, allPhotos.length - photoCap) : Math.max(0, allPhotos.length - 3);
+
+        const clientPage = {
+            id: page.id,
+            recipientName: page.recipientName,
+            message: page.message,
+            age: page.age,
+            senderName: page.senderName,
+            theme: activeTheme,
+            music: activeMusic,
+            originalTheme: page.theme,
+            originalMusic: page.music,
+            isVip: isVip || isVipPro,
+            isVipPro,
+            isGroup: !!page.isGroup,
+            birthdayDate: page.birthdayDate ? new Date(page.birthdayDate).toISOString().slice(0, 10) : null,
+            loves: page.loves,
+            viewCount: page.viewCount,
+            lockedPhotosCount,
+            photosCount: allPhotos.length,
+        };
+
+        return NextResponse.json({
+            success: true,
+            page: clientPage,
+            photos: visiblePhotos,
+            lockedCount: lockedPhotosCount,
+        }, {
+            headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+            },
+        });
+    } catch (error) {
+        console.error('Fetch card error:', error);
+        return NextResponse.json({ success: false, error: 'Failed to fetch card' }, { status: 500 });
+    }
+}

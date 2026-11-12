@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { Crown, Check, Copy, Sparkles, ArrowRight, X, Eye, Bell, CalendarDays, Users, Loader2, AlertTriangle } from 'lucide-react';
 import {
@@ -93,8 +93,66 @@ export default function PostCreationModal({
         /* eslint-enable react-hooks/set-state-in-effect */
     }, []);
 
+    const celebrateVip = useCallback(() => {
+        setUpgraded(true);
+        if (String(buyerContact.email || '').trim()) setReceiptExpected(true);
+        try {
+            localStorage.setItem(`bgen_owner_${card?.id}`, '1');
+            sessionStorage.setItem(`bgen_vip_${card?.id}`, '1');
+            localStorage.removeItem(`bgen_pending_vip_${card?.id}`);
+        } catch {}
+        setStatus({ phase: 'success', message: 'VIP Activated!' });
+        track('upgrade_success');
+        try {
+            const premiumTrack = card?.originalMusic || card?.music || 'strings';
+            window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { track: premiumTrack, cardId: card?.id } }));
+        } catch {}
+        try {
+            confetti({
+                particleCount: 200,
+                spread: 90,
+                origin: { y: 0.5 },
+                colors: ['#f2c14e', '#fb7185', '#a855f7', '#ffd700'],
+                disableForReducedMotion: true,
+            });
+        } catch {}
+    }, [buyerContact.email, card]);
+
     useEffect(() => {
         if (!isOpen || !card) return;
+
+        // Auto-recover pending payment if user switched to UPI app and reloaded
+        try {
+            const rawPending = localStorage.getItem(`bgen_pending_vip_${card.id}`);
+            if (rawPending) {
+                const pending = JSON.parse(rawPending);
+                if (pending?.orderId && pending?.pollToken && (Date.now() - (pending.time || 0) < 30 * 60 * 1000)) {
+                    fetch(`/api/premium/order/status?orderId=${encodeURIComponent(pending.orderId)}&token=${encodeURIComponent(pending.pollToken)}`)
+                        .then((r) => r.json())
+                        .then((data) => {
+                            if (data?.paid) {
+                                if (pending.tier === 'group_card') {
+                                    setGroupUnlocked(true);
+                                    try {
+                                        localStorage.setItem(`bgen_owner_${card.id}`, '1');
+                                        sessionStorage.setItem(`bgen_vip_${card.id}`, '1');
+                                        localStorage.removeItem(`bgen_pending_vip_${card.id}`);
+                                    } catch {}
+                                    setGroupStatus({ phase: 'success', message: 'Group card activated!' });
+                                    try {
+                                        window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { cardId: card.id } }));
+                                    } catch {}
+                                } else {
+                                    celebrateVip();
+                                }
+                            }
+                        })
+                        .catch(() => {});
+                } else {
+                    localStorage.removeItem(`bgen_pending_vip_${card.id}`);
+                }
+            }
+        } catch {}
 
         // Celebratory confetti burst on open
         try {
@@ -155,27 +213,6 @@ export default function PostCreationModal({
         setTimeout(() => setCopied(false), 2500);
     };
 
-    const celebrateVip = () => {
-        setUpgraded(true);
-        if (String(buyerContact.email || '').trim()) setReceiptExpected(true);
-        try { localStorage.setItem(`bgen_owner_${card.id}`, '1'); } catch {}
-        setStatus({ phase: 'success', message: 'VIP Activated!' });
-        track('upgrade_success');
-        try {
-            const premiumTrack = card.originalMusic || card.music || 'strings';
-            window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { track: premiumTrack } }));
-        } catch {}
-        try {
-            confetti({
-                particleCount: 200,
-                spread: 90,
-                origin: { y: 0.5 },
-                colors: ['#f2c14e', '#fb7185', '#a855f7', '#ffd700'],
-                disableForReducedMotion: true,
-            });
-        } catch {}
-    };
-
     const handleUpgrade = async () => {
         // Validate the optional receipt address before opening checkout, so a
         // typo cannot cost the buyer their payment confirmation.
@@ -191,6 +228,14 @@ export default function PostCreationModal({
         setStatus({ phase: 'loading', message: 'Connecting to checkout…' });
         try {
             const order = await createPremiumOrder(region, { tier: 'card_vip', pageId: card.id, buyerContact: formatBuyerContact(contact) });
+            try {
+                localStorage.setItem(`bgen_pending_vip_${card.id}`, JSON.stringify({
+                    orderId: order.orderId,
+                    pollToken: order.pollToken,
+                    tier: 'card_vip',
+                    time: Date.now(),
+                }));
+            } catch {}
             setStatus({ phase: 'checkout', message: 'Opening secure checkout…' });
 
             // Background poll for UPI recovery (browser may lose the Razorpay
@@ -259,10 +304,15 @@ export default function PostCreationModal({
                 try {
                     await verifyPremiumPayment({ provider: 'test', pageId: card.id, tier: 'card_vip' });
                     setUpgraded(true);
+                    try {
+                        localStorage.setItem(`bgen_owner_${card.id}`, '1');
+                        sessionStorage.setItem(`bgen_vip_${card.id}`, '1');
+                        localStorage.removeItem(`bgen_pending_vip_${card.id}`);
+                    } catch {}
                     setStatus({ phase: 'success', message: 'VIP Activated in Test Mode!' });
                     try {
                         const premiumTrack = card.originalMusic || card.music || 'strings';
-                        window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { track: premiumTrack } }));
+                        window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { track: premiumTrack, cardId: card.id } }));
                     } catch {}
                 } catch {
                     setStatus({ phase: 'error', message: 'Test activation failed.' });
@@ -291,6 +341,14 @@ export default function PostCreationModal({
                 pageId: card.id,
                 buyerContact: formatBuyerContact(contact),
             });
+            try {
+                localStorage.setItem(`bgen_pending_vip_${card.id}`, JSON.stringify({
+                    orderId: order.orderId,
+                    pollToken: order.pollToken,
+                    tier: 'group_card',
+                    time: Date.now(),
+                }));
+            } catch {}
             setGroupStatus({ phase: 'checkout', message: 'Opening secure checkout…' });
 
             const abort = new AbortController();
@@ -319,8 +377,16 @@ export default function PostCreationModal({
                     tier: 'group_card',
                 });
                 setGroupUnlocked(true);
+                try {
+                    localStorage.setItem(`bgen_owner_${card.id}`, '1');
+                    sessionStorage.setItem(`bgen_vip_${card.id}`, '1');
+                    localStorage.removeItem(`bgen_pending_vip_${card.id}`);
+                } catch {}
                 setGroupStatus({ phase: 'success', message: 'Group card activated!' });
                 track('group_card_success');
+                try {
+                    window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { cardId: card.id } }));
+                } catch {}
                 try {
                     confetti({
                         particleCount: 180,
@@ -348,8 +414,16 @@ export default function PostCreationModal({
                 abort.abort();
                 if (pollResult?.unlockKey) {
                     setGroupUnlocked(true);
+                    try {
+                        localStorage.setItem(`bgen_owner_${card.id}`, '1');
+                        sessionStorage.setItem(`bgen_vip_${card.id}`, '1');
+                        localStorage.removeItem(`bgen_pending_vip_${card.id}`);
+                    } catch {}
                     setGroupStatus({ phase: 'success', message: 'Group card activated!' });
                     track('group_card_success');
+                    try {
+                        window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { cardId: card.id } }));
+                    } catch {}
                 } else {
                     setGroupStatus({ phase: 'error', message: 'Payment window closed. If money was deducted, refresh in a minute and the group card will activate automatically.' });
                 }
@@ -359,7 +433,15 @@ export default function PostCreationModal({
                 try {
                     await verifyPremiumPayment({ provider: 'test', pageId: card.id, tier: 'group_card' });
                     setGroupUnlocked(true);
+                    try {
+                        localStorage.setItem(`bgen_owner_${card.id}`, '1');
+                        sessionStorage.setItem(`bgen_vip_${card.id}`, '1');
+                        localStorage.removeItem(`bgen_pending_vip_${card.id}`);
+                    } catch {}
                     setGroupStatus({ phase: 'success', message: 'Group card activated in Test Mode!' });
+                    try {
+                        window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { cardId: card.id } }));
+                    } catch {}
                 } catch {
                     setGroupStatus({ phase: 'error', message: 'Test activation failed.' });
                 }
@@ -515,6 +597,11 @@ export default function PostCreationModal({
         // first, but never block the creator on a failed network call.
         await saveReminder().catch(() => { });
         if (upgraded || groupUnlocked) {
+            try {
+                localStorage.setItem(`bgen_owner_${card.id}`, '1');
+                sessionStorage.setItem(`bgen_vip_${card.id}`, '1');
+                localStorage.removeItem(`bgen_pending_vip_${card.id}`);
+            } catch {}
             // Force a fresh server render. Group purchases used to fall through
             // to onClose(), which kept the pre-payment page on screen until a
             // manual refresh.

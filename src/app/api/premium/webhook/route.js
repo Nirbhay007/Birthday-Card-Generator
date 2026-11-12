@@ -118,7 +118,14 @@ export async function POST(request) {
                             ...(effectiveTier === 'group_card' ? { isGroup: true } : {}),
                         },
                     }).catch((e) => console.error('Failed to mark page as VIP via webhook:', e?.message || e));
-                    try { revalidatePath(`/b/${targetPageId}`); } catch {}
+                    try {
+                        revalidatePath(`/b/${targetPageId}`, 'page');
+                        revalidatePath(`/b/${targetPageId}`);
+                        revalidatePath('/b/[id]', 'page');
+                        if (effectiveTier === 'group_card') {
+                            revalidatePath(`/b/${targetPageId}/add`, 'page');
+                        }
+                    } catch {}
                 }
             }
         }

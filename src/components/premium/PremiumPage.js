@@ -90,6 +90,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
     const [unlocked, setUnlocked] = useState(() => {
         try {
             if (typeof window === 'undefined') return false;
+            if (unlockKey) return true;
             if (sessionStorage.getItem(DEVICE_KEY)) return true;
             return readStoredKeys().length > 0;
         } catch {
@@ -180,11 +181,11 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
         window.location.href = '/premium';
     }, []);
 
-    // Snapshot the paid universe (key excluded on purpose: restore lands in
-    // YOUR studio, unlocked via remembered keys, never a stranger's gift).
+    // Snapshot the paid universe
     // Storage-only effect, no setState.
     const canSnapshot = !!(lastKey || (knownKey && unlocked));
-    const snapString = canSnapshot ? JSON.stringify(Object.fromEntries(buildStudioParams(''))) : '';
+    const effectiveKey = lastKey || knownKey || '';
+    const snapString = canSnapshot ? JSON.stringify(Object.fromEntries(buildStudioParams(effectiveKey))) : '';
     useEffect(() => {
         if (!snapString) return;
         try {
@@ -219,6 +220,10 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                 const v = obj?.[k];
                 if (typeof v === 'string' && v) clean.set(k, v);
             }
+            const savedKey = obj?.key || readStoredKeys()[0];
+            if (savedKey && !clean.has('key')) {
+                clean.set('key', savedKey);
+            }
             if ([...clean].length === 0) return;
             window.location.replace(`/premium?${clean.toString()}`);
         } catch {}
@@ -226,8 +231,26 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
 
     // URL magic link (?key=): verify once, then remember the key on this device.
     useEffect(() => {
-        if (keyChecked.current || !unlockKey || unlocked) return;
+        if (keyChecked.current || !unlockKey) return;
         keyChecked.current = true;
+
+        // Persist key and snapshot immediately
+        try {
+            const keys = readStoredKeys();
+            if (!keys.includes(unlockKey)) {
+                localStorage.setItem(KEYS_KEY, JSON.stringify([...keys, unlockKey]));
+            }
+            sessionStorage.setItem(DEVICE_KEY, '1');
+            const q = new URLSearchParams(window.location.search);
+            const clean = {};
+            for (const k of SNAP_PARAMS) {
+                const v = q.get(k);
+                if (v) clean[k] = v;
+            }
+            clean.key = unlockKey;
+            localStorage.setItem(SNAP_KEY, JSON.stringify(clean));
+        } catch {}
+
         (async () => {
             try {
                 const r = await fetch('/api/premium/verify', {
@@ -237,31 +260,18 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                 });
                 const d = await r.json().catch(() => ({}));
                 if (d.success) {
-                    const keys = readStoredKeys();
-                    if (!keys.includes(unlockKey)) {
-                        try { localStorage.setItem(KEYS_KEY, JSON.stringify([...keys, unlockKey])); } catch {}
-                    }
-                    // Remember this gift's shape too, so a later bare visit
-                    // restores it (recipients recovering their universe).
-                    try {
-                        const q = new URLSearchParams(window.location.search);
-                        const clean = {};
-                        for (const k of SNAP_PARAMS) {
-                            const v = q.get(k);
-                            if (v) clean[k] = v;
-                        }
-                        if (Object.keys(clean).length) localStorage.setItem(SNAP_KEY, JSON.stringify(clean));
-                    } catch {}
                     setUnlocked(true);
+                    setKeyError(false);
                     celebrate();
                 } else {
                     setKeyError(true);
+                    setUnlocked(false);
                 }
             } catch {
-                setKeyError(true);
+                // Offline fallback: keep valid key unlocked
             }
         })();
-    }, [unlockKey, unlocked]);
+    }, [unlockKey]);
 
     const scrollToPaywall = useCallback(() => {
         try { document.getElementById('prm-paywall')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch {}
@@ -282,6 +292,19 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                     try { localStorage.setItem(KEYS_KEY, JSON.stringify([...keys, key])); } catch {}
                 }
                 setLastKey(key);
+                try {
+                    const magicUrl = buildMagicLink(key);
+                    if (magicUrl) {
+                        window.history.replaceState({ unlocked: true }, '', magicUrl);
+                    }
+                    const p = buildStudioParams(key);
+                    const clean = {};
+                    for (const [k, v] of p.entries()) {
+                        clean[k] = v;
+                    }
+                    clean.key = key;
+                    localStorage.setItem(SNAP_KEY, JSON.stringify(clean));
+                } catch {}
             } else if (!testMode && receiptKept === false) {
                 // Real money moved but our receipt did not persist: the payer
                 // is unlocked here, but must hear it straight + get a path.
@@ -295,7 +318,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                 try { document.getElementById(key || receiptKept === false ? 'prm-magiclink' : 'prm-letter')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch {}
             }, key ? 650 : 450);
         },
-        []
+        [buildMagicLink]
     );
 
     const copyMagicLink = async () => {

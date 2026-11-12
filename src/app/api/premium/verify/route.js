@@ -95,7 +95,14 @@ export async function POST(request) {
                             ...(effectiveTier === 'group_card' ? { isGroup: true } : {}),
                         },
                     }).catch((e) => console.error('Failed to mark page as VIP:', e?.message || e));
-                    try { revalidatePath(`/b/${effectivePageId}`); } catch { }
+                    try {
+                        revalidatePath(`/b/${effectivePageId}`, 'page');
+                        revalidatePath(`/b/${effectivePageId}`);
+                        revalidatePath('/b/[id]', 'page');
+                        if (effectiveTier === 'group_card') {
+                            revalidatePath(`/b/${effectivePageId}/add`, 'page');
+                        }
+                    } catch { }
                 }
             } catch (dbError) {
                 console.error('PremiumOrder mark-paid failed (pending migration?):', dbError?.message || dbError);
@@ -183,7 +190,14 @@ export async function POST(request) {
                             ...(testTier === 'group_card' ? { isGroup: true } : {}),
                         },
                     });
-                    try { revalidatePath(`/b/${testPageId}`); } catch { }
+                    try {
+                        revalidatePath(`/b/${testPageId}`, 'page');
+                        revalidatePath(`/b/${testPageId}`);
+                        revalidatePath('/b/[id]', 'page');
+                        if (testTier === 'group_card') {
+                            revalidatePath(`/b/${testPageId}/add`, 'page');
+                        }
+                    } catch { }
                 } catch { }
             }
             return NextResponse.json({ success: true, testMode: true, isVip: !!testPageId, pageId: testPageId, tier: testTier });

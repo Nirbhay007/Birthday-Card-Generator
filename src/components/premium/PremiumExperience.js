@@ -270,7 +270,7 @@ export default function PremiumExperience({
                 mm.revert();
             };
         },
-        { scope: rootRef, dependencies: [unsealed, unlocked, reasonsList.length] }
+        { scope: rootRef, dependencies: [unsealed, isEffectiveUnlocked, reasonsList.length] }
     );
 
     // Letter reading animation: SplitText RESTRUCTURES the DOM, so it must
@@ -290,7 +290,7 @@ export default function PremiumExperience({
             try { ScrollTrigger.refresh(); } catch {}
         }, 400);
         return () => clearTimeout(t);
-    }, [unsealed, unlocked, letterSig, reasonsList.length]);
+    }, [unsealed, isEffectiveUnlocked, letterSig, reasonsList.length]);
 
     // Webfont swaps reflow lines after first paint; re-measure once loaded.
     useEffect(() => {
@@ -302,11 +302,11 @@ export default function PremiumExperience({
                 })
                 .catch(() => {});
         } catch {}
-    }, [unsealed, unlocked]);
+    }, [unsealed, isEffectiveUnlocked]);
 
     useGSAP(
         () => {
-            if (!unsealed || !unlocked) return;
+            if (!unsealed || !isEffectiveUnlocked) return;
             if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
             let split = null;
             const letter = document.querySelector('.prm-gsap-letter');
@@ -327,7 +327,7 @@ export default function PremiumExperience({
                 try { split?.revert(); } catch {}
             };
         },
-        { scope: rootRef, dependencies: [unsealed, unlocked, letterSig] }
+        { scope: rootRef, dependencies: [unsealed, isEffectiveUnlocked, letterSig] }
     );
 
     const showerLove = () => {

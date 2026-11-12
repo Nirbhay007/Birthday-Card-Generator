@@ -115,9 +115,22 @@ export async function generateMetadata({ params }) {
     };
 }
 
-export default async function BirthdayPage({ params }) {
+export default async function BirthdayPage({ params, searchParams }) {
     const { id } = await params;
-    const page = await getBirthdayPage(id);
+    const sp = searchParams && typeof searchParams.then === 'function' ? await searchParams : searchParams || {};
+    const forceFresh = sp.vip === '1' || sp.vip === 'true' || !!sp.fresh;
+    const page = forceFresh
+        ? await prisma.birthdayPage.findUnique({
+            where: { id },
+            include: {
+                photos: {
+                    orderBy: {
+                        order: 'asc',
+                    },
+                },
+            },
+        })
+        : await getBirthdayPage(id);
 
     if (!page) {
         notFound();

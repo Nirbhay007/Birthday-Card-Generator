@@ -46,7 +46,17 @@ function purgeCardCache(id, origin, cache) {
     if (!id || !origin) return Promise.resolve();
     const targets = [
         `${origin}/b/${id}`,
+        `${origin}/b/${id}?__cf_v=${CACHE_VERSION}`,
         `${origin}/b/${id}?__cf_rsc=1`,
+        `${origin}/b/${id}?__cf_rsc=1&__cf_v=${CACHE_VERSION}`,
+        `${origin}/b/${id}?created=1`,
+        `${origin}/b/${id}?created=1&__cf_v=${CACHE_VERSION}`,
+        `${origin}/b/${id}?created=1&__cf_rsc=1`,
+        `${origin}/b/${id}?created=1&__cf_rsc=1&__cf_v=${CACHE_VERSION}`,
+        `${origin}/b/${id}?vip=1`,
+        `${origin}/b/${id}?vip=1&__cf_v=${CACHE_VERSION}`,
+        `${origin}/b/${id}?vip=1&__cf_rsc=1`,
+        `${origin}/b/${id}?vip=1&__cf_rsc=1&__cf_v=${CACHE_VERSION}`,
     ];
     return Promise.all(targets.map((target) => cache.delete(target).catch(() => {})));
 }
@@ -111,7 +121,10 @@ const worker = {
         const isApi = url.pathname.startsWith("/api/");
         const isBypass = request.headers.has("Authorization") ||
                          request.headers.has("x-prerender-revalidate") ||
-                         request.headers.has("x-isr");
+                         request.headers.has("x-isr") ||
+                         request.headers.get("cache-control")?.includes("no-cache") ||
+                         url.searchParams.has("vip") ||
+                         url.searchParams.has("fresh");
 
         // Razorpay webhooks can mark a card VIP without the client ever calling
         // /api/premium/verify. Clone before Next.js consumes the body.
@@ -151,6 +164,9 @@ const worker = {
 
         // 5. Cache eligible card responses in Cloudflare Edge Cache
         if (isGet && !isBypass && !isApi && response.status === 200 && url.pathname.startsWith("/b/")) {
+            if (url.searchParams.has("vip") || url.searchParams.has("fresh")) {
+                return response;
+            }
             const cacheControl = response.headers.get("Cache-Control") || "";
             const isCacheable = (cacheControl.includes("s-maxage") || cacheControl.includes("max-age")) &&
                                 !cacheControl.includes("no-store") &&

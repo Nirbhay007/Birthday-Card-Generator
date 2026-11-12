@@ -15,6 +15,8 @@ const VipCustomizerModal = dynamic(() => import('@/components/VipCustomizerModal
 const PostCreationModal = dynamic(() => import('@/components/PostCreationModal'), { ssr: false });
 const DeliveryScheduler = dynamic(() => import('@/components/DeliveryScheduler'), { ssr: false });
 const KeepsakeCard = dynamic(() => import('@/components/premium/KeepsakeCard'), { ssr: false });
+const PhotoGallery = dynamic(() => import('@/components/PhotoGallery'), { ssr: false });
+const AudioPlayer = dynamic(() => import('@/components/AudioPlayer'), { ssr: false });
 import { BIRTHDAY_OPENED_EVENT } from '@/lib/music';
 import { trackShare } from '@/lib/shareTracking';
 import { track } from '@/lib/track';
@@ -90,6 +92,10 @@ function isResumeParam() {
 }
 
 export default function BirthdayExperience({ page, photos, gallery, shareSlot, audioSlot, preview = false, autoOpen = false }) {
+    const [clientVipData, setClientVipData] = useState(null);
+    const activePage = clientVipData?.page || page;
+    const activePhotos = clientVipData?.photos || photos;
+
     const [opened, setOpened] = useState(false);
     const blowTrackedRef = useRef(false);
     const [candleBlown, setCandleBlown] = useState(false);
@@ -113,47 +119,147 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     const proofShownRef = useRef(false);
     const remixShownRef = useRef(false);
 
+    // Live theme synchronization to <main data-theme="...">
+    useEffect(() => {
+        if (activePage?.theme) {
+            try {
+                document.querySelector('main[data-theme]')?.setAttribute('data-theme', activePage.theme);
+            } catch {}
+        }
+    }, [activePage?.theme]);
+
+    // Live VIP activation listener (dispatched upon checkout completion or recovery)
+    useEffect(() => {
+        const pageId = activePage.id || page.id;
+        const handleVipActivated = (e) => {
+            try {
+                sessionStorage.setItem(`bgen_vip_${pageId}`, '1');
+                localStorage.setItem(`bgen_owner_${pageId}`, '1');
+                localStorage.removeItem(`bgen_pending_vip_${pageId}`);
+            } catch {}
+            setShowCustomizeHint(true);
+            setClientVipData((prev) => ({
+                page: {
+                    ...(prev?.page || page),
+                    isVip: true,
+                    isVipPro: true,
+                    theme: prev?.page?.originalTheme || page.originalTheme || page.theme || 'royal',
+                    music: e?.detail?.track || prev?.page?.originalMusic || page.originalMusic || page.music || 'strings',
+                    lockedPhotosCount: 0,
+                },
+                photos: prev?.photos || photos,
+            }));
+            fetch(`/api/birthday/${pageId}?fresh=${Date.now()}`, {
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache' },
+            })
+                .then((r) => r.json())
+                .then((data) => {
+                    if (data?.success && data.page) {
+                        setClientVipData({ page: data.page, photos: data.photos || photos });
+                    }
+                })
+                .catch(() => {});
+        };
+
+        window.addEventListener('bgen:vip_activated', handleVipActivated);
+        return () => window.removeEventListener('bgen:vip_activated', handleVipActivated);
+    }, [activePage.id, page, photos]);
+
+    // Verify / restore VIP status on mount if query flag, session, or pending checkout is present
+    useEffect(() => {
+        const pageId = activePage.id || page.id;
+        let isVipQuery = false;
+        try {
+            const q = new URLSearchParams(window.location.search);
+            isVipQuery = q.has('vip') || q.has('fresh');
+        } catch {}
+
+        const hasVipSession = typeof window !== 'undefined' && !!sessionStorage.getItem(`bgen_vip_${pageId}`);
+        const pendingJson = typeof window !== 'undefined' ? localStorage.getItem(`bgen_pending_vip_${pageId}`) : null;
+
+        if (activePage.isVip || page.isVip) {
+            try {
+                sessionStorage.setItem(`bgen_vip_${pageId}`, '1');
+                localStorage.setItem(`bgen_owner_${pageId}`, '1');
+                localStorage.removeItem(`bgen_pending_vip_${pageId}`);
+            } catch {}
+            return;
+        }
+
+        if (isVipQuery || hasVipSession || pendingJson) {
+            fetch(`/api/birthday/${pageId}?fresh=${Date.now()}`, {
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache' },
+            })
+                .then((r) => r.json())
+                .then((data) => {
+                    if (data?.success && data.page?.isVip) {
+                        setClientVipData({ page: data.page, photos: data.photos || photos });
+                        setShowCustomizeHint(true);
+                        try {
+                            sessionStorage.setItem(`bgen_vip_${pageId}`, '1');
+                            localStorage.setItem(`bgen_owner_${pageId}`, '1');
+                            localStorage.removeItem(`bgen_pending_vip_${pageId}`);
+                        } catch {}
+                    } else if (pendingJson) {
+                        try {
+                            const pending = JSON.parse(pendingJson);
+                            if (pending?.orderId && pending?.pollToken) {
+                                fetch(`/api/premium/order/status?orderId=${encodeURIComponent(pending.orderId)}&token=${encodeURIComponent(pending.pollToken)}`)
+                                    .then((r) => r.json())
+                                    .then((statusData) => {
+                                        if (statusData?.paid) {
+                                            fetch(`/api/birthday/${pageId}?fresh=${Date.now()}`, { cache: 'no-store' })
+                                                .then((r) => r.json())
+                                                .then((d2) => {
+                                                    if (d2?.success && d2.page) {
+                                                        setClientVipData({ page: d2.page, photos: d2.photos || photos });
+                                                        setShowCustomizeHint(true);
+                                                        try {
+                                                            sessionStorage.setItem(`bgen_vip_${pageId}`, '1');
+                                                            localStorage.setItem(`bgen_owner_${pageId}`, '1');
+                                                            localStorage.removeItem(`bgen_pending_vip_${pageId}`);
+                                                        } catch {}
+                                                    }
+                                                })
+                                                .catch(() => {});
+                                        }
+                                    })
+                                    .catch(() => {});
+                            }
+                        } catch {}
+                    }
+                })
+                .catch(() => {});
+        }
+    }, [activePage.id, activePage.isVip, page.id, page.isVip, photos]);
+
     useEffect(() => {
         try {
             // Hydration-safe: localStorage is only read after mount.
             // eslint-disable-next-line react-hooks/set-state-in-effect
-            if (localStorage.getItem(`bgen-proof-dismissed-${page.id}`)) setProofDismissed(true);
+            if (localStorage.getItem(`bgen-proof-dismissed-${activePage.id}`)) setProofDismissed(true);
         } catch { }
-    }, [page.id]);
+    }, [activePage.id]);
 
     useEffect(() => {
         /* eslint-disable react-hooks/set-state-in-effect */
         if (isCreatedParam() || isResumeParam()) setVipModalOpen(true);
-        setIsOwner(checkIsOwner(page.id, preview));
+        setIsOwner(checkIsOwner(activePage.id, preview));
         setIsViewerPreview(isViewerParam());
         try {
             setVipPrice(getVipCardPrice(detectRegion()));
         } catch { }
         /* eslint-enable react-hooks/set-state-in-effect */
-        if (page.isVip) {
+        if (activePage.isVip) {
             try {
                 const q = new URLSearchParams(window.location.search);
                 if (q.has('vip')) setShowCustomizeHint(true);
             } catch { }
         }
-    }, [page.id, page.isVip, preview]);
+    }, [activePage.id, activePage.isVip, preview]);
 
-    // Just paid, but the HTML arrived from a cache entry rendered before the
-    // upgrade (ISR/CDN propagation). Reload once instead of showing the free
-    // card and making the buyer refresh manually.
-    useEffect(() => {
-        if (page.isVip) return;
-        let q;
-        try { q = new URLSearchParams(window.location.search); } catch { return; }
-        if (!q.has('vip')) return;
-        const key = `bgen_vip_reload_${page.id}`;
-        try {
-            if (sessionStorage.getItem(key)) return;
-            sessionStorage.setItem(key, '1');
-        } catch { return; }
-        const t = setTimeout(() => window.location.reload(), 700);
-        return () => clearTimeout(t);
-    }, [page.id, page.isVip]);
     // Auto-dismiss the customize hint after 6 seconds
     useEffect(() => {
         if (!showCustomizeHint) return;
@@ -169,7 +275,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
             setPreviewMode(true);
         }
     }, [preview]);
-    const typedName = useTypewriter(page.recipientName || 'Friend', opened, 90);
+    const typedName = useTypewriter(activePage.recipientName || 'Friend', opened, 90);
 
     const openVip = () => {
         track('upgrade_cta_click');
@@ -178,10 +284,10 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
 
     const handleCopyLink = async () => {
         try {
-            const url = typeof window !== 'undefined' ? `${window.location.origin}/b/${page.id}` : '';
+            const url = typeof window !== 'undefined' ? `${window.location.origin}/b/${activePage.id}` : '';
             if (url) {
                 await navigator.clipboard.writeText(url);
-                trackShare({ pageId: page.id, channel: 'copy', source: 'creator_notice' });
+                trackShare({ pageId: activePage.id, channel: 'copy', source: 'creator_notice' });
                 setCopiedNotice(true);
                 setTimeout(() => setCopiedNotice(false), 2000);
             }
@@ -221,7 +327,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
             ) {
                 ['created', 'new', 'manage', 'resume', 'rt', 'uploadWarning'].forEach((key) => q.delete(key));
                 const search = q.toString();
-                window.history.pushState({}, '', `/b/${page.id}${search ? `?${search}` : ''}`);
+                window.history.pushState({}, '', `/b/${activePage.id}${search ? `?${search}` : ''}`);
             }
         } catch { }
     };
@@ -230,16 +336,16 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     // Skipped for preview links AND for the creator's own visits (owner token,
     // ?viewer=1, ?preview=1) so creator self-views never inflate the count.
     useEffect(() => {
-        if (previewMode || isPreviewUrl() || isViewerParam() || checkIsOwner(page.id, preview)) return;
+        if (previewMode || isPreviewUrl() || isViewerParam() || checkIsOwner(activePage.id, preview)) return;
         try {
-            const key = `bgen-viewed-${page.id}`;
+            const key = `bgen-viewed-${activePage.id}`;
             // The server also dedupes with an httpOnly cookie, so a returning
             // browser already cannot increment the count. Skip the network call
             // entirely for those repeat visits.
             if (sessionStorage.getItem(key) || localStorage.getItem(key)) return;
             sessionStorage.setItem(key, '1');
             localStorage.setItem(key, '1');
-            fetch(`/api/birthday/${page.id}/react`, {
+            fetch(`/api/birthday/${activePage.id}/react`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type: 'view' }),
@@ -248,28 +354,28 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                 .then((d) => { if (d.success && typeof d.viewCount === 'number') setViewCount(d.viewCount); })
                 .catch(() => { });
         } catch { }
-    }, [page.id, previewMode, preview]);
+    }, [activePage.id, previewMode, preview]);
 
     // Fresh social proof for the owner's proof-moment banner. The server prop
     // can be stale on an ISR page; this read is cheap and only runs for owners.
     useEffect(() => {
-        if (!isOwner || page.isVip) return;
+        if (!isOwner || activePage.isVip) return;
         let alive = true;
-        fetch(`/api/birthday/${page.id}/react`)
+        fetch(`/api/birthday/${activePage.id}/react`)
             .then((r) => r.json())
             .then((d) => {
                 if (alive && d?.success && typeof d.loves === 'number') setHeartCount(d.loves);
             })
             .catch(() => { });
         return () => { alive = false; };
-    }, [isOwner, page.id, page.isVip]);
+    }, [isOwner, activePage.id, activePage.isVip]);
 
     const handleOpen = () => {
         setOpened(true);
         // Synchronous dispatch inside the tap gesture so audio is allowed to start
         try { window.dispatchEvent(new CustomEvent(BIRTHDAY_OPENED_EVENT)); } catch { }
         const proColors = ['#f5c518', '#7dd3fc', '#a78bfa', '#f472b6', '#ffffff'];
-        const common = page.isVipPro ? { colors: proColors } : {};
+        const common = activePage.isVipPro ? { colors: proColors } : {};
         confetti({ particleCount: 180, spread: 80, origin: { y: 0.6 }, disableForReducedMotion: true, ...common });
         setTimeout(() => {
             confetti({ particleCount: 90, angle: 60, spread: 60, origin: { x: 0, y: 0.7 }, disableForReducedMotion: true, ...common });
@@ -284,18 +390,18 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
         // Preview mode / owner self-love: animate locally only, never touch
         // the counter. The recipient's love is the social proof we later show
         // the creator, so it must not include the creator's own taps.
-        if (previewMode || isViewerPreview || isViewerParam() || checkIsOwner(page.id, preview)) return;
+        if (previewMode || isViewerPreview || isViewerParam() || checkIsOwner(activePage.id, preview)) return;
         // Every tap animates; only the first tap per browser session is
         // counted (the server cookie is the authoritative second layer).
         try {
-            const key = `bgen-loved-${page.id}`;
+            const key = `bgen-loved-${activePage.id}`;
             if (sessionStorage.getItem(key)) return;
             sessionStorage.setItem(key, '1');
         } catch {
             return;
         }
         try {
-            fetch(`/api/birthday/${page.id}/react`, {
+            fetch(`/api/birthday/${activePage.id}/react`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type: 'love' }),
@@ -311,7 +417,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     // The proof moment: only the creator sees it, only after the recipient has
     // actually sent love, and only while the card is still free. Never shown
     // to viewers (they should see a clean surprise, not an upsell).
-    const showProofBanner = isOwner && !isViewerPreview && !page.isVip && heartCount > 0 && !proofDismissed;
+    const showProofBanner = isOwner && !isViewerPreview && !activePage.isVip && heartCount > 0 && !proofDismissed;
 
     useEffect(() => {
         if (!opened || !showProofBanner || proofShownRef.current) return;
@@ -331,18 +437,18 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     const handleCandleBlown = () => {
         // The recipient's "aha" moment. The CTA appears only for them, after
         // the candles are out — the emotional peak, not a mid-gift upsell.
-        if (!isOwner && !previewMode && !isViewerPreview && !isViewerParam() && !checkIsOwner(page.id, preview)) {
+        if (!isOwner && !previewMode && !isViewerPreview && !isViewerParam() && !checkIsOwner(activePage.id, preview)) {
             setCandleBlown(true);
         }
         if (blowTrackedRef.current) return;
         blowTrackedRef.current = true;
-        if (isOwner || previewMode || isViewerPreview || isCreatedParam() || isViewerParam() || checkIsOwner(page.id, preview)) return;
+        if (isOwner || previewMode || isViewerPreview || isCreatedParam() || isViewerParam() || checkIsOwner(activePage.id, preview)) return;
         track('candle_blown', { path: '/b/[id]' });
     };
 
     const dismissProof = () => {
         setProofDismissed(true);
-        try { localStorage.setItem(`bgen-proof-dismissed-${page.id}`, '1'); } catch { }
+        try { localStorage.setItem(`bgen-proof-dismissed-${activePage.id}`, '1'); } catch { }
     };
 
     const openProofUpsell = () => {
@@ -350,11 +456,25 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
         openVip();
     };
 
+    const isVipActive = !!(activePage.isVip || activePage.isVipPro);
+    const renderedGallery = isVipActive && (!page.isVip || activePhotos.length !== (photos?.length || 0)) ? (
+        <PhotoGallery
+            photos={activePhotos}
+            lockedCount={activePage.lockedPhotosCount || 0}
+            pageId={activePage.id}
+            isVip={isVipActive}
+        />
+    ) : gallery;
+
+    const renderedAudio = isVipActive && (!page.isVip || activePage.music !== page.music) ? (
+        activePage.music !== 'off' ? <AudioPlayer track={activePage.music || 'strings'} /> : null
+    ) : audioSlot;
+
     return (
         <div className="relative">
-            <CelebrationBackground theme={page.theme} density={opened ? 'normal' : 'light'} />
-            {page.isVipPro && (
-                <ProAtmosphere variant={page.theme === 'aurora' ? 'aurora' : 'holo'} />
+            <CelebrationBackground theme={activePage.theme} density={opened ? 'normal' : 'light'} />
+            {activePage.isVipPro && (
+                <ProAtmosphere variant={activePage.theme === 'aurora' ? 'aurora' : 'holo'} />
             )}
 
             {/* Preview mode banner — detected client-side from ?preview=1 so the
@@ -362,7 +482,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
             {previewMode && (
                 <p className="mb-4 text-center text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200 rounded-full px-4 py-2">
                     👀 Preview mode: views & reactions are paused.{' '}
-                    <a href={`/b/${page.id}`} className="underline">Exit preview</a>
+                    <a href={`/b/${activePage.id}`} className="underline">Exit preview</a>
                 </p>
             )}
 
@@ -377,19 +497,19 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                     <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-2.5">
                             <div className="w-8 h-8 rounded-xl bg-purple-600/40 border border-purple-400/60 flex items-center justify-center shrink-0 mt-0.5">
-                                {page.isVip ? <Crown className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4 text-purple-300" />}
+                                {activePage.isVip ? <Crown className="w-4 h-4 text-amber-400" /> : <Eye className="w-4 h-4 text-purple-300" />}
                             </div>
                             <div className="space-y-1">
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <span className="font-extrabold text-white text-xs sm:text-sm">
-                                        {page.isVip ? '👑 VIP Creator Mode' : '👀 Creator Mode'}
+                                        {activePage.isVip ? '👑 VIP Creator Mode' : '👀 Creator Mode'}
                                     </span>
                                     <span className="text-[10px] font-extrabold bg-purple-900/90 text-purple-100 border border-purple-400/60 px-2.5 py-0.5 rounded-full">
                                         Only visible to you on this device
                                     </span>
                                 </div>
                                 <p className="text-purple-100 text-xs leading-relaxed">
-                                    <strong>{page.recipientName}</strong> will see a clean, sparkling surprise with <strong>zero edit or upgrade buttons</strong>. You can test this in an <strong>Incognito window</strong> or click below to preview.
+                                    <strong>{activePage.recipientName}</strong> will see a clean, sparkling surprise with <strong>zero edit or upgrade buttons</strong>. You can test this in an <strong>Incognito window</strong> or click below to preview.
                                 </p>
                             </div>
                         </div>
@@ -406,7 +526,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
 
                     <div className="mt-3 pt-2.5 border-t border-white/15 flex items-center justify-between gap-2 flex-wrap text-xs">
                         <div className="flex items-center gap-2 flex-wrap">
-                            {page.isVip ? (
+                            {activePage.isVip ? (
                                 <button
                                     type="button"
                                     onClick={() => setCustomizerOpen(true)}
@@ -426,7 +546,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                                 </button>
                             )}
                             <a
-                                href={`/b/${page.id}?viewer=1`}
+                                href={`/b/${activePage.id}?viewer=1`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1 text-white hover:text-amber-200 font-bold bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-xl border border-white/20 transition-all cursor-pointer"
@@ -442,7 +562,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                             className="inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:brightness-110 text-white font-bold px-3.5 py-1.5 rounded-xl shadow-md transition-all cursor-pointer"
                         >
                             {copiedNotice ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-                            <span>{copiedNotice ? 'Link Copied!' : `Copy Link for ${page.recipientName}`}</span>
+                            <span>{copiedNotice ? 'Link Copied!' : `Copy Link for ${activePage.recipientName}`}</span>
                         </button>
                     </div>
                 </div>
@@ -452,11 +572,11 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
             {!opened && (
                 <div className="relative z-10 min-h-[62vh] flex flex-col items-center justify-center text-center px-6 py-14">
                     <div className="pop-in max-w-md w-full theme-card rounded-3xl p-8 sm:p-10">
-                        {page.isVipPro ? (
+                        {activePage.isVipPro ? (
                             <p className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.2em] text-gray-950 bg-gradient-to-r from-sky-300 via-amber-200 to-pink-300 px-3.5 py-1 rounded-full mb-3 border border-amber-300 shadow-md">
                                 💎 VIP Birthday Surprise
                             </p>
-                        ) : page.isVip ? (
+                        ) : activePage.isVip ? (
                             <p className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.2em] text-amber-950 bg-gradient-to-r from-amber-300 via-amber-200 to-amber-300 px-3.5 py-1 rounded-full mb-3 border border-amber-400 shadow-md">
                                 👑 VIP Birthday Surprise
                             </p>
@@ -464,19 +584,19 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                             <p className="text-xs font-bold uppercase tracking-[0.2em] opacity-70 mb-3">You&apos;ve got a surprise</p>
                         )}
                         <h1 className="text-3xl sm:text-4xl font-extrabold mb-2" style={{ fontFamily: 'var(--font-heading)' }}>
-                            Hey {page.recipientName}! 🎁
+                            Hey {activePage.recipientName}! 🎁
                         </h1>
                         <p className="text-sm opacity-75 mb-6">
                             Someone made something special for you. Tap the gift to open it.
-                            {page.senderName ? <><br />With love, <strong>{page.senderName}</strong></> : null}
+                            {activePage.senderName ? <><br />With love, <strong>{activePage.senderName}</strong></> : null}
                         </p>
                         <button
                             onClick={handleOpen}
                             className={cn(
                                 "gift-wiggle mx-auto w-28 h-28 rounded-3xl theme-gift-box flex items-center justify-center text-white hover:scale-105 transition-all focus:outline-none focus:ring-4 cursor-pointer",
-                                page.isVipPro ? "pro-conic-ring ring-4 ring-sky-300/70" : page.isVip ? "vip-pulse-ring ring-4 ring-amber-300/80" : "focus:ring-purple-300"
+                                activePage.isVipPro ? "pro-conic-ring ring-4 ring-sky-300/70" : activePage.isVip ? "vip-pulse-ring ring-4 ring-amber-300/80" : "focus:ring-purple-300"
                             )}
-                            aria-label={`Open birthday surprise for ${page.recipientName}`}
+                            aria-label={`Open birthday surprise for ${activePage.recipientName}`}
                         >
                             <Gift className="w-14 h-14 drop-shadow-md" aria-hidden="true" />
                         </button>
@@ -489,11 +609,11 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
             {opened && (
                 <div className="relative z-10">
                     <header className="text-center mb-8 space-y-4 pop-in">
-                        {page.isVipPro ? (
+                        {activePage.isVipPro ? (
                             <p className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest bg-gradient-to-r from-sky-300 via-amber-200 to-pink-300 text-gray-950 border border-amber-300 rounded-full px-4 py-1.5 shadow-md">
                                 <span>💎</span> VIP Birthday Surprise
                             </p>
-                        ) : page.isVip ? (
+                        ) : activePage.isVip ? (
                             <p className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest bg-gradient-to-r from-amber-300 via-amber-200 to-amber-300 text-amber-950 border border-amber-400 rounded-full px-4 py-1.5 shadow-md">
                                 <span>👑</span> VIP Birthday Surprise
                             </p>
@@ -506,16 +626,16 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
                             Happy Birthday
                         </h1>
-                        <h2 className={`text-4xl md:text-6xl font-extrabold min-h-[1.2em] ${page.isVipPro ? 'pro-shimmer-text' : 'text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 animated-gradient-text'}`}>
+                        <h2 className={`text-4xl md:text-6xl font-extrabold min-h-[1.2em] ${activePage.isVipPro ? 'pro-shimmer-text' : 'text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 animated-gradient-text'}`}>
                             {typedName}<span className="animate-pulse">|</span>
                         </h2>
-                        {page.message && (
+                        {activePage.message && (
                             <blockquote className="text-xl md:text-2xl opacity-90 max-w-2xl mx-auto leading-relaxed italic border-l-4 border-amber-400 pl-4 py-3 my-6 theme-card rounded-2xl text-left sm:text-center sm:border-l-0 sm:border-t-4 sm:pt-4 sm:pl-0">
-                                &ldquo;{page.message}&rdquo;
+                                &ldquo;{activePage.message}&rdquo;
                             </blockquote>
                         )}
-                        {page.senderName && (
-                            <p className="text-sm font-semibold opacity-80">With all my love, {page.senderName} 💜</p>
+                        {activePage.senderName && (
+                            <p className="text-sm font-semibold opacity-80">With all my love, {activePage.senderName} 💜</p>
                         )}
                         {viewCount > 0 && (
                             <p className="inline-flex items-center gap-1 text-[11px] font-bold bg-white/40 border border-white/30 rounded-full px-3 py-1 opacity-80">
@@ -525,7 +645,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                     </header>
 
                     <div className="mb-14 theme-card rounded-3xl p-4 sm:p-8 pop-in">
-                        <CandleBlower age={page.age} recipientName={page.recipientName} onBlow={handleCandleBlown} />
+                        <CandleBlower age={activePage.age} recipientName={activePage.recipientName} onBlow={handleCandleBlown} />
                     </div>
 
                     {/* The emotional peak is right after the candles go out.
@@ -542,7 +662,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                                     Make them a card like this — photos, music, and candles they can blow out. Free, no signup, 30 seconds.
                                 </p>
                                 <Link
-                                    href={`/?remix=1&theme=${encodeURIComponent(page.originalTheme || page.theme || 'fun')}&utm_source=recipient&utm_medium=remix&utm_campaign=post_candle#create`}
+                                    href={`/?remix=1&theme=${encodeURIComponent(activePage.originalTheme || activePage.theme || 'fun')}&utm_source=recipient&utm_medium=remix&utm_campaign=post_candle#create`}
                                     onClick={() => {
                                         track('recipient_remix_click', { path: '/b/[id]' });
                                         track('recipient_create_click', { path: '/b/[id]' });
@@ -560,15 +680,15 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                         </section>
                     )}
 
-                    {photos?.length > 0 && (
+                    {activePhotos?.length > 0 && (
                         <section className="mb-14 space-y-5" aria-label="Photo Memories">
-                            {isOwner && !isViewerPreview && !page.isVip && page.lockedPhotosCount > 0 && (
+                            {isOwner && !isViewerPreview && !activePage.isVip && activePage.lockedPhotosCount > 0 && (
                                 <div className="mx-auto max-w-2xl rounded-2xl border border-amber-300/70 bg-gradient-to-br from-amber-50 to-pink-50 px-4 py-3 shadow-sm">
                                     <div className="flex items-start gap-2.5">
                                         <span className="w-8 h-8 rounded-xl bg-amber-400/30 text-amber-800 flex items-center justify-center shrink-0" aria-hidden="true">📸</span>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-xs font-extrabold text-amber-950">
-                                                {page.photosCount || (photos.length + page.lockedPhotosCount)} photos added — {photos.length} showing.
+                                                {activePage.photosCount || (activePhotos.length + activePage.lockedPhotosCount)} photos added — {activePhotos.length} showing.
                                             </p>
                                             <p className="text-[11px] text-amber-900/75 mt-0.5 leading-relaxed">
                                                 Only you can see this. The rest are saved and appear the moment you unlock VIP.
@@ -585,32 +705,32 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                                 </div>
                             )}
                             <h3 className="text-2xl font-bold text-center opacity-90">Cherished Memories 📸</h3>
-                            {gallery}
+                            {renderedGallery}
                         </section>
                     )}
 
                     <GroupWishes
-                        pageId={page.id}
-                        recipientName={page.recipientName}
+                        pageId={activePage.id}
+                        recipientName={activePage.recipientName}
                         isOwner={isOwner && !isViewerPreview}
-                        isGroup={!!page.isGroup}
+                        isGroup={!!activePage.isGroup}
                     />
 
                     {/* VIP keepsake: the export that makes the ₹49 feel earned */}
-                    {(page.isVip || page.isVipPro) && (
+                    {(activePage.isVip || activePage.isVipPro) && (
                         <section className="mb-14" aria-label="VIP keepsake card">
                             <h3 className="text-2xl font-bold text-center opacity-90 mb-2">VIP Keepsake 🖼️</h3>
                             <p className="text-center text-sm opacity-75 mb-6 max-w-md mx-auto">
-                                A film-style image of this exact moment. Save it as {page.recipientName}&apos;s
+                                A film-style image of this exact moment. Save it as {activePage.recipientName}&apos;s
                                 wallpaper, or send it back with your thank-you.
                             </p>
                             <KeepsakeCard
-                                to={page.recipientName || 'You'}
-                                from={page.senderName || 'Someone who loves you'}
-                                photoUrl={photos?.[0]?.url || (typeof photos?.[0] === 'string' ? photos[0] : null)}
-                                dedication={page.message || ''}
+                                to={activePage.recipientName || 'You'}
+                                from={activePage.senderName || 'Someone who loves you'}
+                                photoUrl={activePhotos?.[0]?.url || (typeof activePhotos?.[0] === 'string' ? activePhotos[0] : null)}
+                                dedication={activePage.message || ''}
                                 occasionLabel="A Birthday Surprise"
-                                theme={page.theme === 'aurora' ? 'aurora' : /rose|pink|love/.test(String(page.theme || '')) ? 'rose' : 'gold'}
+                                theme={activePage.theme === 'aurora' ? 'aurora' : /rose|pink|love/.test(String(activePage.theme || '')) ? 'rose' : 'gold'}
                                 unlocked
                             />
                         </section>
@@ -620,9 +740,9 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                         VIP and reads the edit token itself. */}
                     {isOwner && !isViewerPreview && (
                         <DeliveryScheduler
-                            pageId={page.id}
-                            isVip={!!(page.isVip || page.isVipPro)}
-                            birthdayDate={page.birthdayDate || null}
+                            pageId={activePage.id}
+                            isVip={!!(activePage.isVip || activePage.isVipPro)}
+                            birthdayDate={activePage.birthdayDate || null}
                         />
                     )}
 
@@ -649,11 +769,11 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                         </div>
                         <p className="text-xs opacity-60 mt-2">
                             {isOwner && !isViewerPreview ? (
-                                <>Only {page.recipientName}&apos;s own taps add to the public count. Open the plain card link in Incognito to test the love flow.</>
+                                <>Only {activePage.recipientName}&apos;s own taps add to the public count. Open the plain card link in Incognito to test the love flow.</>
                             ) : isViewerPreview || previewMode ? (
                                 <>Reactions are paused in this preview. Open the plain card link in Incognito to test them.</>
                             ) : (
-                                <>Tap to shower {page.recipientName} with love</>
+                                <>Tap to shower {activePage.recipientName} with love</>
                             )}
                         </p>
                     </div>
@@ -671,7 +791,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm sm:text-base font-extrabold text-gray-900">
-                                        {heartCount} {heartCount === 1 ? 'person has' : 'people have'} sent love to {page.recipientName}&apos;s card
+                                        {heartCount} {heartCount === 1 ? 'person has' : 'people have'} sent love to {activePage.recipientName}&apos;s card
                                     </p>
                                     <p className="text-xs sm:text-sm text-gray-700 mt-1 leading-relaxed">
                                         That&apos;s the moment worth keeping. Add the golden crown, VIP themes, and the keepsake image they can save forever.
@@ -709,7 +829,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                     </span>
                     <div className="relative flex items-center gap-2">
                         {/* Post-VIP customize hint tooltip */}
-                        {showCustomizeHint && page.isVip && (
+                        {showCustomizeHint && activePage.isVip && (
                             <div className="absolute bottom-full left-0 mb-2 z-50 pointer-events-none">
                                 <div className="relative bg-amber-400 text-gray-950 text-xs font-extrabold px-3 py-2 rounded-xl shadow-2xl whitespace-nowrap animate-bounce">
                                     🎨 Tap here to customize your card!
@@ -718,7 +838,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                                 </div>
                             </div>
                         )}
-                        {page.isVip ? (
+                        {activePage.isVip ? (
                             <button
                                 type="button"
                                 onClick={() => setCustomizerOpen(true)}
@@ -740,7 +860,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                             </button>
                         )}
                         <a
-                            href={`/b/${page.id}?viewer=1`}
+                            href={`/b/${activePage.id}?viewer=1`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-full bg-gray-950/90 hover:bg-gray-900 text-purple-200 hover:text-white backdrop-blur-md shadow-2xl border border-purple-400/30 text-xs font-bold cursor-pointer transition-all hover:scale-105"
@@ -756,18 +876,19 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
 
             {/* Fixed-position player: mounted from page load so it can catch
                 the synchronous gift-open gesture and start music reliably */}
-            {audioSlot}
+            {renderedAudio}
 
             <VipCustomizerModal
                 isOpen={customizerOpen}
                 onClose={() => setCustomizerOpen(false)}
-                page={page}
+                page={activePage}
+                onUpdated={(updated) => setClientVipData((prev) => ({ ...prev, page: { ...(prev?.page || activePage), ...updated } }))}
             />
 
             <PostCreationModal
                 isOpen={vipModalOpen}
                 onClose={handleCloseVipModal}
-                card={page}
+                card={activePage}
             />
         </div>
     );
