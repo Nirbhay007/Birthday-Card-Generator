@@ -57,7 +57,7 @@ function burst(big = false) {
                 confetti({ particleCount: 90, angle: 120, spread: 60, origin: { x: 1, y: 0.7 }, disableForReducedMotion: true });
             }, 350);
         }
-    } catch {}
+    } catch { }
 }
 
 export default function PremiumExperience({
@@ -137,7 +137,7 @@ export default function PremiumExperience({
 
     const unseal = () => {
         setUnsealed(true);
-        try { window.dispatchEvent(new CustomEvent(BIRTHDAY_OPENED_EVENT)); } catch {}
+        try { window.dispatchEvent(new CustomEvent(BIRTHDAY_OPENED_EVENT)); } catch { }
         burst();
         if (mode === 'cinema') {
             setTimeout(() => setCinemaPlayerOpen(true), 350);
@@ -155,7 +155,7 @@ export default function PremiumExperience({
     const sealRitual = () => {
         if (ritualRunning.current) return;
         // Synchronous dispatch inside the tap gesture so audio starts immediately on mobile
-        try { window.dispatchEvent(new CustomEvent(BIRTHDAY_OPENED_EVENT)); } catch {}
+        try { window.dispatchEvent(new CustomEvent(BIRTHDAY_OPENED_EVENT)); } catch { }
         try {
             if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
                 unseal();
@@ -287,7 +287,7 @@ export default function PremiumExperience({
     useEffect(() => {
         if (!unsealed) return;
         const t = setTimeout(() => {
-            try { ScrollTrigger.refresh(); } catch {}
+            try { ScrollTrigger.refresh(); } catch { }
         }, 400);
         return () => clearTimeout(t);
     }, [unsealed, isEffectiveUnlocked, letterSig, reasonsList.length]);
@@ -298,10 +298,10 @@ export default function PremiumExperience({
         try {
             document.fonts?.ready
                 ?.then(() => {
-                    try { ScrollTrigger.refresh(); } catch {}
+                    try { ScrollTrigger.refresh(); } catch { }
                 })
-                .catch(() => {});
-        } catch {}
+                .catch(() => { });
+        } catch { }
     }, [unsealed, isEffectiveUnlocked]);
 
     useGSAP(
@@ -321,10 +321,10 @@ export default function PremiumExperience({
                         stagger: 0.08,
                         scrollTrigger: { trigger: letter, start: 'top 80%', end: 'bottom 55%', scrub: 0.6 },
                     });
-                } catch {}
+                } catch { }
             }
             return () => {
-                try { split?.revert(); } catch {}
+                try { split?.revert(); } catch { }
             };
         },
         { scope: rootRef, dependencies: [unsealed, isEffectiveUnlocked, letterSig] }
@@ -339,7 +339,7 @@ export default function PremiumExperience({
     };
 
     const scrollToId = (id) => {
-        try { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch {}
+        try { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch { }
     };
 
     return (
@@ -710,9 +710,9 @@ export default function PremiumExperience({
                     onSaveKeepsake={
                         isEffectiveUnlocked
                             ? () => {
-                                  setCinemaPlayerOpen(false);
-                                  setTimeout(() => scrollToId('prm-keepsake'), 320);
-                              }
+                                setCinemaPlayerOpen(false);
+                                setTimeout(() => scrollToId('prm-keepsake'), 320);
+                            }
                             : null
                     }
                     onUnlock={() => {

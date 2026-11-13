@@ -124,7 +124,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
         if (activePage?.theme) {
             try {
                 document.querySelector('main[data-theme]')?.setAttribute('data-theme', activePage.theme);
-            } catch {}
+            } catch { }
         }
     }, [activePage?.theme]);
 
@@ -136,7 +136,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                 sessionStorage.setItem(`bgen_vip_${pageId}`, '1');
                 localStorage.setItem(`bgen_owner_${pageId}`, '1');
                 localStorage.removeItem(`bgen_pending_vip_${pageId}`);
-            } catch {}
+            } catch { }
             setShowCustomizeHint(true);
             setClientVipData((prev) => ({
                 page: {
@@ -159,7 +159,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                         setClientVipData({ page: data.page, photos: data.photos || photos });
                     }
                 })
-                .catch(() => {});
+                .catch(() => { });
         };
 
         window.addEventListener('bgen:vip_activated', handleVipActivated);
@@ -173,7 +173,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
         try {
             const q = new URLSearchParams(window.location.search);
             isVipQuery = q.has('vip') || q.has('fresh');
-        } catch {}
+        } catch { }
 
         const hasVipSession = typeof window !== 'undefined' && !!sessionStorage.getItem(`bgen_vip_${pageId}`);
         const pendingJson = typeof window !== 'undefined' ? localStorage.getItem(`bgen_pending_vip_${pageId}`) : null;
@@ -183,7 +183,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                 sessionStorage.setItem(`bgen_vip_${pageId}`, '1');
                 localStorage.setItem(`bgen_owner_${pageId}`, '1');
                 localStorage.removeItem(`bgen_pending_vip_${pageId}`);
-            } catch {}
+            } catch { }
             return;
         }
 
@@ -201,7 +201,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                             sessionStorage.setItem(`bgen_vip_${pageId}`, '1');
                             localStorage.setItem(`bgen_owner_${pageId}`, '1');
                             localStorage.removeItem(`bgen_pending_vip_${pageId}`);
-                        } catch {}
+                        } catch { }
                     } else if (pendingJson) {
                         try {
                             const pending = JSON.parse(pendingJson);
@@ -220,18 +220,18 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                                                             sessionStorage.setItem(`bgen_vip_${pageId}`, '1');
                                                             localStorage.setItem(`bgen_owner_${pageId}`, '1');
                                                             localStorage.removeItem(`bgen_pending_vip_${pageId}`);
-                                                        } catch {}
+                                                        } catch { }
                                                     }
                                                 })
-                                                .catch(() => {});
+                                                .catch(() => { });
                                         }
                                     })
-                                    .catch(() => {});
+                                    .catch(() => { });
                             }
-                        } catch {}
+                        } catch { }
                     }
                 })
-                .catch(() => {});
+                .catch(() => { });
         }
     }, [activePage.id, activePage.isVip, page.id, page.isVip, photos]);
 

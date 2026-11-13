@@ -58,7 +58,7 @@ export default function PostCreationModal({
     useEffect(() => {
         // Hydration-safe: origin and receipt details are read after mount.
         /* eslint-disable react-hooks/set-state-in-effect */
-        try { setOrigin(window.location.origin); } catch {}
+        try { setOrigin(window.location.origin); } catch { }
         // Reuse receipt details entered on the /premium paywall (same browser)
         // so a card upgrade does not ask for them again.
         try {
@@ -66,7 +66,7 @@ export default function PostCreationModal({
             setBuyerContact(saved);
             if (saved.email) setReminderEmail(saved.email);
             if (saved.phone) setReminderPhone(saved.phone);
-        } catch {}
+        } catch { }
         try {
             const q = new URLSearchParams(window.location.search);
             const warning = parseInt(q.get('uploadWarning') || '0', 10);
@@ -89,7 +89,7 @@ export default function PostCreationModal({
                     .catch(() => { })
                     .finally(() => setResumeLoading(false));
             }
-        } catch {}
+        } catch { }
         /* eslint-enable react-hooks/set-state-in-effect */
     }, []);
 
@@ -100,13 +100,13 @@ export default function PostCreationModal({
             localStorage.setItem(`bgen_owner_${card?.id}`, '1');
             sessionStorage.setItem(`bgen_vip_${card?.id}`, '1');
             localStorage.removeItem(`bgen_pending_vip_${card?.id}`);
-        } catch {}
+        } catch { }
         setStatus({ phase: 'success', message: 'VIP Activated!' });
         track('upgrade_success');
         try {
             const premiumTrack = card?.originalMusic || card?.music || 'strings';
             window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { track: premiumTrack, cardId: card?.id } }));
-        } catch {}
+        } catch { }
         try {
             confetti({
                 particleCount: 200,
@@ -115,7 +115,7 @@ export default function PostCreationModal({
                 colors: ['#f2c14e', '#fb7185', '#a855f7', '#ffd700'],
                 disableForReducedMotion: true,
             });
-        } catch {}
+        } catch { }
     }, [buyerContact.email, card]);
 
     useEffect(() => {
@@ -137,22 +137,22 @@ export default function PostCreationModal({
                                         localStorage.setItem(`bgen_owner_${card.id}`, '1');
                                         sessionStorage.setItem(`bgen_vip_${card.id}`, '1');
                                         localStorage.removeItem(`bgen_pending_vip_${card.id}`);
-                                    } catch {}
+                                    } catch { }
                                     setGroupStatus({ phase: 'success', message: 'Group card activated!' });
                                     try {
                                         window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { cardId: card.id } }));
-                                    } catch {}
+                                    } catch { }
                                 } else {
                                     celebrateVip();
                                 }
                             }
                         })
-                        .catch(() => {});
+                        .catch(() => { });
                 } else {
                     localStorage.removeItem(`bgen_pending_vip_${card.id}`);
                 }
             }
-        } catch {}
+        } catch { }
 
         // Celebratory confetti burst on open
         try {
@@ -162,7 +162,7 @@ export default function PostCreationModal({
                 origin: { y: 0.6 },
                 disableForReducedMotion: true,
             });
-        } catch {}
+        } catch { }
     }, [isOpen, card]);
 
     useEffect(() => {
@@ -222,7 +222,7 @@ export default function PostCreationModal({
             return;
         }
         const contact = { ...buyerContact, email: receiptEmail };
-        try { saveBuyerContact(contact); } catch {}
+        try { saveBuyerContact(contact); } catch { }
 
         track('upgrade_click');
         setStatus({ phase: 'loading', message: 'Connecting to checkout…' });
@@ -235,7 +235,7 @@ export default function PostCreationModal({
                     tier: 'card_vip',
                     time: Date.now(),
                 }));
-            } catch {}
+            } catch { }
             setStatus({ phase: 'checkout', message: 'Opening secure checkout…' });
 
             // Background poll for UPI recovery (browser may lose the Razorpay
@@ -308,12 +308,12 @@ export default function PostCreationModal({
                         localStorage.setItem(`bgen_owner_${card.id}`, '1');
                         sessionStorage.setItem(`bgen_vip_${card.id}`, '1');
                         localStorage.removeItem(`bgen_pending_vip_${card.id}`);
-                    } catch {}
+                    } catch { }
                     setStatus({ phase: 'success', message: 'VIP Activated in Test Mode!' });
                     try {
                         const premiumTrack = card.originalMusic || card.music || 'strings';
                         window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { track: premiumTrack, cardId: card.id } }));
-                    } catch {}
+                    } catch { }
                 } catch {
                     setStatus({ phase: 'error', message: 'Test activation failed.' });
                 }
@@ -331,7 +331,7 @@ export default function PostCreationModal({
             return;
         }
         const contact = { ...buyerContact, email: receiptEmail };
-        try { saveBuyerContact(contact); } catch {}
+        try { saveBuyerContact(contact); } catch { }
 
         track('group_card_click');
         setGroupStatus({ phase: 'loading', message: 'Connecting to checkout…' });
@@ -348,7 +348,7 @@ export default function PostCreationModal({
                     tier: 'group_card',
                     time: Date.now(),
                 }));
-            } catch {}
+            } catch { }
             setGroupStatus({ phase: 'checkout', message: 'Opening secure checkout…' });
 
             const abort = new AbortController();
@@ -381,12 +381,12 @@ export default function PostCreationModal({
                     localStorage.setItem(`bgen_owner_${card.id}`, '1');
                     sessionStorage.setItem(`bgen_vip_${card.id}`, '1');
                     localStorage.removeItem(`bgen_pending_vip_${card.id}`);
-                } catch {}
+                } catch { }
                 setGroupStatus({ phase: 'success', message: 'Group card activated!' });
                 track('group_card_success');
                 try {
                     window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { cardId: card.id } }));
-                } catch {}
+                } catch { }
                 try {
                     confetti({
                         particleCount: 180,
@@ -395,7 +395,7 @@ export default function PostCreationModal({
                         colors: ['#38bdf8', '#f2c14e', '#a855f7', '#fb7185'],
                         disableForReducedMotion: true,
                     });
-                } catch {}
+                } catch { }
             } catch (modalErr) {
                 if (callbackOk) {
                     setGroupStatus({ phase: 'error', message: modalErr?.message || 'Verification failed.' });
@@ -418,12 +418,12 @@ export default function PostCreationModal({
                         localStorage.setItem(`bgen_owner_${card.id}`, '1');
                         sessionStorage.setItem(`bgen_vip_${card.id}`, '1');
                         localStorage.removeItem(`bgen_pending_vip_${card.id}`);
-                    } catch {}
+                    } catch { }
                     setGroupStatus({ phase: 'success', message: 'Group card activated!' });
                     track('group_card_success');
                     try {
                         window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { cardId: card.id } }));
-                    } catch {}
+                    } catch { }
                 } else {
                     setGroupStatus({ phase: 'error', message: 'Payment window closed. If money was deducted, refresh in a minute and the group card will activate automatically.' });
                 }
@@ -437,11 +437,11 @@ export default function PostCreationModal({
                         localStorage.setItem(`bgen_owner_${card.id}`, '1');
                         sessionStorage.setItem(`bgen_vip_${card.id}`, '1');
                         localStorage.removeItem(`bgen_pending_vip_${card.id}`);
-                    } catch {}
+                    } catch { }
                     setGroupStatus({ phase: 'success', message: 'Group card activated in Test Mode!' });
                     try {
                         window.dispatchEvent(new CustomEvent('bgen:vip_activated', { detail: { cardId: card.id } }));
-                    } catch {}
+                    } catch { }
                 } catch {
                     setGroupStatus({ phase: 'error', message: 'Test activation failed.' });
                 }
@@ -464,7 +464,7 @@ export default function PostCreationModal({
             return;
         }
         const contact = { ...buyerContact, email: receiptEmail };
-        try { saveBuyerContact(contact); } catch {}
+        try { saveBuyerContact(contact); } catch { }
 
         track('checkout_resume_click', { path: '/b/[id]' });
         setPhase({ phase: 'checkout', message: 'Reopening your saved checkout…' });
@@ -544,7 +544,7 @@ export default function PostCreationModal({
             await navigator.clipboard.writeText(groupUrl);
             setGroupCopied(true);
             setTimeout(() => setGroupCopied(false), 2200);
-        } catch {}
+        } catch { }
     };
 
     const saveReminder = async ({ force = false } = {}) => {
@@ -601,7 +601,7 @@ export default function PostCreationModal({
                 localStorage.setItem(`bgen_owner_${card.id}`, '1');
                 sessionStorage.setItem(`bgen_vip_${card.id}`, '1');
                 localStorage.removeItem(`bgen_pending_vip_${card.id}`);
-            } catch {}
+            } catch { }
             // Force a fresh server render. Group purchases used to fall through
             // to onClose(), which kept the pre-payment page on screen until a
             // manual refresh.

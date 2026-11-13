@@ -34,7 +34,7 @@ function readStoredKeys() {
 function celebrate() {
     try {
         confetti({ particleCount: 220, spread: 100, origin: { y: 0.6 }, disableForReducedMotion: true, colors: ['#f2c14e', '#fff7dd', '#fb7185', '#c084fc'] });
-    } catch {}
+    } catch { }
 }
 
 /**
@@ -67,7 +67,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
             if (typeof window !== 'undefined') {
                 return sessionStorage.getItem('prm_cinema_temp_photo') || null;
             }
-        } catch {}
+        } catch { }
         return null;
     });
     // Memory album: up to 12 photos, each a keepsake card in the unlocked album.
@@ -120,8 +120,8 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
     const effectiveCustom = editorActive
         ? custom
         : customReasons?.length || customVows?.length
-          ? { letter: '', reasons: customReasons || [], vows: customVows || [] }
-          : null;
+            ? { letter: '', reasons: customReasons || [], vows: customVows || [] }
+            : null;
 
     const buildStudioParams = useCallback(
         (key) => {
@@ -135,8 +135,8 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
             const eff = editorActive
                 ? custom
                 : customReasons?.length || customVows?.length
-                  ? { reasons: customReasons || [], vows: customVows || [] }
-                  : null;
+                    ? { reasons: customReasons || [], vows: customVows || [] }
+                    : null;
             const rs = (eff?.reasons || []).filter((r) => r.t || r.d);
             const vs = (eff?.vows || []).filter((v) => v);
             if (rs.length) p.set('rs', JSON.stringify(rs));
@@ -177,7 +177,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
             localStorage.removeItem(SNAP_KEY);
             localStorage.removeItem(KEYS_KEY);
             sessionStorage.removeItem(DEVICE_KEY);
-        } catch {}
+        } catch { }
         window.location.href = '/premium';
     }, []);
 
@@ -190,7 +190,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
         if (!snapString) return;
         try {
             localStorage.setItem(SNAP_KEY, snapString);
-        } catch {}
+        } catch { }
     }, [snapString]);
 
     // Bare /premium + snapshot on this device = returning payer. Restore
@@ -207,7 +207,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                     localStorage.removeItem(SNAP_KEY);
                     localStorage.removeItem(KEYS_KEY);
                     sessionStorage.removeItem(DEVICE_KEY);
-                } catch {}
+                } catch { }
                 window.location.replace('/premium');
                 return;
             }
@@ -226,7 +226,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
             }
             if ([...clean].length === 0) return;
             window.location.replace(`/premium?${clean.toString()}`);
-        } catch {}
+        } catch { }
     }, []);
 
     // URL magic link (?key=): verify once, then remember the key on this device.
@@ -249,7 +249,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
             }
             clean.key = unlockKey;
             localStorage.setItem(SNAP_KEY, JSON.stringify(clean));
-        } catch {}
+        } catch { }
 
         (async () => {
             try {
@@ -274,22 +274,22 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
     }, [unlockKey]);
 
     const scrollToPaywall = useCallback(() => {
-        try { document.getElementById('prm-paywall')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch {}
+        try { document.getElementById('prm-paywall')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch { }
     }, []);
 
     // Locker CTA lands on the editor, not the cash register: names and words
     // first, payment after they have seen what they are buying.
     const scrollToCustomize = useCallback(() => {
-        try { document.getElementById('prm-customize')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch {}
+        try { document.getElementById('prm-customize')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch { }
     }, []);
 
     const handleUnlocked = useCallback(
         ({ testMode, unlockKey: key, receiptKept = true } = {}) => {
-            try { sessionStorage.setItem(DEVICE_KEY, '1'); } catch {}
+            try { sessionStorage.setItem(DEVICE_KEY, '1'); } catch { }
             if (key) {
                 const keys = readStoredKeys();
                 if (!keys.includes(key)) {
-                    try { localStorage.setItem(KEYS_KEY, JSON.stringify([...keys, key])); } catch {}
+                    try { localStorage.setItem(KEYS_KEY, JSON.stringify([...keys, key])); } catch { }
                 }
                 setLastKey(key);
                 try {
@@ -304,7 +304,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                     }
                     clean.key = key;
                     localStorage.setItem(SNAP_KEY, JSON.stringify(clean));
-                } catch {}
+                } catch { }
             } else if (!testMode && receiptKept === false) {
                 // Real money moved but our receipt did not persist: the payer
                 // is unlocked here, but must hear it straight + get a path.
@@ -315,7 +315,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
             // Paid moment: land them exactly on the magic link (or the honest
             // notice when no link could be minted). Test unlocks continue in.
             setTimeout(() => {
-                try { document.getElementById(key || receiptKept === false ? 'prm-magiclink' : 'prm-letter')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch {}
+                try { document.getElementById(key || receiptKept === false ? 'prm-magiclink' : 'prm-letter')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch { }
             }, key ? 650 : 450);
         },
         [buildMagicLink]
@@ -333,7 +333,7 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
                 ta.select();
                 document.execCommand('copy');
                 document.body.removeChild(ta);
-            } catch {}
+            } catch { }
         }
         setCopied(true);
         setTimeout(() => setCopied(false), 2500);
@@ -349,16 +349,16 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
     const previewAsRecipient = () => {
         try {
             window.history.pushState({ prmPreview: true }, '');
-        } catch {}
+        } catch { }
         setForceGift(true);
         setTimeout(() => {
-            try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+            try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { }
         }, 80);
     };
     const exitPreview = () => {
         setForceGift(false);
         setTimeout(() => {
-            try { document.getElementById('prm-magiclink')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch {}
+            try { document.getElementById('prm-magiclink')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch { }
         }, 80);
     };
 
@@ -395,85 +395,83 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
             )}
             {/* Studio ribbon (givers only — recipients never see this) */}
             {!giftMode && (
-            <div className="sticky top-0 z-40 border-b border-[rgba(242,193,78,0.25)] bg-[rgba(7,4,18,0.85)] backdrop-blur-md">
-                <div className="max-w-5xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-xs sm:text-sm">
-                    {fromBuilder && (
-                        <button
-                            type="button"
-                            onClick={() => {
-                                if (typeof window !== 'undefined' && window.history.length > 1) {
-                                    window.history.back();
-                                } else {
-                                    window.location.href = '/#create';
-                                }
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f2c14e]/15 hover:bg-[#f2c14e]/25 text-[#f7dc9a] border border-[#f2c14e]/40 font-bold text-xs transition-colors cursor-pointer mr-auto sm:mr-0"
-                            title="Return to the card generator"
-                        >
-                            <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>Back to card editor</span>
-                        </button>
-                    )}
-                    <span className="inline-flex items-center gap-1.5">
-                        <Crown className="w-4 h-4 text-[#f2c14e] shrink-0" aria-hidden="true" />
-                        <span className="text-[#cfc4e8]">
-                            <strong className="text-[#f7dc9a]">Premium studio.</strong>{' '}
-                            <span className="hidden sm:inline">
-                                {unlocked ? 'Card unlocked — all updates sync live. ' : 'Names first, then words, then unlock. '}
+                <div className="sticky top-0 z-40 border-b border-[rgba(242,193,78,0.25)] bg-[rgba(7,4,18,0.85)] backdrop-blur-md">
+                    <div className="max-w-5xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-xs sm:text-sm">
+                        {fromBuilder && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (typeof window !== 'undefined' && window.history.length > 1) {
+                                        window.history.back();
+                                    } else {
+                                        window.location.href = '/#create';
+                                    }
+                                }}
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f2c14e]/15 hover:bg-[#f2c14e]/25 text-[#f7dc9a] border border-[#f2c14e]/40 font-bold text-xs transition-colors cursor-pointer mr-auto sm:mr-0"
+                                title="Return to the card generator"
+                            >
+                                <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
+                                <span>Back to card editor</span>
+                            </button>
+                        )}
+                        <span className="inline-flex items-center gap-1.5">
+                            <Crown className="w-4 h-4 text-[#f2c14e] shrink-0" aria-hidden="true" />
+                            <span className="text-[#cfc4e8]">
+                                <strong className="text-[#f7dc9a]">Premium studio.</strong>{' '}
+                                <span className="hidden sm:inline">
+                                    {unlocked ? 'Card unlocked — all updates sync live. ' : 'Names first, then words, then unlock. '}
+                                </span>
+                                <span className="inline-flex items-center gap-3">
+                                    <button type="button" onClick={scrollToCustomize} className="underline decoration-dotted underline-offset-4 hover:text-white inline-flex items-center gap-1">
+                                        <PencilLine className="w-3.5 h-3.5" aria-hidden="true" /> Start below
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleStartFresh}
+                                        title="Forget this device's saved universe and start over"
+                                        className="underline decoration-dotted underline-offset-4 hover:text-white cursor-pointer"
+                                    >
+                                        Start fresh
+                                    </button>
+                                </span>
                             </span>
-                            <span className="inline-flex items-center gap-3">
-                                <button type="button" onClick={scrollToCustomize} className="underline decoration-dotted underline-offset-4 hover:text-white inline-flex items-center gap-1">
-                                    <PencilLine className="w-3.5 h-3.5" aria-hidden="true" /> Start below
+                        </span>
+                        <span className="inline-flex flex-wrap items-center justify-center gap-1.5" role="group" aria-label="Pick mode and occasion">
+                            <div className="inline-flex items-center p-0.5 rounded-full bg-black/50 border border-white/15">
+                                <button
+                                    type="button"
+                                    onClick={() => setMode('cinema')}
+                                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold transition-all cursor-pointer ${mode === 'cinema'
+                                            ? 'bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] shadow-sm'
+                                            : 'text-[#b9aed4] hover:text-white'
+                                        }`}
+                                >
+                                    ⚡ Instant Cinema
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={handleStartFresh}
-                                    title="Forget this device's saved universe and start over"
-                                    className="underline decoration-dotted underline-offset-4 hover:text-white cursor-pointer"
+                                    onClick={() => setMode('keepsake')}
+                                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold transition-all cursor-pointer ${mode === 'keepsake'
+                                            ? 'bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] shadow-sm'
+                                            : 'text-[#b9aed4] hover:text-white'
+                                        }`}
                                 >
-                                    Start fresh
+                                    👑 Keepsake (Full Story)
                                 </button>
-                            </span>
+                            </div>
+                            {OCCASION_IDS.map((id) => (
+                                <Link
+                                    key={id}
+                                    href={studioHref(id)}
+                                    aria-current={deck.id === id ? 'true' : undefined}
+                                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-colors ${deck.id === id ? 'bg-[#f2c14e] text-[#241031]' : 'text-[#b9aed4] hover:text-white border border-white/15'}`}
+                                >
+                                    {getOccasion(id).label}
+                                </Link>
+                            ))}
                         </span>
-                    </span>
-                    <span className="inline-flex flex-wrap items-center justify-center gap-1.5" role="group" aria-label="Pick mode and occasion">
-                        <div className="inline-flex items-center p-0.5 rounded-full bg-black/50 border border-white/15">
-                            <button
-                                type="button"
-                                onClick={() => setMode('cinema')}
-                                className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold transition-all cursor-pointer ${
-                                    mode === 'cinema'
-                                        ? 'bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] shadow-sm'
-                                        : 'text-[#b9aed4] hover:text-white'
-                                }`}
-                            >
-                                ⚡ Instant Cinema
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setMode('keepsake')}
-                                className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold transition-all cursor-pointer ${
-                                    mode === 'keepsake'
-                                        ? 'bg-gradient-to-r from-[#f2c14e] to-[#fb7185] text-[#241031] shadow-sm'
-                                        : 'text-[#b9aed4] hover:text-white'
-                                }`}
-                            >
-                                👑 Keepsake (Full Story)
-                            </button>
-                        </div>
-                        {OCCASION_IDS.map((id) => (
-                            <Link
-                                key={id}
-                                href={studioHref(id)}
-                                aria-current={deck.id === id ? 'true' : undefined}
-                                className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-colors ${deck.id === id ? 'bg-[#f2c14e] text-[#241031]' : 'text-[#b9aed4] hover:text-white border border-white/15'}`}
-                            >
-                                {getOccasion(id).label}
-                            </Link>
-                        ))}
-                    </span>
+                    </div>
                 </div>
-            </div>
             )}
 
             {keyError && (
@@ -613,33 +611,33 @@ export default function PremiumPage({ to, from, message, age, occasion, unlockKe
 
             {/* Giver-facing closer (recipients never see the sales pitch) */}
             {!giftMode && (
-            <section className="relative px-5 sm:px-8 pb-24 pt-4" aria-label="How premium works">
-                <div className="max-w-3xl mx-auto text-center">
-                    <div className="prm-divider mb-14" aria-hidden="true" />
-                    <Reveal><p className="prm-eyebrow mb-6">✦ How gifting premium works ✦</p></Reveal>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-                        {[
-                            { n: '1', t: 'Preview the magic', d: 'Unseal the envelope above. Feel exactly what they will feel in the first ten seconds.' },
-                            { n: '2', t: 'Make it theirs, then unlock', d: 'Add names, write it in your words, pick the look and music. ₹99 / $1, one payment, no account.' },
-                            { n: '3', t: 'Send the magic link', d: 'You get a private link that opens everything on any device. Then wait for the voice note. There is always a voice note.' },
-                        ].map((s, i) => (
-                            <Reveal key={s.t} delay={i * 120}>
-                                <div className="prm-card rounded-2xl p-6 h-full">
-                                    <p className="prm-serif text-4xl font-extrabold prm-gold-text" aria-hidden="true">{s.n}</p>
-                                    <h3 className="font-bold text-[#f7dc9a] mt-2 mb-1.5">{s.t}</h3>
-                                    <p className="text-sm leading-relaxed text-[#b9aed4]">{s.d}</p>
-                                </div>
-                            </Reveal>
-                        ))}
+                <section className="relative px-5 sm:px-8 pb-24 pt-4" aria-label="How premium works">
+                    <div className="max-w-3xl mx-auto text-center">
+                        <div className="prm-divider mb-14" aria-hidden="true" />
+                        <Reveal><p className="prm-eyebrow mb-6">✦ How gifting premium works ✦</p></Reveal>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+                            {[
+                                { n: '1', t: 'Preview the magic', d: 'Unseal the envelope above. Feel exactly what they will feel in the first ten seconds.' },
+                                { n: '2', t: 'Make it theirs, then unlock', d: 'Add names, write it in your words, pick the look and music. ₹99 / $1, one payment, no account.' },
+                                { n: '3', t: 'Send the magic link', d: 'You get a private link that opens everything on any device. Then wait for the voice note. There is always a voice note.' },
+                            ].map((s, i) => (
+                                <Reveal key={s.t} delay={i * 120}>
+                                    <div className="prm-card rounded-2xl p-6 h-full">
+                                        <p className="prm-serif text-4xl font-extrabold prm-gold-text" aria-hidden="true">{s.n}</p>
+                                        <h3 className="font-bold text-[#f7dc9a] mt-2 mb-1.5">{s.t}</h3>
+                                        <p className="text-sm leading-relaxed text-[#b9aed4]">{s.d}</p>
+                                    </div>
+                                </Reveal>
+                            ))}
+                        </div>
+                        <Reveal delay={150}>
+                            <p className="prm-lead text-sm mt-10 max-w-xl mx-auto">
+                                A quick text is forgotten in an hour.
+                                This costs less than chai for two, and feels like a personal keepsake they will revisit for years.
+                            </p>
+                        </Reveal>
                     </div>
-                    <Reveal delay={150}>
-                        <p className="prm-lead text-sm mt-10 max-w-xl mx-auto">
-                            A quick text is forgotten in an hour.
-                            This costs less than chai for two, and feels like a personal keepsake they will revisit for years.
-                        </p>
-                    </Reveal>
-                </div>
-            </section>
+                </section>
             )}
         </main>
     );

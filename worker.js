@@ -24,8 +24,8 @@ const CACHE_VERSION = "bgen_20261103_v2";
 function getCacheKey(request) {
     const url = new URL(request.url);
     const isRsc = request.headers.get("rsc") === "1" ||
-                  request.headers.get("next-router-prefetch") === "1" ||
-                  url.searchParams.has("_rsc");
+        request.headers.get("next-router-prefetch") === "1" ||
+        url.searchParams.has("_rsc");
 
     if (isRsc && !url.searchParams.has("__cf_rsc")) {
         url.searchParams.set("__cf_rsc", "1");
@@ -58,7 +58,7 @@ function purgeCardCache(id, origin, cache) {
         `${origin}/b/${id}?vip=1&__cf_rsc=1`,
         `${origin}/b/${id}?vip=1&__cf_rsc=1&__cf_v=${CACHE_VERSION}`,
     ];
-    return Promise.all(targets.map((target) => cache.delete(target).catch(() => {})));
+    return Promise.all(targets.map((target) => cache.delete(target).catch(() => { })));
 }
 
 /**
@@ -120,11 +120,11 @@ const worker = {
         const isGet = request.method === "GET";
         const isApi = url.pathname.startsWith("/api/");
         const isBypass = request.headers.has("Authorization") ||
-                         request.headers.has("x-prerender-revalidate") ||
-                         request.headers.has("x-isr") ||
-                         request.headers.get("cache-control")?.includes("no-cache") ||
-                         url.searchParams.has("vip") ||
-                         url.searchParams.has("fresh");
+            request.headers.has("x-prerender-revalidate") ||
+            request.headers.has("x-isr") ||
+            request.headers.get("cache-control")?.includes("no-cache") ||
+            url.searchParams.has("vip") ||
+            url.searchParams.has("fresh");
 
         // Razorpay webhooks can mark a card VIP without the client ever calling
         // /api/premium/verify. Clone before Next.js consumes the body.
@@ -169,15 +169,15 @@ const worker = {
             }
             const cacheControl = response.headers.get("Cache-Control") || "";
             const isCacheable = (cacheControl.includes("s-maxage") || cacheControl.includes("max-age")) &&
-                                !cacheControl.includes("no-store") &&
-                                !cacheControl.includes("private") &&
-                                !response.headers.has("Set-Cookie");
+                !cacheControl.includes("no-store") &&
+                !cacheControl.includes("private") &&
+                !response.headers.has("Set-Cookie");
 
             if (isCacheable) {
                 const cacheKey = getCacheKey(request);
                 const cached = response.clone();
                 const edgeResponse = withEdgeTtl(cached, CARD_EDGE_TTL_SECONDS);
-                ctx.waitUntil(cache.put(cacheKey, edgeResponse).catch(() => {}));
+                ctx.waitUntil(cache.put(cacheKey, edgeResponse).catch(() => { }));
             }
         }
 

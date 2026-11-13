@@ -125,7 +125,7 @@ export async function POST(request) {
                         if (effectiveTier === 'group_card') {
                             revalidatePath(`/b/${targetPageId}/add`, 'page');
                         }
-                    } catch {}
+                    } catch { }
                 }
             }
         }
