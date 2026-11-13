@@ -107,6 +107,53 @@ function withEdgeTtl(response, seconds) {
     });
 }
 
+const recentEdgeAlerts = new Map();
+const EDGE_ALERT_THROTTLE_MS = 10 * 60 * 1000;
+
+async function sendEdgeCrashAlert(env, requestUrl, status, userAgent) {
+    try {
+        const apiKey = env.RESEND_API_KEY;
+        if (!apiKey) return;
+
+        const urlObj = new URL(requestUrl);
+        const path = urlObj.pathname;
+        const now = Date.now();
+        const lastSent = recentEdgeAlerts.get(path);
+        if (lastSent && now - lastSent < EDGE_ALERT_THROTTLE_MS) return;
+        recentEdgeAlerts.set(path, now);
+
+        const toEmail = env.ALERT_TO_EMAIL || "nirbhaysinghbe1@gmail.com";
+        const fromEmail = env.ALERT_FROM_EMAIL || "alerts@nirbhay.online";
+        const istTime = new Date(now + 5.5 * 3600 * 1000).toISOString().replace("T", " ").slice(0, 19) + " IST";
+
+        await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                from: fromEmail,
+                to: [toEmail],
+                subject: `🚨 [CRITICAL] HTTP ${status} error on ${path} — Birthday Generator`,
+                html: `
+                    <div style="font-family:sans-serif;background:#111;color:#fff;padding:24px;border-radius:8px;">
+                        <h2 style="color:#ef4444;margin:0 0 12px;">🚨 Production Page Error Alert</h2>
+                        <p><strong>URL:</strong> <a href="${requestUrl}" style="color:#60a5fa;">${requestUrl}</a></p>
+                        <p><strong>Status:</strong> HTTP ${status}</p>
+                        <p><strong>Time:</strong> ${istTime}</p>
+                        <p><strong>User Agent:</strong> ${userAgent || "N/A"}</p>
+                        <hr style="border:none;border-top:1px solid #333;margin:16px 0;" />
+                        <p style="color:#9ca3af;font-size:12px;">Triggered automatically by Cloudflare Worker crash monitor</p>
+                    </div>
+                `,
+            }),
+        });
+    } catch {
+        // Edge alert must never disrupt traffic
+    }
+}
+
 const worker = {
     async fetch(request, env, ctx) {
         const url = new URL(request.url);
@@ -149,6 +196,13 @@ const worker = {
 
         // 3. Delegate to OpenNext Next.js handler
         const response = await openNextWorker.fetch(request, env, ctx);
+
+        // 3b. Monitor user-facing card and home routes for 5xx errors and send instant alerts
+        if (response.status >= 500 && (url.pathname.startsWith("/b/") || url.pathname === "/")) {
+            ctx.waitUntil(
+                sendEdgeCrashAlert(env, request.url, response.status, request.headers.get("user-agent"))
+            );
+        }
 
         // 4. Invalidate edge cache on card updates / verification
         if (!isGet && isApi && response.status >= 200 && response.status < 300) {
