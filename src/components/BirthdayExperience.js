@@ -180,9 +180,11 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
 
         if (activePage.isVip || page.isVip) {
             try {
-                sessionStorage.setItem(`bgen_vip_${pageId}`, '1');
-                localStorage.setItem(`bgen_owner_${pageId}`, '1');
-                localStorage.removeItem(`bgen_pending_vip_${pageId}`);
+                if (pendingJson) {
+                    sessionStorage.setItem(`bgen_vip_${pageId}`, '1');
+                    localStorage.setItem(`bgen_owner_${pageId}`, '1');
+                    localStorage.removeItem(`bgen_pending_vip_${pageId}`);
+                }
             } catch { }
             return;
         }
@@ -199,8 +201,10 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                         setShowCustomizeHint(true);
                         try {
                             sessionStorage.setItem(`bgen_vip_${pageId}`, '1');
-                            localStorage.setItem(`bgen_owner_${pageId}`, '1');
-                            localStorage.removeItem(`bgen_pending_vip_${pageId}`);
+                            if (pendingJson || isVipQuery) {
+                                localStorage.setItem(`bgen_owner_${pageId}`, '1');
+                                localStorage.removeItem(`bgen_pending_vip_${pageId}`);
+                            }
                         } catch { }
                     } else if (pendingJson) {
                         try {
