@@ -1,10 +1,51 @@
 import { NextResponse } from 'next/server';
 import { sendEmailAlert } from '@/lib/alerts';
 
+// Common benign errors caused by browser translation (Google Translate),
+// browser extensions, in-app webviews, network drops, or autoplay policies.
+const IGNORED_ERROR_PATTERNS = [
+    // External DOM mutations (Google Translate, Grammarly, Password Managers, ChatGPT/Instagram webview)
+    /not a child of this node/i,
+    /removeChild/i,
+    /insertBefore/i,
+    /appendChild/i,
+
+    // Layout observer benign notifications
+    /ResizeObserver loop/i,
+
+    // Browser extensions
+    /chrome-extension:\/\//i,
+    /moz-extension:\/\//i,
+    /safari-extension:\/\//i,
+
+    // Network interrupts / aborts / ad blockers
+    /AbortError/i,
+    /operation was aborted/i,
+    /NetworkError/i,
+    /Failed to fetch/i,
+    /Load failed/i,
+
+    // Audio autoplay policy
+    /play\(\) failed/i,
+    /NotAllowedError/i,
+
+    // Storage restrictions in private/incognito mode
+    /QuotaExceededError/i,
+];
+
 export async function POST(request) {
     try {
         const body = await request.json().catch(() => ({}));
         const { error, stack, url, digest } = body;
+
+        const errorStr = String(error || '');
+        const stackStr = String(stack || '');
+        const combined = `${errorStr} ${stackStr}`;
+
+        // Filter out known client-side false positives
+        if (IGNORED_ERROR_PATTERNS.some((pattern) => pattern.test(combined))) {
+            return NextResponse.json({ success: true, ignored: true });
+        }
 
         let path = 'page';
         try {

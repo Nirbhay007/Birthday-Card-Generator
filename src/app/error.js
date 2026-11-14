@@ -4,9 +4,45 @@ import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { RefreshCw, Home } from 'lucide-react';
 
+// DOM mutations caused by Google Translate, Grammarly, Password Managers, or in-app webviews
+const BENIGN_DOM_MUTATION = /not a child of this node|removeChild|insertBefore|appendChild/i;
+
+const IGNORED_CLIENT_PATTERNS = [
+    BENIGN_DOM_MUTATION,
+    /ResizeObserver loop/i,
+    /chrome-extension:\/\//i,
+    /moz-extension:\/\//i,
+    /safari-extension:\/\//i,
+    /AbortError/i,
+    /operation was aborted/i,
+    /Failed to fetch/i,
+    /NetworkError/i,
+    /Load failed/i,
+    /play\(\) failed/i,
+    /NotAllowedError/i,
+    /QuotaExceededError/i,
+];
+
 export default function GlobalAppErrorBoundary({ error, reset }) {
     useEffect(() => {
         try {
+            const msg = error?.message || '';
+            const stack = error?.stack || '';
+            const combined = `${msg} ${stack}`;
+
+            // If it's a DOM mismatch caused by translation/extensions, silently reset once to recover
+            if (BENIGN_DOM_MUTATION.test(combined)) {
+                if (typeof reset === 'function') {
+                    reset();
+                    return;
+                }
+            }
+
+            // Skip known false-positive noise
+            if (IGNORED_CLIENT_PATTERNS.some((p) => p.test(combined))) {
+                return;
+            }
+
             console.error('Application error captured:', error);
             const errKey = `bgen-app-err-${error?.digest || error?.message || 'unknown'}`;
             if (sessionStorage.getItem(errKey)) return;
@@ -24,7 +60,7 @@ export default function GlobalAppErrorBoundary({ error, reset }) {
                 keepalive: true,
             }).catch(() => { });
         } catch { }
-    }, [error]);
+    }, [error, reset]);
 
     return (
         <main className="min-h-screen bg-stone-950 text-stone-100 flex items-center justify-center px-4 py-16">
