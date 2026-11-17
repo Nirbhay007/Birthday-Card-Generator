@@ -56,6 +56,7 @@ export default function MemoryMatchStage({ recipientName, senderName, photos = [
             [deck[i], deck[j]] = [deck[j], deck[i]];
         }
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCards(deck);
         setMatchedIds([]);
         setFlippedIndices([]);

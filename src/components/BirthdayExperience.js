@@ -149,24 +149,35 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                 },
                 photos: prev?.photos || photos,
             }));
-            fetch(`/api/birthday/${pageId}?fresh=${Date.now()}`, {
-                cache: 'no-store',
-                headers: { 'Cache-Control': 'no-cache' },
-            })
-                .then((r) => r.json())
-                .then((data) => {
-                    if (data?.success && data.page) {
-                        setClientVipData({ page: data.page, photos: data.photos || photos });
-                    }
+            const fetchFresh = (attempt = 1) => {
+                fetch(`/api/birthday/${pageId}?fresh=${Date.now()}`, {
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache' },
                 })
-                .catch(() => { });
+                    .then((r) => r.json())
+                    .then((data) => {
+                        if (data?.success && data.page) {
+                            setClientVipData({ page: data.page, photos: data.photos || photos });
+                            if (attempt < 3 && (data.photos?.length || 0) <= 3 && (data.page.photosCount || 0) > 3) {
+                                setTimeout(() => fetchFresh(attempt + 1), 600);
+                            }
+                        } else if (attempt < 3) {
+                            setTimeout(() => fetchFresh(attempt + 1), 600);
+                        }
+                    })
+                    .catch(() => {
+                        if (attempt < 3) setTimeout(() => fetchFresh(attempt + 1), 600);
+                    });
+            };
+            fetchFresh(1);
         };
 
         window.addEventListener('bgen:vip_activated', handleVipActivated);
         return () => window.removeEventListener('bgen:vip_activated', handleVipActivated);
     }, [activePage.id, page, photos]);
 
-    // Verify / restore VIP status on mount if query flag, session, or pending checkout is present
+    // Verify / restore VIP status on mount if query flag, session, pending checkout,
+    // or if the card was rendered as free / has missing photos (handles stale ISR/edge cache).
     useEffect(() => {
         const pageId = activePage.id || page.id;
         let isVipQuery = false;
@@ -178,7 +189,9 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
         const hasVipSession = typeof window !== 'undefined' && !!sessionStorage.getItem(`bgen_vip_${pageId}`);
         const pendingJson = typeof window !== 'undefined' ? localStorage.getItem(`bgen_pending_vip_${pageId}`) : null;
 
-        if (activePage.isVip || page.isVip) {
+        const hasAllPhotos = (activePhotos?.length || 0) >= (activePage.photosCount || 0);
+
+        if ((activePage.isVip || page.isVip) && hasAllPhotos) {
             try {
                 if (pendingJson) {
                     sessionStorage.setItem(`bgen_vip_${pageId}`, '1');
@@ -189,18 +202,22 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
             return;
         }
 
-        if (isVipQuery || hasVipSession || pendingJson) {
+        const shouldCheckVip = isVipQuery || hasVipSession || !!pendingJson || !page.isVip || !hasAllPhotos;
+
+        if (shouldCheckVip) {
             fetch(`/api/birthday/${pageId}?fresh=${Date.now()}`, {
                 cache: 'no-store',
                 headers: { 'Cache-Control': 'no-cache' },
             })
                 .then((r) => r.json())
                 .then((data) => {
-                    if (data?.success && data.page?.isVip) {
+                    if (data?.success && (data.page?.isVip || (data.photos?.length || 0) > (activePhotos?.length || 0))) {
                         setClientVipData({ page: data.page, photos: data.photos || photos });
-                        setShowCustomizeHint(true);
+                        if (isVipQuery || hasVipSession) setShowCustomizeHint(true);
                         try {
-                            sessionStorage.setItem(`bgen_vip_${pageId}`, '1');
+                            if (data.page?.isVip) {
+                                sessionStorage.setItem(`bgen_vip_${pageId}`, '1');
+                            }
                             if (pendingJson || isVipQuery) {
                                 localStorage.setItem(`bgen_owner_${pageId}`, '1');
                                 localStorage.removeItem(`bgen_pending_vip_${pageId}`);
@@ -237,7 +254,7 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
                 })
                 .catch(() => { });
         }
-    }, [activePage.id, activePage.isVip, page.id, page.isVip, photos]);
+    }, [activePage.id, activePage.isVip, activePage.photosCount, activePhotos?.length, page.id, page.isVip, page.photosCount, photos]);
 
     useEffect(() => {
         try {
@@ -461,14 +478,14 @@ export default function BirthdayExperience({ page, photos, gallery, shareSlot, a
     };
 
     const isVipActive = !!(activePage.isVip || activePage.isVipPro);
-    const renderedGallery = isVipActive && (!page.isVip || activePhotos.length !== (photos?.length || 0)) ? (
+    const renderedGallery = (
         <PhotoGallery
             photos={activePhotos}
-            lockedCount={activePage.lockedPhotosCount || 0}
+            lockedCount={isVipActive ? 0 : (activePage.lockedPhotosCount || 0)}
             pageId={activePage.id}
             isVip={isVipActive}
         />
-    ) : gallery;
+    );
 
     const renderedAudio = isVipActive && (!page.isVip || activePage.music !== page.music) ? (
         activePage.music !== 'off' ? <AudioPlayer track={activePage.music || 'strings'} /> : null

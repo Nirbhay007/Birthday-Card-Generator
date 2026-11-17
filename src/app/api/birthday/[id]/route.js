@@ -234,9 +234,8 @@ export async function GET(request, { params }) {
         const activeMusic = (!isVipPro && PRO_TRACKS.includes(activeMusicRaw)) ? 'strings' : activeMusicRaw;
 
         const allPhotos = page.photos || [];
-        const photoCap = isVipPro ? 12 : isVip ? 9 : 3;
-        const visiblePhotos = (isVip || isVipPro) ? allPhotos.slice(0, photoCap) : allPhotos.slice(0, 3);
-        const lockedPhotosCount = (isVip || isVipPro) ? Math.max(0, allPhotos.length - photoCap) : Math.max(0, allPhotos.length - 3);
+        const visiblePhotos = (isVip || isVipPro) ? allPhotos : allPhotos.slice(0, 3);
+        const lockedPhotosCount = (isVip || isVipPro) ? 0 : Math.max(0, allPhotos.length - 3);
 
         const clientPage = {
             id: page.id,

@@ -25,15 +25,17 @@ export default function PhotoGallery({ photos, lockedCount = 0, onUnlockVip = nu
     const openLightbox = (index) => setSelectedPhotoIndex(index);
     const closeLightbox = () => setSelectedPhotoIndex(null);
 
-    const nextPhoto = (e) => {
+    const getPhotoUrl = (p) => (typeof p === 'string' ? p : (p?.url || ''));
+
+    const nextPhoto = useCallback((e) => {
         if (e) e.stopPropagation();
         setSelectedPhotoIndex((prev) => (prev + 1) % photos.length);
-    };
+    }, [photos.length]);
 
-    const prevPhoto = (e) => {
+    const prevPhoto = useCallback((e) => {
         if (e) e.stopPropagation();
         setSelectedPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
-    };
+    }, [photos.length]);
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -44,7 +46,7 @@ export default function PhotoGallery({ photos, lockedCount = 0, onUnlockVip = nu
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedPhotoIndex, photos.length]);
+    }, [selectedPhotoIndex, nextPhoto, prevPhoto]);
 
     const showLocked = isOwner && !isVip && lockedCount > 0;
     if ((!photos || photos.length === 0) && !showLocked) return null;
@@ -58,28 +60,32 @@ export default function PhotoGallery({ photos, lockedCount = 0, onUnlockVip = nu
     return (
         <div className="w-full max-w-4xl mx-auto p-4">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {(photos || []).map((photo, index) => (
-                    <motion.button
-                        key={photo.id || index}
-                        type="button"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="aspect-square cursor-pointer rounded-2xl overflow-hidden shadow-md focus:outline-none focus:ring-4 focus:ring-purple-500 border border-gray-100 bg-gray-100"
-                        onClick={() => openLightbox(index)}
-                        aria-label={`View photo memory ${index + 1}`}
-                    >
-                        <img
-                            src={photo.url}
-                            alt={`Birthday memory photo ${index + 1}`}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            decoding="async"
-                            onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                            }}
-                        />
-                    </motion.button>
-                ))}
+                {(photos || []).map((photo, index) => {
+                    const photoUrl = getPhotoUrl(photo);
+                    if (!photoUrl) return null;
+                    return (
+                        <motion.button
+                            key={photo?.id || photoUrl || index}
+                            type="button"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="aspect-square cursor-pointer rounded-2xl overflow-hidden shadow-md focus:outline-none focus:ring-4 focus:ring-purple-500 border border-gray-100 bg-gray-100"
+                            onClick={() => openLightbox(index)}
+                            aria-label={`View photo memory ${index + 1}`}
+                        >
+                            <img
+                                src={photoUrl}
+                                alt={`Birthday memory photo ${index + 1}`}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                                decoding="async"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                }}
+                            />
+                        </motion.button>
+                    );
+                })}
 
                 {showLocked && (
                     <motion.button
@@ -144,7 +150,7 @@ export default function PhotoGallery({ photos, lockedCount = 0, onUnlockVip = nu
                             key={selectedPhotoIndex}
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            src={photos[selectedPhotoIndex].url}
+                            src={getPhotoUrl(photos[selectedPhotoIndex])}
                             alt={`Full size memory ${selectedPhotoIndex + 1} of ${photos.length}`}
                             className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl"
                             onClick={(e) => e.stopPropagation()}

@@ -134,7 +134,7 @@ export async function POST(request) {
                 music: validMusic,
                 source: validSource,
                 photos: {
-                    create: photos?.slice(0, 12).map((url, index) => ({
+                    create: photos?.slice(0, 24).map((url, index) => ({
                         url,
                         order: index,
                     })) || [],
