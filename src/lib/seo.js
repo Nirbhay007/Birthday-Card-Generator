@@ -98,7 +98,7 @@ export function getSoftwareApplicationSchema(siteUrl) {
       price: '0.00',
       priceCurrency: 'USD',
       availability: 'https://schema.org/InStock',
-      description: 'Free to create and share personalized birthday websites. Premium cinematic experiences start at ₹99.',
+      description: 'Free to create and share personalized birthday websites. Premium cinematic experiences start at ₹49.',
     },
     featureList: [
       'Interactive Virtual Candle Blowing via Microphone',
@@ -106,13 +106,13 @@ export function getSoftwareApplicationSchema(siteUrl) {
       'Personalized Photo Gallery Slideshow',
       'Ambient Music Selection (Classic, Music Box, Party Pop)',
       'Relationship Personalization (Mom, Best Friend, Partner, Kids)',
-      '2 free themes plus 8 premium themes (Royal Gold, Cosmic Galaxy, Princess, Retro Arcade, Aurora and more)',
+      '8 Free Visual Themes (Royal Gold, Midnight Stars, Princess, Unicorn, Retro Neon, Minimal)',
       'Instant Shareable Link Generation',
       'WhatsApp-ready sharing with rich personalized social card preview',
       'No account or signup required',
-      'Pages stay online for at least 30 days; the free annual reminder preserves them for next year',
+      'Pages active for 30 days with free renewal',
     ],
-    description: 'An interactive web tool to design and send a personalized birthday website with greeting cards, photos, music and candle blowing, in seconds. Free to create with no signup; premium keepsakes are optional.',
+    description: 'An interactive web tool to design and send a personalized birthday website with greeting cards, photos, music and candle blowing, in seconds. 100% free, no signup needed.',
     screenshot: `${siteUrl}/api/og?name=Friend&theme=fun`,
     inLanguage: 'en-US',
   };
@@ -127,7 +127,7 @@ export function getWebApplicationSchema(siteUrl) {
     applicationCategory: 'UtilitiesApplication',
     operatingSystem: 'All',
     browserRequirements: 'Requires JavaScript. Works on Chrome, Firefox, Safari, Edge.',
-    description: 'Browser-based birthday website maker. Create an interactive birthday page with photos, candle blowing, music and custom messages, shareable on WhatsApp instantly. Free core, optional premium keepsakes.',
+    description: 'Free browser-based birthday website maker. Create an interactive birthday page with photos, candle blowing, music and custom messages — shareable on WhatsApp instantly.',
     datePublished: SITE_DATE_PUBLISHED,
     dateModified: SITE_DATE_MODIFIED,
     offers: {
@@ -148,8 +148,8 @@ export function getProductSchema(siteUrl) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: 'BirthdayGen Premium: Cinematic Birthday Universe',
-    description: 'Multi-act cinematic birthday and anniversary experience with sealed letters, photo acts, and immersive storytelling. Starting at ₹99.',
+    name: 'BirthdayGen Premium — Cinematic Birthday Universe',
+    description: 'Multi-act cinematic birthday and anniversary experience with sealed letters, photo acts, and immersive storytelling. Starting at ₹49.',
     url: `${siteUrl}/premium`,
     brand: {
       '@type': 'Brand',
@@ -294,29 +294,15 @@ export function getVideoObjectSchema(siteUrl) {
   const videoUrl = process.env.NEXT_PUBLIC_DEMO_VIDEO_URL;
   if (!videoUrl) return null;
 
-  // Extract YouTube ID if it's a YouTube link
-  const ytMatch = videoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([\w-]{11})/i);
-  const ytId = ytMatch ? ytMatch[1] : null;
-
-  const embedUrl = ytId ? `https://www.youtube.com/embed/${ytId}` : videoUrl;
-  const contentUrl = ytId ? `https://www.youtube.com/watch?v=${ytId}` : videoUrl;
-  const thumbnails = ytId
-    ? [
-        `https://i.ytimg.com/vi/${ytId}/maxresdefault.jpg`,
-        `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`,
-        `${siteUrl}/api/og?name=Friend&theme=fun`,
-      ]
-    : [`${siteUrl}/api/og?name=Friend&theme=fun`];
-
   return {
     '@context': 'https://schema.org',
     '@type': 'VideoObject',
-    name: 'BirthdayGen Demo: Create a Free Personalized Birthday Website',
+    name: 'BirthdayGen Demo — Create a Free Personalized Birthday Website',
     description:
-      'Watch how BirthdayGen lets you build an interactive birthday website in under 30 seconds: gift reveal, mic-powered candle blowing, photo gallery, custom music and instant WhatsApp sharing.',
-    thumbnailUrl: thumbnails,
-    contentUrl,
-    embedUrl,
+      'Watch how BirthdayGen lets you build an interactive birthday website in under 30 seconds — gift reveal, mic-powered candle blowing, photo gallery, custom music and instant WhatsApp sharing.',
+    thumbnailUrl: `${siteUrl}/api/og?name=Friend&theme=fun`,
+    contentUrl: videoUrl,
+    embedUrl: videoUrl,
     uploadDate: '2024-09-01T00:00:00+05:30',
     duration: 'PT1M',
     publisher: {
@@ -330,4 +316,3 @@ export function getVideoObjectSchema(siteUrl) {
     inLanguage: 'en-US',
   };
 }
-
