@@ -15,9 +15,8 @@ export default function robots() {
           'GPTBot',
           'ChatGPT-User',
           'OAI-SearchBot',
-          // Google
+          // Google (Gemini training & AI answers, NOT Googlebot search crawler)
           'Google-Extended',
-          'Googlebot',
           // Anthropic / Claude
           'ClaudeBot',
           'Anthropic-ai',
@@ -51,7 +50,8 @@ export default function robots() {
           // Mistral / Le Chat
           'MistralAI-User',
         ],
-        allow: ['/', '/llms.txt', '/llms-full.txt', '/wishes', '/ages', '/premium'],
+        allow: ['/', '/llms.txt', '/llms-full.txt', '/wishes', '/ages', '/anniversary', '/premium', '/api/og'],
+        disallow: ['/api/'],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

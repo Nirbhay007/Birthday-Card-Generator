@@ -31,12 +31,8 @@ export default function SiteFooter() {
                             <li><a className={footerLink} href="#create">Create a birthday card</a></li>
                             <li><a className={footerLink} href="#how-it-works">How it works</a></li>
                             <li><a className={footerLink} href="#pricing">Pricing</a></li>
+                            <li><Link className={footerLink} href="/anniversary">Anniversary surprise</Link></li>
                             <li><Link className={footerLink} href="/premium" prefetch={false}>Cinematic premium</Link></li>
-                            <li>
-                                <a className={footerLink} href="https://invite.nirbhay.online/" target="_blank" rel="noopener">
-                                    Anniversary cards
-                                </a>
-                            </li>
                         </ul>
                     </nav>
 

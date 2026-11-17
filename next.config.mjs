@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    experimental: {
+        agentUpgrade: 'security',
+    },
     // QA runs a second dev server without clobbering the developer's .next dir.
     distDir: process.env.NEXT_DIST_DIR || '.next',
     // The dev indicator sits in the bottom-left corner, exactly where the card

@@ -6,9 +6,9 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.on
 // Static dates — avoids telling Google every page is "always modified",
 // which wastes crawl budget and can suppress rankings.
 // Update these manually when you make meaningful content changes.
-const LAST_MODIFIED_CORE = new Date('2026-10-16');
-const LAST_MODIFIED_CONTENT = new Date('2026-10-16');
-const LAST_MODIFIED_PREMIUM = new Date('2026-09-10');
+const LAST_MODIFIED_CORE = new Date('2026-11-17');
+const LAST_MODIFIED_CONTENT = new Date('2026-11-17');
+const LAST_MODIFIED_PREMIUM = new Date('2026-11-17');
 
 export default async function sitemap() {
   // Core static pages
@@ -18,7 +18,7 @@ export default async function sitemap() {
       lastModified: LAST_MODIFIED_CORE,
       changeFrequency: 'daily',
       priority: 1.0,
-      images: [`${baseUrl}/api/og?name=Friend&amp;theme=fun`],
+      images: [`${baseUrl}/api/og?name=Friend&theme=fun`],
     },
     {
       url: `${baseUrl}/wishes`,
@@ -67,7 +67,7 @@ export default async function sitemap() {
       lastModified: LAST_MODIFIED_PREMIUM,
       changeFrequency: 'weekly',
       priority: 0.85,
-      images: [`${baseUrl}/api/og?name=Premium&amp;theme=royal`],
+      images: [`${baseUrl}/api/og?name=Premium&theme=royal`],
     },
   ];
 

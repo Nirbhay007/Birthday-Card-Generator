@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 import { PTHEME_IDS } from '@/components/premium/looks';
 import { REL_IDS } from '@/components/premium/relationships';
 import { TRACKS, PREMIUM_TRACKS } from '@/lib/music';
-import { getBreadcrumbSchema, serializeJsonLd } from '@/lib/seo';
+import { getBreadcrumbSchema, getProductSchema, serializeJsonLd } from '@/lib/seo';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
@@ -145,10 +145,12 @@ export default async function PremiumRoute({ searchParams }) {
         { name: 'Home', url: '/' },
         { name: 'Premium Birthday Universe', url: '/premium' },
     ]);
+    const productSchema = getProductSchema(baseUrl);
 
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbs) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(productSchema) }} />
             <ClientOnly
                 fallback={
                     <div className="flex flex-col items-center justify-center min-h-[60vh] py-16 text-center animate-pulse text-white">

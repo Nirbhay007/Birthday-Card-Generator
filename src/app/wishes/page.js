@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Sparkles, Heart, Laugh, Users, Award, MessageCircle, ArrowRight, CheckCircle, Gift, HeartHandshake, Star, Flower2, Gamepad2, Crown, Gem, Flame, Smile, Rocket, Rainbow, Cake, Coffee, Briefcase, GraduationCap, Clock, Languages, Camera, Quote } from 'lucide-react';
 import WhatsNew from '@/components/WhatsNew';
 import { getAllCategories } from '@/lib/wishesData';
-import { getBreadcrumbSchema, serializeJsonLd } from '@/lib/seo';
+import { getBreadcrumbSchema, getCollectionSchema, getItemListSchema, serializeJsonLd } from '@/lib/seo';
 import WishCard from './[slug]/WishCard';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
@@ -118,11 +118,35 @@ export default function WishesIndexPage() {
     { name: 'Birthday Wishes Library', url: '/wishes' },
   ]);
 
+  const collectionSchema = getCollectionSchema(baseUrl, {
+    title: 'Birthday Wishes, Quotes & Greetings Library',
+    shortDescription: 'Explore 250+ curated birthday wishes for best friends, lovers, family, regional languages, and milestones.',
+    canonicalUrl: `${baseUrl}/wishes`,
+  });
+
+  const itemListSchema = getItemListSchema(
+    baseUrl,
+    'Birthday Wishes Categories',
+    categories.map((c) => ({
+      name: `${c.navTitle} Birthday Wishes`,
+      description: c.shortDescription || c.title,
+      url: `${baseUrl}/wishes/${c.slug}`,
+    }))
+  );
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbs) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(collectionSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(itemListSchema) }}
       />
 
       <div className="min-h-screen bg-paper text-gray-900">

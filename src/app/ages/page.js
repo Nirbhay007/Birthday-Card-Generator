@@ -4,7 +4,7 @@ import { Sparkles, ArrowRight, Gift, Cake } from 'lucide-react';
 import WhatsNew from '@/components/WhatsNew';
 import { getAllAgePages } from '@/lib/ageWishesData';
 import { getAllCategories } from '@/lib/wishesData';
-import { getBreadcrumbSchema, serializeJsonLd } from '@/lib/seo';
+import { getBreadcrumbSchema, getCollectionSchema, getItemListSchema, serializeJsonLd } from '@/lib/seo';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://birthday.nirbhay.online';
 
@@ -41,11 +41,35 @@ export default function AgesIndexPage() {
     { name: 'Wishes by Age', url: '/ages' },
   ]);
 
+  const collectionSchema = getCollectionSchema(baseUrl, {
+    title: 'Birthday Wishes by Milestone Age',
+    shortDescription: 'Milestone-age birthday wishes from sweet 16 to golden 50th.',
+    canonicalUrl: `${baseUrl}/ages`,
+  });
+
+  const itemListSchema = getItemListSchema(
+    baseUrl,
+    'Milestone Age Birthday Wishes',
+    ages.map((a) => ({
+      name: `${a.navTitle} Birthday Wishes`,
+      description: a.metaDescription || a.title,
+      url: `${baseUrl}/ages/${a.age}`,
+    }))
+  );
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbs) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(collectionSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(itemListSchema) }}
       />
 
       <div className="min-h-screen bg-paper text-gray-900">

@@ -2,7 +2,7 @@ import { Inter, Playfair_Display, Lato, Fredoka, Quicksand, Press_Start_2P, VT32
 import Script from "next/script";
 import "./globals.css";
 import "./themes.css";
-import { getWebSiteSchema, getOrganizationSchema, getWebApplicationSchema, getProductSchema, serializeJsonLd } from "@/lib/seo";
+import { getWebSiteSchema, getOrganizationSchema, getWebApplicationSchema, serializeJsonLd } from "@/lib/seo";
 
 import HydrationMarker from "@/components/HydrationMarker";
 import AttributionCapture from "@/components/AttributionCapture";
@@ -133,7 +133,6 @@ export default function RootLayout({ children }) {
   const websiteSchema = getWebSiteSchema(baseUrl);
   const organizationSchema = getOrganizationSchema(baseUrl);
   const webAppSchema = getWebApplicationSchema(baseUrl);
-  const productSchema = getProductSchema(baseUrl);
 
   return (
     <html
@@ -141,9 +140,6 @@ export default function RootLayout({ children }) {
       className={`${geist.variable} ${bricolage.variable} ${inter.variable} ${playfair.variable} ${lato.variable} ${fredoka.variable} ${quicksand.variable} ${pressStart.variable} ${vt323.variable}`}
     >
       <head>
-        {/* Preconnect to external origins for faster resource loading */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
 
         {/* Application identity */}
@@ -161,10 +157,6 @@ export default function RootLayout({ children }) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(webAppSchema) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: serializeJsonLd(productSchema) }}
         />
       </head>
       <body>

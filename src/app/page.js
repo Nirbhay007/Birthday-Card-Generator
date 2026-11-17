@@ -578,9 +578,9 @@ export default function Home() {
               </div>
               <p className="mt-7 text-xs text-white/40">
                 Anniversary coming up too?{' '}
-                <a href="https://invite.nirbhay.online/" target="_blank" rel="noopener" className="underline underline-offset-2 hover:text-white/70">
+                <Link href="/anniversary" className="underline underline-offset-2 hover:text-white/70">
                   Make an anniversary card →
-                </a>
+                </Link>
               </p>
             </div>
           </div>
