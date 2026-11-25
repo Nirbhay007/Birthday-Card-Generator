@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import Razorpay from 'razorpay';
 import { getClientIp } from '@/lib/clientIp';
 import prisma from '@/lib/prisma';
 import { pollTokenFor } from '@/lib/premiumTokens';
@@ -59,15 +58,66 @@ function cleanBuyerContact(value) {
     return clean || null;
 }
 
-function razorpayClient() {
-    const { keyId, secret } = resolveRazorpayKeys();
-    if (!keyId || !secret) return { client: null, keyId: null };
-    return { client: new Razorpay({ key_id: keyId, key_secret: secret }), keyId };
+/**
+ * Call Razorpay's Orders API directly via native fetch instead of the axios-based
+ * Node SDK (whose error normalizer throws TypeError on undefined err.response in
+ * Cloudflare Workers). Retries once on transient network or 5xx errors.
+ */
+async function createRazorpayOrder({ keyId, secret, payload }) {
+    const auth = Buffer.from(`${keyId}:${secret}`).toString('base64');
+    let lastError;
+
+    for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+            const response = await fetch('https://api.razorpay.com/v1/orders', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Basic ${auth}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+                signal: AbortSignal.timeout(10000),
+            });
+
+            const raw = await response.text();
+            let data = null;
+            try {
+                data = raw ? JSON.parse(raw) : null;
+            } catch {
+                data = null;
+            }
+
+            if (response.ok && data?.id) {
+                return data;
+            }
+
+            const err = new Error(data?.error?.description || raw.slice(0, 300) || `HTTP ${response.status}`);
+            err.statusCode = response.status;
+            err.code = data?.error?.code || null;
+
+            if (response.status >= 500 && attempt < 2) {
+                lastError = err;
+                await new Promise((resolve) => setTimeout(resolve, 200));
+                continue;
+            }
+            throw err;
+        } catch (err) {
+            lastError = err;
+            const status = err?.statusCode;
+            const retryable = !status || status >= 500;
+            if (!retryable || attempt >= 2) {
+                throw err;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+    }
+
+    throw lastError;
 }
 
 export async function POST(request) {
-    const { client: rzp, keyId } = razorpayClient();
-    if (!rzp) {
+    const { keyId, secret } = resolveRazorpayKeys();
+    if (!keyId || !secret) {
         return NextResponse.json(
             { success: false, testMode: true, error: 'Live payments are not connected yet (missing RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET).' },
             { status: 503 }
@@ -95,16 +145,20 @@ export async function POST(request) {
             return NextResponse.json({ success: false, error: 'Slow down' }, { status: 429 });
         }
 
-        const order = await rzp.orders.create({
-            amount,
-            currency,
-            receipt: `prem_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
-            notes: {
-                product: tier === 'card_vip'
-                    ? 'birthday-vip-card'
-                    : tier === 'group_card' ? 'birthday-group-card' : 'birthday-premium-universe',
-                region,
-                ...(pageId ? { pageId } : {}),
+        const order = await createRazorpayOrder({
+            keyId,
+            secret,
+            payload: {
+                amount,
+                currency,
+                receipt: `prem_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+                notes: {
+                    product: tier === 'card_vip'
+                        ? 'birthday-vip-card'
+                        : tier === 'group_card' ? 'birthday-group-card' : 'birthday-premium-universe',
+                    region,
+                    ...(pageId ? { pageId } : {}),
+                },
             },
         });
 
@@ -126,12 +180,13 @@ export async function POST(request) {
             pollToken: pollTokenFor(order.id),
         });
     } catch (error) {
-        const desc = error?.error?.description || error?.message || error;
-        console.error('Premium order error:', desc);
+        const desc = error?.error?.description || error?.message || String(error);
+        const status = error?.statusCode || error?.error?.code || 'unknown';
+        const code = error?.code || error?.error?.code || 'none';
+        console.error(`Premium order error (status=${status}, code=${code}): ${desc}`);
         // 401 from Razorpay = our key/secret pair is wrong (test/live mixed,
         // typo, or pasted with whitespace). Say so plainly — generic 502s
         // waste everyone's evening.
-        const status = error?.statusCode || error?.error?.code;
         if (status === 401 || /authentication|unauthori[sz]ed/i.test(String(desc))) {
             return NextResponse.json(
                 { success: false, error: 'Payment gateway rejected our keys. The owner has been notified — please try again in a bit.' },

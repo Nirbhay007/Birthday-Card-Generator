@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 import { sendEmailAlert } from '@/lib/alerts';
 import { getClientIp } from '@/lib/clientIp';
 import { warmOgImage } from '@/lib/og-warm';
-import { isValidEmail } from '@/lib/utils';
+import { isValidEmail, sanitizeText } from '@/lib/utils';
 
 // Cap per-IP creations per hour. High enough for shared networks (family wifi,
 // CGNAT mobile carriers) but low enough to stop scripted abuse of storage.
@@ -60,23 +60,21 @@ export async function POST(request) {
 
         // Trim before validating: whitespace-only names are not names, and the
         // stored value should match what the creator sees.
-        const cleanRecipientName = typeof recipientName === 'string' ? recipientName.trim() : '';
+        const cleanRecipientName = sanitizeText(recipientName, 80, { trim: true });
         if (!cleanRecipientName) {
             return NextResponse.json({ success: false, error: 'Recipient name is required' }, { status: 400 });
         }
 
         const validReminderEmail = remindNextYear === true && typeof reminderEmail === 'string'
-            ? reminderEmail.trim().slice(0, 255)
+            ? sanitizeText(reminderEmail, 255, { trim: true })
             : '';
 
         const parsedAge = typeof age === 'number' ? Math.trunc(age) : parseInt(age, 10);
         const validAge = Number.isFinite(parsedAge) && parsedAge >= 1 && parsedAge <= 120 ? parsedAge : null;
-        const validSender = typeof senderName === 'string' && senderName.trim().length > 0
-            ? senderName.trim().slice(0, 80)
-            : null;
-        const validRelationship = typeof relationship === 'string' && relationship.trim().length > 0
-            ? relationship.trim().slice(0, 30)
-            : null;
+        const cleanSender = sanitizeText(senderName, 80, { trim: true });
+        const validSender = cleanSender.length > 0 ? cleanSender : null;
+        const cleanRelationship = sanitizeText(relationship, 30, { trim: true });
+        const validRelationship = cleanRelationship.length > 0 ? cleanRelationship : null;
         const MUSIC_CHOICES = ['classic', 'rock', 'musicbox', 'party', 'off', 'beats', 'strings', 'piano', 'waltz', 'lullaby', 'fanfare', 'retro', 'acoustic', 'reggae', 'techno', 'neon', 'sunset', 'starlight', 'chamber', 'marching'];
         const validMusic = MUSIC_CHOICES.includes(music) ? music : 'classic';
         const validSource = normalizeSource(source);
@@ -118,13 +116,21 @@ export async function POST(request) {
         // kept in their browser's localStorage — never rendered on the page.
         const editToken = crypto.randomBytes(24).toString('hex'); // 192-bit
 
+        const cleanMessage = typeof message === 'string' ? sanitizeText(message, 2000) : null;
+        const cleanPhotos = Array.isArray(photos)
+            ? photos
+                .map((url) => sanitizeText(url, 2000, { trim: true }))
+                .filter(Boolean)
+                .slice(0, 24)
+            : [];
+
         // Create the page and photos in a transaction
         const page = await prisma.birthdayPage.create({
             data: {
                 editToken,
-                recipientName: cleanRecipientName.slice(0, 80),
+                recipientName: cleanRecipientName,
                 birthdayDate: validBirthdayDate,
-                message: typeof message === 'string' ? message.slice(0, 2000) : null,
+                message: cleanMessage,
                 theme: theme || 'elegant',
                 ipAddress: ip,
                 reminderEmail: reminderEmailToStore,
@@ -134,10 +140,10 @@ export async function POST(request) {
                 music: validMusic,
                 source: validSource,
                 photos: {
-                    create: photos?.slice(0, 24).map((url, index) => ({
+                    create: cleanPhotos.map((url, index) => ({
                         url,
                         order: index,
-                    })) || [],
+                    })),
                 },
             },
         });

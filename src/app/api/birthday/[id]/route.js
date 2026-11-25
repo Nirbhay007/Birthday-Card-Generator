@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 import { warmOgImage } from '@/lib/og-warm';
-import { isValidEmail } from '@/lib/utils';
+import { isValidEmail, sanitizeText } from '@/lib/utils';
 
 const VALID_THEMES = ['fun', 'elegant', 'royal', 'neon', 'midnight', 'princess', 'retro', 'sunset', 'unicorn', 'minimal', 'holo', 'aurora'];
 const VALID_TRACKS = ['classic', 'rock', 'off', 'musicbox', 'strings', 'party', 'piano', 'retro', 'acoustic', 'reggae', 'techno', 'beats', 'waltz', 'lullaby', 'fanfare', 'chamber', 'marching'];
@@ -80,7 +80,7 @@ export async function PATCH(request, { params }) {
         }
 
         if (typeof message === 'string') {
-            updateData.message = message.slice(0, 2000);
+            updateData.message = sanitizeText(message, 2000);
         }
 
         if (Array.isArray(photos)) {
@@ -89,7 +89,8 @@ export async function PATCH(request, { params }) {
             updateData.photos = {
                 deleteMany: {},
                 create: photos
-                    .filter((url) => typeof url === 'string' && /^https?:\/\//i.test(url))
+                    .map((url) => sanitizeText(url, 2000, { trim: true }))
+                    .filter((url) => /^https?:\/\//i.test(url))
                     .slice(0, MAX_PHOTOS)
                     .map((url, index) => ({ url, order: index })),
             };

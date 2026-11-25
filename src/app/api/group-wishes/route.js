@@ -28,11 +28,17 @@ function throttled(ip) {
 
 function cleanLine(value, max) {
     if (typeof value !== 'string') return '';
-    return value
+    let clean = value
         .replace(/[\u0000-\u001f\u007f-\u009f]+/g, ' ')
         .replace(/\s+/g, ' ')
         .trim()
         .slice(0, max);
+    if (typeof clean.toWellFormed === 'function') {
+        clean = clean.toWellFormed().replace(/\uFFFD/g, '');
+    } else {
+        clean = clean.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '');
+    }
+    return clean.trim();
 }
 
 export async function GET(request) {

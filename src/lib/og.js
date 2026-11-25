@@ -43,16 +43,24 @@ export const THEME_BG = {
 // text agree for absurdly long names.
 const MAX_FIELD_LENGTH = 24;
 
-// Satori's font shaper throws while processing Arabic GSUB ligatures
-// ("lookupType: 5 - substFormat: 3 is not yet supported"), which surfaced as a
-// 500 and left those cards with no usable preview. Drop Arabic code points
-// before rendering; if nothing readable remains, fall back to a Latin label.
+// Satori's font shaper throws on Arabic GSUB ligatures ("lookupType: 5 -
+// substFormat: 3 is not yet supported") and next/og's loadGoogleFont throws on
+// glyphs with no Google Fonts coverage (such as Braille patterns or Hebrew
+// diacritics), which surfaced as 500s on /api/og. Strip unsupported scripts,
+// Braille symbols, control characters, and lone surrogates before rendering;
+// if nothing readable remains, fall back to a Latin label.
 // The page itself still shows the real name — only the PNG is affected.
-const ARABIC_RANGE = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g;
+const UNSUPPORTED_OG_CHARS = /[\u0000-\u001F\u007F-\u009F\u0590-\u05FF\u0600-\u06FF\u0700-\u07BF\u07C0-\u07FF\u08A0-\u08FF\u200B-\u200F\u202A-\u202E\u2060-\u206F\u2800-\u28FF\uFB50-\uFDFF\uFE70-\uFEFF]/g;
 
 function stripUnsupportedScript(value, fallback = '') {
-    const cleaned = String(value || '')
-        .replace(ARABIC_RANGE, '')
+    let raw = String(value || '');
+    if (typeof raw.toWellFormed === 'function') {
+        raw = raw.toWellFormed().replace(/\uFFFD/g, '');
+    } else {
+        raw = raw.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '');
+    }
+    const cleaned = raw
+        .replace(UNSUPPORTED_OG_CHARS, '')
         .replace(/\s+/g, ' ')
         .trim();
     return cleaned || fallback;

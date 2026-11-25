@@ -115,9 +115,9 @@ export async function POST(request) {
 
         return NextResponse.json({ success: true });
     } catch (error) {
-        // Fail-open: never break the donate flow on tracking errors
-        // (e.g. SupportEvent table not migrated yet).
-        console.error('Support track error:', error?.message || error);
+        // Fail-open: never break the donate/funnel flow on tracking errors
+        // (e.g. SupportEvent table not migrated yet or transient DB proxy drop).
+        console.warn('Support track skipped:', error?.message || error);
         return NextResponse.json({ success: false }, { status: 200 });
     }
 }

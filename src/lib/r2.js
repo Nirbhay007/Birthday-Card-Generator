@@ -79,6 +79,35 @@ function shouldUseNativeBinding() {
     return isCloudflareWorkersRuntime() || !hasS3Creds;
 }
 
+function isRetryableR2Error(err) {
+    const msg = String(err?.message || err || '').toLowerCase();
+    return (
+        msg.includes('10001') ||
+        msg.includes('internal error') ||
+        msg.includes('please try again') ||
+        msg.includes('network') ||
+        msg.includes('timeout') ||
+        msg.includes('econnreset')
+    );
+}
+
+async function withR2Retry(fn, maxAttempts = 3) {
+    let lastErr;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            return await fn();
+        } catch (err) {
+            lastErr = err;
+            if (!isRetryableR2Error(err) || attempt >= maxAttempts) {
+                throw err;
+            }
+            const delayMs = attempt === 1 ? 150 : 450;
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+    }
+    throw lastErr;
+}
+
 /**
  * Upload a buffer or Uint8Array to Cloudflare R2 and return its public URL
  */
@@ -89,26 +118,32 @@ export async function uploadFileToR2({ buffer, key, contentType }) {
     const accountId = config.accountId;
 
     // Fast path: use native Cloudflare Worker R2 binding (zero network hop, no AWS S3 auth needed)
-    try {
-        const nativeBucket = shouldUseNativeBinding() ? await getNativeR2Bucket() : null;
-        if (nativeBucket) {
-            await nativeBucket.put(key, buffer, {
-                httpMetadata: {
-                    contentType: contentType || 'application/octet-stream',
-                },
-            });
+    const nativeBucket = shouldUseNativeBinding() ? await getNativeR2Bucket() : null;
+    if (nativeBucket) {
+        try {
+            await withR2Retry(() =>
+                nativeBucket.put(key, buffer, {
+                    httpMetadata: {
+                        contentType: contentType || 'application/octet-stream',
+                    },
+                })
+            );
             const url = publicDomain ? `${publicDomain}/${key}` : `https://${bucketName}.${accountId}.r2.cloudflarestorage.com/${key}`;
             return {
                 url,
                 key,
                 bucket: bucketName,
             };
+        } catch (nativeErr) {
+            // @aws-sdk/client-s3 calls fs.readFile via loadSharedConfigFiles, which throws in workerd/unenv.
+            if (isCloudflareWorkersRuntime()) {
+                throw nativeErr;
+            }
+            console.warn('[R2] Native binding upload failed, trying S3 client fallback:', nativeErr?.message || nativeErr);
         }
-    } catch (nativeErr) {
-        console.warn('[R2] Native binding upload failed, trying S3 client fallback:', nativeErr?.message || nativeErr);
     }
 
-    // Fallback: AWS S3 client over HTTPS
+    // Fallback (Node.js / local dev): AWS S3 client over HTTPS
     const client = getR2Client();
 
     await client.send(
@@ -137,14 +172,17 @@ export async function deleteFilesFromR2(keys) {
     if (normalizedKeys.length === 0) return 0;
 
     // Fast path: native Cloudflare R2 binding
-    try {
-        const nativeBucket = shouldUseNativeBinding() ? await getNativeR2Bucket() : null;
-        if (nativeBucket) {
-            await nativeBucket.delete(normalizedKeys);
+    const nativeBucket = shouldUseNativeBinding() ? await getNativeR2Bucket() : null;
+    if (nativeBucket) {
+        try {
+            await withR2Retry(() => nativeBucket.delete(normalizedKeys));
             return normalizedKeys.length;
+        } catch (nativeErr) {
+            if (isCloudflareWorkersRuntime()) {
+                throw nativeErr;
+            }
+            console.warn('[R2] Native binding delete failed, trying S3 client fallback:', nativeErr?.message || nativeErr);
         }
-    } catch (nativeErr) {
-        console.warn('[R2] Native binding delete failed, trying S3 client fallback:', nativeErr?.message || nativeErr);
     }
 
     const config = getR2Config();
@@ -187,10 +225,10 @@ export async function listR2Files({ prefix = '', limit = 1000 } = {}) {
     const publicDomain = config.publicDomain;
 
     // Fast path: native Cloudflare R2 binding
-    try {
-        const nativeBucket = shouldUseNativeBinding() ? await getNativeR2Bucket() : null;
-        if (nativeBucket) {
-            const res = await nativeBucket.list({ prefix, limit });
+    const nativeBucket = shouldUseNativeBinding() ? await getNativeR2Bucket() : null;
+    if (nativeBucket) {
+        try {
+            const res = await withR2Retry(() => nativeBucket.list({ prefix, limit }));
             const objects = res.objects || [];
             return objects.map((item) => ({
                 key: item.key,
@@ -198,9 +236,12 @@ export async function listR2Files({ prefix = '', limit = 1000 } = {}) {
                 lastModified: item.uploaded,
                 url: publicDomain ? `${publicDomain}/${item.key}` : item.key,
             }));
+        } catch (nativeErr) {
+            if (isCloudflareWorkersRuntime()) {
+                throw nativeErr;
+            }
+            console.warn('[R2] Native binding list failed, trying S3 client fallback:', nativeErr?.message || nativeErr);
         }
-    } catch (nativeErr) {
-        console.warn('[R2] Native binding list failed, trying S3 client fallback:', nativeErr?.message || nativeErr);
     }
 
     const client = getR2Client();
