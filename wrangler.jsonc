@@ -48,6 +48,13 @@
       "persist": true
     }
   },
+  // Hyperdrive connection pooler in front of Supabase Postgres
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "5c4fe83f9825416185f0955b6f4cfe50"
+    }
+  ],
   // R2 buckets — card media assets and OpenNext Incremental Cache
   "r2_buckets": [
     {
@@ -106,6 +113,12 @@
           }
         ]
       },
+      "hyperdrive": [
+        {
+          "binding": "HYPERDRIVE",
+          "id": "5c4fe83f9825416185f0955b6f4cfe50"
+        }
+      ],
       "r2_buckets": [
         {
           "binding": "BIRTHDAY_ASSETS",

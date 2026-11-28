@@ -31,8 +31,17 @@ function normalizePostgresUrl(raw) {
         const sslmode = parsed.searchParams.get('sslmode');
         // pg-connection-string treats 'prefer', 'require', and 'verify-ca' as
         // aliases for 'verify-full' and emits a noisy SECURITY WARNING per pool.
+        // Supabase poolers present a custom CA chain that fails verify-full under
+        // Node's default trust store, so keep standard libpq semantics there.
         if (sslmode && ['prefer', 'require', 'verify-ca'].includes(sslmode) && !parsed.searchParams.has('uselibpqcompat')) {
-            parsed.searchParams.set('sslmode', 'verify-full');
+            const isSupabase =
+                parsed.hostname.endsWith('.supabase.com') ||
+                parsed.hostname.endsWith('.supabase.co');
+            if (isSupabase) {
+                parsed.searchParams.set('uselibpqcompat', 'true');
+            } else {
+                parsed.searchParams.set('sslmode', 'verify-full');
+            }
             return parsed.toString();
         }
     } catch {
@@ -42,13 +51,22 @@ function normalizePostgresUrl(raw) {
 }
 
 function getPostgresUrl(env = process.env) {
-    const candidates = [
+    // Set DB_PROVIDER=prisma to fall back to Prisma Postgres without removing primary secrets.
+    const usePrismaFallback = String(env?.DB_PROVIDER || '').trim().toLowerCase() === 'prisma';
+    const primaryCandidates = [
         env?.HYPERDRIVE?.connectionString,
         env?.DATABASE_URL_POOLED,
         env?.POSTGRES_URL,
         env?.DATABASE_URL,
         env?.PRISMA_DATABASE_URL,
+        env?.PRISMA_FALLBACK_URL,
     ];
+    const fallbackCandidates = [
+        env?.PRISMA_FALLBACK_URL,
+        env?.PRISMA_DATABASE_URL,
+        ...primaryCandidates,
+    ];
+    const candidates = usePrismaFallback ? fallbackCandidates : primaryCandidates;
     for (const raw of candidates) {
         const normalized = normalizePostgresUrl(raw);
         if (normalized) return normalized;
